@@ -5,7 +5,7 @@
     "engine/harness.js", "engine/styles.js", "styles/flat-vector/style.js", "styles/tech-glow/style.js",
     "styles/flat-vector/skin.js", "styles/isometric/skin.js", "styles/_sound/sound.js",
     "plans/tripnido-demo/scene.js",
-    "inline:useStyle('isometric');",
+    "inline:useStyle('tech-glow');",
     "engine/player.js",
     "inline:setAspect('9x16');"
   ]
