@@ -10,6 +10,7 @@ body { margin: 0; color: var(--fg); font: 700 15px/1.2 "Nunito", system-ui, sans
 .stage { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; position: relative; background: #000; border-radius: 10px; overflow: hidden; }
 canvas { display: block; width: 100%; height: 100%; object-fit: contain; max-width: 100%; }
 .big { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(5,6,28,.35); border: 0; cursor: pointer; color: #fff; }
+.big[hidden] { display: none; }
 .big span { width: 92px; height: 92px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; box-shadow: 0 8px 30px rgba(0,0,0,.45); }
 .big svg { width: 38px; height: 38px; margin-left: 6px; fill: #050816; }
 .bar { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--bar); border: 1px solid var(--edge); border-radius: 12px; padding: 10px 14px; }
@@ -28,7 +29,9 @@ button.ctl:focus-visible, input:focus-visible, .big:focus-visible { outline: 2px
   <input type="range" id="scrub" min="0" max="35" step="0.01" value="0" aria-label="Scrub">
   <span class="time" id="time">0.0 / 35.0 s</span>
   <button class="ctl" id="snd" aria-pressed="true">Sound on</button>
+  <button class="ctl" id="mus" aria-pressed="true" title="Turn the synthesized music pad off, for laying your own track">Music on</button>
   <button class="ctl" id="vo" aria-pressed="false" title="Quieter effects and no music bed, for laying a voiceover on top">Voiceover mix</button>
+  <button class="ctl" id="fs" title="Full screen">Full screen</button>
   <button class="ctl" id="loop" aria-pressed="true">Loop</button>
   <select class="ctl" id="style" aria-label="Visual style" title="Visual style"></select>
   <button class="ctl" id="ar" aria-pressed="false" title="Switch between 16:9 and 9:16">9:16 vertical</button>
@@ -976,7 +979,7 @@ useStyle('tech-glow');
   const $ = (id) => document.getElementById(id);
   const scrub = $('scrub'), timeEl = $('time'), playBtn = $('play'), big = $('big');
   scrub.max = String(DURATION);
-  let cur = 0, playing = false, last = 0, stopSound = null, soundOn = true, loop = true, vo = false, poster = true;
+  let cur = 0, playing = false, last = 0, stopSound = null, soundOn = true, music = true, loop = true, vo = false, poster = true;
   function draw(t) {
     cur = t;
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.clearRect(0, 0, cv.width, cv.height);
@@ -993,7 +996,7 @@ useStyle('tech-glow');
   })();
   window.seek = (t) => draw(Math.max(0, Math.min(DURATION, t)));
   function stopSnd() { if (stopSound) { stopSound(); stopSound = null; } }
-  function startSnd() { stopSnd(); if (soundOn && playing) { try { stopSound = SOUND.live(scoreSound, cur, { voiceover: vo }); } catch (e) { stopSound = null; } } }
+  function startSnd() { stopSnd(); if (soundOn && playing) { try { stopSound = SOUND.live(scoreSound, cur, { voiceover: vo, nomusic: !music }); } catch (e) { stopSound = null; } } }
   function setPlaying(p) {
     playing = p; playBtn.textContent = p ? 'Pause' : 'Play'; playBtn.setAttribute('aria-label', p ? 'Pause' : 'Play'); big.hidden = p || !poster;
     if (p) { if (poster) { poster = false; draw(0); } last = performance.now(); startSnd(); requestAnimationFrame(frame); } else stopSnd();
@@ -1009,6 +1012,8 @@ useStyle('tech-glow');
   playBtn.onclick = big.onclick = () => { if (!playing && cur >= DURATION) draw(0); setPlaying(!playing); };
   scrub.oninput = () => { poster = false; big.hidden = true; draw(parseFloat(scrub.value)); if (playing) { last = performance.now(); startSnd(); } else stopSnd(); };
   $('snd').onclick = (e) => { soundOn = !soundOn; e.target.setAttribute('aria-pressed', soundOn); e.target.textContent = soundOn ? 'Sound on' : 'Sound off'; if (soundOn) startSnd(); else stopSnd(); };
+  $('mus').onclick = (e) => { music = !music; e.target.setAttribute('aria-pressed', music); e.target.textContent = music ? 'Music on' : 'Music off'; if (playing) startSnd(); };
+  $('fs').onclick = () => { const st = $('stage'); try { if (document.fullscreenElement) document.exitFullscreen(); else (st.requestFullscreen || st.webkitRequestFullscreen).call(st); } catch (e) { /* not supported */ } };
   $('vo').onclick = (e) => { vo = !vo; e.target.setAttribute('aria-pressed', vo); if (playing) startSnd(); };
   $('ar').onclick = (e) => { const v = window.ASPECT !== '9x16'; setAspect(v ? '9x16' : '16x9'); e.target.setAttribute('aria-pressed', v); e.target.textContent = v ? '16:9 wide' : '9:16 vertical'; };
   $('loop').onclick = (e) => { loop = !loop; e.target.setAttribute('aria-pressed', loop); };

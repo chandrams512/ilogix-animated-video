@@ -4,7 +4,7 @@
   const $ = (id) => document.getElementById(id);
   const scrub = $('scrub'), timeEl = $('time'), playBtn = $('play'), big = $('big');
   scrub.max = String(DURATION);
-  let cur = 0, playing = false, last = 0, stopSound = null, soundOn = true, loop = true, vo = false, poster = true;
+  let cur = 0, playing = false, last = 0, stopSound = null, soundOn = true, music = true, loop = true, vo = false, poster = true;
   function draw(t) {
     cur = t;
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.clearRect(0, 0, cv.width, cv.height);
@@ -21,7 +21,7 @@
   })();
   window.seek = (t) => draw(Math.max(0, Math.min(DURATION, t)));
   function stopSnd() { if (stopSound) { stopSound(); stopSound = null; } }
-  function startSnd() { stopSnd(); if (soundOn && playing) { try { stopSound = SOUND.live(scoreSound, cur, { voiceover: vo }); } catch (e) { stopSound = null; } } }
+  function startSnd() { stopSnd(); if (soundOn && playing) { try { stopSound = SOUND.live(scoreSound, cur, { voiceover: vo, nomusic: !music }); } catch (e) { stopSound = null; } } }
   function setPlaying(p) {
     playing = p; playBtn.textContent = p ? 'Pause' : 'Play'; playBtn.setAttribute('aria-label', p ? 'Pause' : 'Play'); big.hidden = p || !poster;
     if (p) { if (poster) { poster = false; draw(0); } last = performance.now(); startSnd(); requestAnimationFrame(frame); } else stopSnd();
@@ -37,6 +37,8 @@
   playBtn.onclick = big.onclick = () => { if (!playing && cur >= DURATION) draw(0); setPlaying(!playing); };
   scrub.oninput = () => { poster = false; big.hidden = true; draw(parseFloat(scrub.value)); if (playing) { last = performance.now(); startSnd(); } else stopSnd(); };
   $('snd').onclick = (e) => { soundOn = !soundOn; e.target.setAttribute('aria-pressed', soundOn); e.target.textContent = soundOn ? 'Sound on' : 'Sound off'; if (soundOn) startSnd(); else stopSnd(); };
+  $('mus').onclick = (e) => { music = !music; e.target.setAttribute('aria-pressed', music); e.target.textContent = music ? 'Music on' : 'Music off'; if (playing) startSnd(); };
+  $('fs').onclick = () => { const st = $('stage'); try { if (document.fullscreenElement) document.exitFullscreen(); else (st.requestFullscreen || st.webkitRequestFullscreen).call(st); } catch (e) { /* not supported */ } };
   $('vo').onclick = (e) => { vo = !vo; e.target.setAttribute('aria-pressed', vo); if (playing) startSnd(); };
   $('ar').onclick = (e) => { const v = window.ASPECT !== '9x16'; setAspect(v ? '9x16' : '16x9'); e.target.setAttribute('aria-pressed', v); e.target.textContent = v ? '16:9 wide' : '9:16 vertical'; };
   $('loop').onclick = (e) => { loop = !loop; e.target.setAttribute('aria-pressed', loop); };
