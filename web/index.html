@@ -68,8 +68,8 @@ footer{padding:36px 0 56px;color:var(--muted);font-size:13px}
 <body>
 <header class="wrap">
   <div class="brand"><span class="dot"></span> iLogix Video Studio</div>
-  <h1>Animated explainers,<br>made once, shown in any style.</h1>
-  <p class="lead">Short animated videos for iLogix, TripNido and the education channel. Preview them here, download the MP4s, or send a brief for a new one.</p>
+  <h1>Animated explainers,<br>made once, shown in seven styles.</h1>
+  <p class="lead">Short animated videos for iLogix, TripNido and the education channel. Preview them here, download the MP4s, or send a brief for a new one. Videos come with captions, brand colours and no-music audio.</p>
   <nav><a href="#videos">Videos</a><a href="#styles">Styles</a><a href="#brief">New video brief</a></nav>
 </header>
 
@@ -82,11 +82,15 @@ footer{padding:36px 0 56px;color:var(--muted);font-size:13px}
 
 <section id="styles">
   <h2>Styles</h2>
-  <p class="sub">The same scene in each look. Pick a style from the dropdown in any player.</p>
+  <p class="sub">The same scene (a water-cycle timeline) in each look. Pick a style from the dropdown in any player.</p>
   <div class="styles">
-    <div class="card style"><img src="img/style-tech-glow.jpg" alt="Tech Glow style" loading="lazy"><div class="body"><h3>Tech Glow</h3><p>Dark, neon glow. Best for iLogix, SaaS and AI topics.</p></div></div>
-    <div class="card style"><img src="img/style-flat-vector.jpg" alt="Flat Vector style" loading="lazy"><div class="body"><h3>Flat Vector</h3><p>Warm paper and bold shapes. Best for education.</p></div></div>
-    <div class="card style"><img src="img/style-isometric.jpg" alt="Isometric Pastel style" loading="lazy"><div class="body"><h3>Isometric Pastel</h3><p>Soft pastel slabs. Best for travel and lifestyle.</p></div></div>
+    <div class="card style"><img src="img/style-tech-glow.jpg" alt="Tech Glow style" loading="lazy"><div class="body"><h3>Tech Glow</h3><p>Dark, neon glow. iLogix, SaaS, AI.</p></div></div>
+    <div class="card style"><img src="img/style-glass.jpg" alt="Glass UI style" loading="lazy"><div class="body"><h3>Glass UI</h3><p>Frosted panels over soft colour. Apps and demos.</p></div></div>
+    <div class="card style"><img src="img/style-isometric.jpg" alt="Isometric Pastel style" loading="lazy"><div class="body"><h3>Isometric Pastel</h3><p>Soft pastel slabs. Travel, lifestyle.</p></div></div>
+    <div class="card style"><img src="img/style-flat-vector.jpg" alt="Flat Vector style" loading="lazy"><div class="body"><h3>Flat Vector</h3><p>Warm paper, bold shapes. Education.</p></div></div>
+    <div class="card style"><img src="img/style-whiteboard.jpg" alt="Whiteboard style" loading="lazy"><div class="body"><h3>Whiteboard</h3><p>Hand-drawn marker. Teaching.</p></div></div>
+    <div class="card style"><img src="img/style-blueprint.jpg" alt="Blueprint style" loading="lazy"><div class="body"><h3>Blueprint</h3><p>White line-work on blue. Technical topics.</p></div></div>
+    <div class="card style"><img src="img/style-neo-brutal.jpg" alt="Neo-brutalist style" loading="lazy"><div class="body"><h3>Neo-brutalist</h3><p>Thick outlines, loud colour. Social reels.</p></div></div>
   </div>
 </section>
 
@@ -98,8 +102,10 @@ footer{padding:36px 0 56px;color:var(--muted);font-size:13px}
     <div class="f"><label for="b-brand">For</label><select id="b-brand"><option>iLogix</option><option>TripNido</option><option>Education channel</option><option>Other</option></select></div>
     <div class="f"><label for="b-len">Length</label><select id="b-len"><option>10 s</option><option selected>20 s</option><option>35 s</option><option>60 s</option></select></div>
     <div class="f"><label for="b-asp">Shape</label><select id="b-asp"><option>9:16 vertical</option><option>16:9 wide</option><option>Both</option></select></div>
-    <div class="f"><label for="b-style">Style</label><select id="b-style"><option>Tech Glow</option><option>Flat Vector</option><option>Isometric Pastel</option></select></div>
+    <div class="f"><label for="b-style">Style</label><select id="b-style"><option>Tech Glow</option><option>Glass UI</option><option>Isometric Pastel</option><option>Flat Vector</option><option>Whiteboard</option><option>Blueprint</option><option>Neo-brutalist</option></select></div>
     <div class="f"><label for="b-audio">Audio</label><select id="b-audio"><option>Sound effects only (I will add music)</option><option>Sound effects plus music</option><option>Leave room for voiceover</option></select></div>
+    <div class="f"><label for="b-cap">Captions</label><select id="b-cap"><option>On (burned in, plus an .srt file)</option><option>Off</option></select></div>
+    <div class="f"><label for="b-brandkit">Brand kit (optional)</label><input id="b-brandkit" placeholder="Name, logo file, brand colours"></div>
     <div class="f wide"><label for="b-pts">Key points or script (one per line)</label><textarea id="b-pts" placeholder="Hook&#10;Main point 1&#10;Main point 2&#10;Call to action"></textarea></div>
     <div class="f wide"><label for="b-notes">Facts, sources, brand notes (optional)</label><textarea id="b-notes" placeholder="Links, numbers that must be correct, words to avoid"></textarea></div>
     <div class="f wide"><label>Brief to paste</label><pre id="out"></pre></div>
@@ -119,6 +125,8 @@ var VIDEOS=[
  {t:'Voice agents and agentic AI',d:'iLogix explainer: a missed call becomes a booked customer.',img:'img/ilogix.jpg',src:'v/ilogix-voice-agents.html',sb:'s/ilogix-voice-agents.html',tags:['35 s','16:9 + 9:16','Tech Glow'],dl:[['16:9','downloads/ilogix-voice-agents_16x9_no-music.mp4'],['9:16','downloads/ilogix-voice-agents_9x16_no-music.mp4']],p:false},
  {t:'TripNido: plan a trip in seconds',d:'Travel reel demo with a sample Goa itinerary.',img:'img/tripnido.jpg',src:'v/tripnido-demo.html',tags:['Demo','10 s','9:16','Tech Glow'],dl:[['No music','downloads/tripnido-demo_9x16_no-music.mp4'],['With music','downloads/tripnido-demo_9x16_with-music.mp4']],p:true},
  {t:'Why is the sky blue?',d:'Educational explainer demo on light scattering.',img:'img/edu.jpg',src:'v/edu-sky.html',tags:['Demo','10 s','16:9','Tech Glow'],dl:[['No music','downloads/edu-sky_16x9_no-music.mp4'],['With music','downloads/edu-sky_16x9_with-music.mp4']],p:false},
+ {t:'Why automate follow-ups',d:'Built from a JSON plan: hook, stat, chart, compare, flow and call to action, with captions.',img:'img/sample-automation.jpg',src:'v/sample-automation.html',tags:['Plan-built','~24 s','9:16','Captions'],dl:[['9:16 (captions, no music)','downloads/automation_9x16_sfx-only.mp4']],p:true},
+ {t:'The water cycle',d:'Educational explainer from a JSON plan in the Whiteboard style.',img:'img/sample-water-cycle.jpg',src:'v/sample-water-cycle.html',tags:['Plan-built','18 s','16:9','Whiteboard'],dl:[['16:9 (captions, no music)','downloads/water_16x9_sfx-only.mp4']],p:false},
  {t:'How Earth got its water',d:'The first video, in Flat-Vector Science style. Kept as originally built.',img:'img/earth.jpg',src:'v/earth-water.html',sb:'s/earth-water.html',tags:['23 s','16:9','Archive'],dl:[],p:false}
 ];
 var g=document.getElementById('vgrid');
@@ -137,14 +145,14 @@ g.addEventListener('click',function(e){var b=e.target.closest('[data-i]');if(b)o
 document.getElementById('mx').onclick=closeV;M.addEventListener('click',function(e){if(e.target===M)closeV()});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&M.classList.contains('open'))closeV()});
 // brief builder
-var ids=['topic','brand','len','asp','style','audio','pts','notes'],el={};ids.forEach(function(k){el[k]=document.getElementById('b-'+k)});
+var ids=['topic','brand','len','asp','style','audio','cap','brandkit','pts','notes'],el={};ids.forEach(function(k){el[k]=document.getElementById('b-'+k)});
 function brief(){
   var pts=el.pts.value.trim(),notes=el.notes.value.trim();
   return 'New animated video for the ilogix-animated-video repo.\n\n'+
   'Topic: '+(el.topic.value.trim()||'(add a topic)')+'\nFor: '+el.brand.value+'\nLength: '+el.len.value+'\nShape: '+el.asp.value+'\nStyle: '+el.style.value+'\nAudio: '+el.audio.value+'\n\n'+
   'Key points / script:\n'+(pts||'(none given: please propose a hook, 3 points and a call to action)')+'\n\n'+
   (notes?'Facts, sources, brand notes:\n'+notes+'\n\n':'')+
-  'Please: write a short storyboard first, wait for my OK, then build it as a new plan in the repo, check the frames, render the MP4s and push to GitHub. Use only facts I gave or that you can source, and label any sample content.';
+  'Please: write a short storyboard first, wait for my OK, then build it as a JSON plan in the repo (docs/plan-format.md), check the frames, render the MP4s and push to GitHub. Use only facts I gave or that you can source, and label any sample content.';
 }
 var out=document.getElementById('out');function upd(){out.textContent=brief()}
 ids.forEach(function(k){el[k].addEventListener('input',upd);el[k].addEventListener('change',upd)});upd();

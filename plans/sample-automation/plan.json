@@ -1,0 +1,98 @@
+{
+  "title": "Why automate follow-ups",
+  "style": "tech-glow",
+  "aspect": "9x16",
+  "brand": {
+    "name": "iLogix Digital",
+    "colors": {}
+  },
+  "scenes": [
+    {
+      "type": "hook",
+      "dur": 3,
+      "lines": [
+        "Slow replies",
+        "lose leads."
+      ],
+      "say": "Slow replies can lose you leads."
+    },
+    {
+      "type": "stat",
+      "dur": 3.4,
+      "value": 21,
+      "suffix": "x",
+      "label": "more likely to qualify",
+      "sub": "Sample figure for layout only",
+      "say": "Fast replies can change who you win."
+    },
+    {
+      "type": "chart",
+      "dur": 4,
+      "title": "Sample: reply time (minutes)",
+      "bars": [
+        {
+          "label": "Manual",
+          "value": 45
+        },
+        {
+          "label": "With an AI agent",
+          "value": 1
+        }
+      ],
+      "say": "An agent can reply in about a minute. Sample data."
+    },
+    {
+      "type": "compare",
+      "dur": 4.6,
+      "title": "Manual vs automated",
+      "left": {
+        "title": "Manual",
+        "items": [
+          "Slow replies",
+          "Missed follow-ups",
+          "Copy and paste"
+        ]
+      },
+      "right": {
+        "title": "Automated",
+        "items": [
+          "Instant reply",
+          "Every lead followed up",
+          "One connected flow"
+        ]
+      },
+      "say": "Manual follow-up misses leads. Automation does not."
+    },
+    {
+      "type": "flow",
+      "dur": 4.4,
+      "title": "How it flows",
+      "nodes": [
+        {
+          "label": "Lead",
+          "icon": "person"
+        },
+        {
+          "label": "Agent",
+          "icon": "bolt"
+        },
+        {
+          "label": "CRM",
+          "icon": "doc"
+        }
+      ],
+      "say": "A lead comes in, an agent replies, and your CRM is updated."
+    },
+    {
+      "type": "cta",
+      "dur": 3.4,
+      "lines": [
+        "Automate",
+        "your follow-ups."
+      ],
+      "button": "ilogixdigital.com",
+      "tag": "AI automation",
+      "say": "Automate your follow-ups with iLogix."
+    }
+  ]
+}

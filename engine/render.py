@@ -12,6 +12,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HTML_PATH = os.path.abspath(sys.argv[3]) if len(sys.argv) > 3 else os.path.join(ROOT, 'dist', 'ilogix_voice_agents.html')
 PREFIX = sys.argv[4] if len(sys.argv) > 4 else 'ilogix'
 STYLE = sys.argv[5] if len(sys.argv) > 5 else None
+CAPS = os.environ.get('CAPTIONS', '1') != '0'
 FPS = 30
 HTML = 'file://' + HTML_PATH
 os.makedirs(OUT, exist_ok=True)
@@ -25,6 +26,7 @@ async def main():
         await pg.goto(HTML)
         await pg.wait_for_function('typeof window.seek === "function" && typeof window.DURATION === "number"')
         await pg.wait_for_timeout(3000)  # let fonts settle
+        if not CAPS: await pg.evaluate('setCaptions && setCaptions(false)')
         if STYLE: await pg.evaluate(f"setStyle('{STYLE}')")
         await pg.evaluate(f"setAspect('{ASPECT}')")
         dur = await pg.evaluate('window.DURATION')

@@ -37,6 +37,8 @@
   playBtn.onclick = big.onclick = () => { if (!playing && cur >= DURATION) draw(0); setPlaying(!playing); };
   scrub.oninput = () => { poster = false; big.hidden = true; draw(parseFloat(scrub.value)); if (playing) { last = performance.now(); startSnd(); } else stopSnd(); };
   $('snd').onclick = (e) => { soundOn = !soundOn; e.target.setAttribute('aria-pressed', soundOn); e.target.textContent = soundOn ? 'Sound on' : 'Sound off'; if (soundOn) startSnd(); else stopSnd(); };
+  if (window.HAS_CAPTIONS) { $('cap').hidden = false; $('cap').onclick = (e) => { window.CAPTIONS_ON = !window.CAPTIONS_ON; e.target.setAttribute('aria-pressed', window.CAPTIONS_ON); e.target.textContent = window.CAPTIONS_ON ? 'Captions on' : 'Captions off'; draw(cur); }; }
+  try { if (new URLSearchParams(location.search).get('captions') === '0') window.CAPTIONS_ON = false; } catch (e) { /* default */ }
   $('mus').onclick = (e) => { music = !music; e.target.setAttribute('aria-pressed', music); e.target.textContent = music ? 'Music on' : 'Music off'; if (playing) startSnd(); };
   $('fs').onclick = () => { const st = $('stage'); try { if (document.fullscreenElement) document.exitFullscreen(); else (st.requestFullscreen || st.webkitRequestFullscreen).call(st); } catch (e) { /* not supported */ } };
   $('vo').onclick = (e) => { vo = !vo; e.target.setAttribute('aria-pressed', vo); if (playing) startSnd(); };
