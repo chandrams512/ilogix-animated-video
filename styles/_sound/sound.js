@@ -9,6 +9,7 @@
 //   k.music('pad', t0, t1, o)       slow chord pad: bpm, gain, chords (dropped in voiceover mode)
 //   k.withMinor(fn)                 everything scheduled inside fn counts as minor
 //   k.vo                            true in voiceover mix
+// Options: voiceover (quieter effects) and nomusic (drop bed and pad only, effects at full level, for laying your own music).
 // Voiceover mix: no bed or music, minor sounds at 60%, all effects a little lower.
 // Entry points: SOUND.live(score, fromT, {voiceover}) -> stop(); SOUND.renderOffline(score, dur, sampleRate, {voiceover}).
 (function () {
@@ -46,7 +47,7 @@
   // Build a kit on ctx. base = ctx time that score time 0 maps to; from = score time to start at (live seeking).
   function kit(ctx, opts) {
     opts = opts || {};
-    const vo = !!opts.voiceover, base = opts.base || 0, from = opts.from || 0, A = assets(ctx);
+    const vo = !!opts.voiceover, nomusic = vo || !!opts.nomusic, base = opts.base || 0, from = opts.from || 0, A = assets(ctx);
     const master = ctx.createGain(); master.gain.value = opts.master == null ? 0.85 : opts.master;
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -16; comp.knee.value = 14; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.2;
@@ -111,7 +112,7 @@
         out(n, o, t); src.start(s, r() * 1.5); src.stop(s + dur + 0.05); nodes.push(src, g);
       },
       bed(name, t0, t1, o) {
-        if (vo || t1 <= from) return; o = o || {};
+        if (nomusic || t1 <= from) return; o = o || {};
         const a = Math.max(t0, from), s = abs(a), dur = t1 - a, fade = Math.min(0.4, dur / 3);
         const src = ctx.createBufferSource(); src.buffer = A.brown; src.loop = true;
         const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 420;
@@ -122,7 +123,7 @@
         src.connect(f); f.connect(g); g.connect(master); src.start(s); src.stop(s + dur + 0.05); nodes.push(src, f, g);
       },
       music(name, t0, t1, o) {
-        if (vo || t1 <= from) return; o = o || {};
+        if (nomusic || t1 <= from) return; o = o || {};
         const bpm = o.bpm || 70, bar = (60 / bpm) * 4, chords = o.chords || [['A3', 'C4', 'E4', 'G4']], gain = (o.gain == null ? 1 : o.gain) * 0.028;
         for (let i = 0, t = t0; t < t1; i++, t += bar) {
           const len = Math.min(bar * 1.25, t1 - t); if (t + len <= from) continue;

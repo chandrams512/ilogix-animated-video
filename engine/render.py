@@ -3,7 +3,7 @@
 Usage: python3 engine/render.py <16x9|9x16> <outdir> [html_path] [name_prefix] [style]
 Defaults: dist/ilogix_voice_agents.html, prefix 'ilogix'.
 Renders frames once (silent), renders both audio mixes offline, then muxes:
-  ilogix_<aspect>_sound.mp4 (full effects + music pad)  and  ilogix_<aspect>_voiceover-mix.mp4 (quieter, no pad)."""
+  ilogix_<aspect>_sound.mp4 (full effects + music pad)  and  voiceover-mix (quieter, no pad) and sfx-only (full effects, no music, for laying your own track)."""
 import asyncio, base64, subprocess, sys, os
 from playwright.async_api import async_playwright
 
@@ -30,8 +30,8 @@ async def main():
         dur = await pg.evaluate('window.DURATION')
         n = round(dur * FPS)
         # audio first (offline render, both mixes)
-        for name, vo in (('sound', 'false'), ('voiceover-mix', 'true')):
-            js = f"""(async()=>{{const r=await SOUND.renderOffline(window.scoreSound,window.DURATION,48000,{{voiceover:{vo}}});
+        for name, vo in (('sound', '{voiceover:false}'), ('voiceover-mix', '{voiceover:true}'), ('sfx-only', '{voiceover:false,nomusic:true}')):
+            js = f"""(async()=>{{const r=await SOUND.renderOffline(window.scoreSound,window.DURATION,48000,{vo});
               const by=new Uint8Array(r.inter.buffer);let s='';for(let i=0;i<by.length;i+=0x8000)s+=String.fromCharCode.apply(null,by.subarray(i,i+0x8000));
               return {{peak:r.peak,b64:btoa(s)}};}})()"""
             r = await pg.evaluate(js)
@@ -46,7 +46,7 @@ async def main():
             if i % 150 == 0: print('frame', i, '/', n, flush=True)
         ff.stdin.close(); ff.wait()
         await b.close()
-    for name in ('sound', 'voiceover-mix'):
+    for name in ('sound', 'voiceover-mix', 'sfx-only'):
         out = os.path.join(OUT, f'{PREFIX}_{ASPECT}_{name}.mp4')
         subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', silent, '-f', 'f32le', '-ar', '48000', '-ac', '2', '-i', os.path.join(OUT, f'_audio_{name}.f32'),
                         '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', out], check=True)

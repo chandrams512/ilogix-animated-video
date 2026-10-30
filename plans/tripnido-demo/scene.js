@@ -22,10 +22,10 @@ function tripDraw(x, W, Hh, t) {
   const aA = 1 - seg(t, TL.out[0], TL.out[1]);
   if (aA > 0) {
     x.save(); x.globalAlpha *= aA;
-    const y1 = P ? 330 : 190, px = P ? 66 : 60;
+    const y1 = P ? 380 : 190, px = P ? 66 : 60;
     popIn(x, C, y1, u(TL.h1), () => S.text(x, 'Plan your trip', C, y1, px, pal.ink, { w: 800, glow: pal.cyan }));
     popIn(x, C, y1 + px * 1.2, u(TL.h2), () => S.text(x, 'in seconds.', C, y1 + px * 1.2, px, pal.cyan, { w: 800, glow: pal.cyan }));
-    const cw = P ? 600 : 700, ch = 160, cX = C - cw / 2, cY = P ? 650 : 360;
+    const cw = P ? 600 : 700, ch = 160, cX = C - cw / 2, cY = P ? 710 : 360;
     popIn(x, C, cY + ch / 2, u(TL.card, 0.6), () => {
       S.card(x, cX, cY, cw, ch, { col: pal.cyan });
       S.text(x, 'WHERE TO?', cX + 30, cY + 40, 17, pal.mute, { mono: true, align: 'left' });
@@ -43,10 +43,10 @@ function tripDraw(x, W, Hh, t) {
   const aB = seg(t, TL.b0, TL.b0 + 0.3) * (1 - seg(t, TL.out2[0], TL.out2[1]));
   if (aB > 0) {
     x.save(); x.globalAlpha *= aB;
-    S.text(x, 'Your day-by-day plan', C, P ? 190 : 90, P ? 50 : 46, pal.ink, { w: 800 });
+    S.text(x, 'Your day-by-day plan', C, P ? 220 : 90, P ? 50 : 46, pal.ink, { w: 800 });
     const cols = [pal.cyan, pal.pink, pal.amber], ic = [iPin, S.icon.cal, S.icon.check];
     DAYS.forEach((d, i) => {
-      const w = P ? 600 : 360, h = P ? 200 : 300, X = P ? C - w / 2 : C - 560 + i * 380, Y = P ? 300 + i * 250 : 210;
+      const w = P ? 600 : 360, h = P ? 200 : 300, X = P ? C - w / 2 : C - 560 + i * 380, Y = P ? 330 + i * 260 : 210;
       popIn(x, X + w / 2, Y + h / 2, u(TL.d[i], 0.55), () => {
         S.card(x, X, Y, w, h, { col: cols[i] });
         S.chip(x, X + 84, Y + 52, d[0], 22, { col: cols[i], solid: true });
@@ -55,13 +55,13 @@ function tripDraw(x, W, Hh, t) {
         S.node(x, X + w - 72, Y + (P ? h / 2 : 60), 38, cols[i], t, { icon: ic[i], ph: i });
       });
     });
-    x.save(); x.globalAlpha *= u(TL.note, 0.4); S.text(x, 'Sample itinerary', C, P ? 1100 : 590, 20, pal.mute, { mono: true }); x.restore();
+    x.save(); x.globalAlpha *= u(TL.note, 0.4); S.text(x, 'Sample itinerary', C, P ? 1140 : 590, 20, pal.mute, { mono: true }); x.restore();
     x.restore();
   }
 
   // Scene C: call to action
   if (t >= TL.c0 - 0.05) {
-    const ny = P ? 560 : 250;
+    const ny = P ? 600 : 250;
     popIn(x, C, ny, u(TL.c0, 0.7), () => S.node(x, C, ny, 84, pal.cyan, t, { icon: iPlane, ring: true }));
     const ty = ny + 170;
     popIn(x, C, ty, u(TL.c0 + 0.3, 0.5), () => S.text(x, 'Your trip,', C, ty, P ? 66 : 60, pal.ink, { w: 800 }));

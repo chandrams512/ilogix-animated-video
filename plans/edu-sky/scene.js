@@ -2,7 +2,7 @@
 const DURATION = 10;
 const TL = { title: 0.2, sun: 0.8, atmo: 1.3, beam: [1.8, 2.8], split: 2.8, straight: [2.9, 3.9], scat: 3.1, chipA: 4.3, eye: 4.8, arrive: [5.4, 6.6], chipB: 5.2, out: [7.8, 8.3], card: 8.3, chipC: 9.1 };
 function popIn(x, cx, cy, u, fn, a) { if (u <= 0) return; x.save(); x.globalAlpha *= (a == null ? 1 : a) * Math.min(1, u * 3); const s = back(Math.min(1, u)); x.translate(cx, cy); x.scale(s, s); x.translate(-cx, -cy); fn(); x.restore(); }
-const BLUE = '#2f7bff';
+const BLUE = '#4d9dff';
 
 function skyDraw(x, W, Hh, t) {
   S.bg(x, t);
@@ -34,7 +34,7 @@ function skyDraw(x, W, Hh, t) {
     x.save(); x.lineCap = 'round';
     [[pal.red, 318], [pal.green, 338]].forEach(([c, y]) => { x.strokeStyle = c; x.lineWidth = 6; x.beginPath(); x.moveTo(520, 330); x.lineTo(520, y); x.lineTo(lerp(520, 1190, sp), y); x.stroke(); });
     x.restore();
-    x.save(); x.globalAlpha *= u(TL.chipA, 0.4); S.chip(x, 1040, 262, 'Red and green pass straight', 22, { col: pal.red }); x.restore();
+    x.save(); x.globalAlpha *= u(TL.chipA, 0.4); S.chip(x, 1040, 262, 'Red and green pass straight', 22, { col: pal.red, solid: true }); x.restore();
   }
   const angs = [-95, 70, -135, 110, -55, 140, -160, 85, -110, 125];
   if (t > TL.scat) {
