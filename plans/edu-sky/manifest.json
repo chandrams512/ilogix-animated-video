@@ -1,0 +1,11 @@
+{
+  "title": "Why Is The Sky Blue",
+  "out": "edu_sky.html",
+  "scripts": [
+    "engine/harness.js", "engine/styles.js", "styles/flat-vector/style.js", "styles/tech-glow/style.js",
+    "styles/flat-vector/skin.js", "styles/isometric/skin.js", "styles/_sound/sound.js",
+    "plans/edu-sky/scene.js",
+    "inline:useStyle('flat-vector');",
+    "engine/player.js"
+  ]
+}

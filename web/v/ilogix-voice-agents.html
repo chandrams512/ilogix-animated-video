@@ -20,7 +20,7 @@ button.ctl:focus-visible, input:focus-visible, .big:focus-visible { outline: 2px
 .time { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 92px; text-align: right; }
 </style>
 <div class="stage" id="stage">
-  <canvas id="cv" width="1280" height="720" aria-label="Animated explainer: iLogix voice agents and agentic AI"></canvas>
+  <canvas id="cv" width="1280" height="720" aria-label="Animated explainer: iLogix Voice Agents Explainer"></canvas>
   <button class="big" id="big" aria-label="Play"><span><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></span></button>
 </div>
 <div class="bar">
@@ -113,6 +113,7 @@ button.ctl:focus-visible, input:focus-visible, .big:focus-visible { outline: 2px
   };
   H.W = 1280; H.H = 720;
 })();
+
 // ===== Style registry =====
 // A style ("skin") registers one object with the same shape, then scenes draw only through S:
 //   pal {bg0,bg1,bg2,cyan,violet,pink,green,amber,red,ink,mute}   semantic palette (names are roles, not literal colours)
@@ -126,6 +127,7 @@ function registerStyle(name, def) { STYLES[name] = def; def.id = name; if (!ACTI
 function useStyle(name) { if (!STYLES[name]) throw new Error('Unknown style: ' + name); ACTIVE_STYLE = name; }
 function styleList() { return Object.keys(STYLES).map((id) => ({ id, label: STYLES[id].label || id })); }
 const S = new Proxy({}, { get(_, k) { return STYLES[ACTIVE_STYLE][k]; } });
+
 // ===== Flat-Vector Science: drawing, texture and finishing functions (copied from the reference) =====
 const TAU = Math.PI * 2;
 const cl = H.clamp, lerp = H.lerp;
@@ -348,6 +350,7 @@ function burst(x, cx, cy, age, seed, spread) {
 }
 const blinkAt = (t, ph) => { const u = (t + ph) % 3.3; return u < 0.14 ? Math.sin((u / 0.14) * Math.PI) : 0; };
 function header(x, a) { pill(x, 232, 44, 'How did Earth get water?', 28, { a, bg: 'rgba(255,255,255,0.95)' }); }
+
 // ===== Tech Glow: palette, helpers and the nine key frames (uses H, glow, rr, seg, back, finish from the kit) =====
 const W_ = 1280, H_ = 720;
 const T = { bg0: '#050816', bg1: '#0a1030', bg2: '#140f3d', cyan: '#38e8ff', violet: '#8b6bff', pink: '#ff5fa8', green: '#3dffa0', amber: '#ffc94a', red: '#ff4d6d', ink: '#eaf1ff', mute: '#8fa3d8' };
@@ -559,6 +562,7 @@ registerStyle('tech-glow', {
   pal: T, bg: tbg, finish: tfinish, text: ttext, chip: tchip, card: tcard, node: tnode, link: tlink, wordmark, orb: mayaOrb,
   icon: { phone: iPhone, mail: iMail, chat: iChat, cal: iCal, person: iPerson, doc: iDoc, check: iCheck, bolt: iBolt, plan: iPlan, shield: iShield },
 });
+
 // ===== Flat Vector skin (warm paper, flat shapes, hard shadows). Education look. =====
 // Uses kit helpers from style.js (rr, glow, finish, TAU, lerp, H) and the line icons from Tech Glow.
 (function () {
@@ -624,6 +628,7 @@ registerStyle('tech-glow', {
   }
   registerStyle('flat-vector', { label: 'Flat Vector', pal: P, bg, finish: fin, text, chip, card, node, link, wordmark, orb, icon: STYLES['tech-glow'].icon });
 })();
+
 // ===== Isometric Pastel skin (soft pastel slabs and discs with a 3D edge). Travel / lifestyle look. =====
 (function () {
   const P = { bg0: '#eef6ff', bg1: '#f1eaff', bg2: '#fff0f5', cyan: '#2fa8d4', violet: '#8a74e8', pink: '#ee6f9f', green: '#3fbf86', amber: '#f2b13a', red: '#ec6a6a', ink: '#2c3764', mute: '#7a86ad' };
@@ -690,6 +695,7 @@ registerStyle('tech-glow', {
   }
   registerStyle('isometric', { label: 'Isometric Pastel', pal: P, bg, finish: fin, text, chip, card, node, link, wordmark, orb, icon: STYLES['tech-glow'].icon });
 })();
+
 // ===== SOUND: original synthesized sound kit (plain Web Audio, no audio files) =====
 // Written from scratch for this repo. API used by scoreSound(k) functions:
 //   k.hz(note)                      note name ("A3", "C#4", "Eb5") or number -> Hz
@@ -880,6 +886,7 @@ registerStyle('tech-glow', {
   };
   window.SOUND = SOUND;
 })();
+
 // ===== iLogix explainer: one timeline drives both picture and sound =====
 const DURATION = 35;
 const TL = {
@@ -1168,6 +1175,7 @@ function scoreSound(k) {
 }
 window.DURATION = DURATION;
 window.scoreSound = scoreSound;
+
 // ===== 9:16 layout (720x1280). Same timeline TL and the same sound score as the 16:9 cut; only positions change. =====
 function explainerP(ctx, W, Hh, t) {
   const x = ctx;
@@ -1360,6 +1368,7 @@ function explainerP(ctx, W, Hh, t) {
   twhite(x, seg(t, TL.white[0], TL.white[1]) * (1 - seg(t, TL.white[1], TL.white[2])));
   S.finish(x, t);
 }
+
 // ===== Player =====
 (function () {
   const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
