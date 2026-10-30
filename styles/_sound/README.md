@@ -1,7 +1,14 @@
-# Sound kit: TO BE REPLACED
+# Sound kit
 
-`sound.js` was copied from the Futurepedia AI Style Atlas "Flat-Vector Science" package and extended.
-It has no licence header, and Futurepedia's terms have not been checked.
-Do not sell or redistribute work that depends on it until it is either cleared or rewritten from scratch.
-A rewrite must keep the same API (`SOUND.kit`, `SOUND.live`, `SOUND.renderOffline`, `k.bed/play/tone/noise/withMinor`)
-so existing `scoreSound(k)` functions keep working.
+`sound.js` is an original synthesized kit written from scratch for this repo (plain Web Audio, no audio files, no
+third-party code). It replaces the earlier version that was copied from the Futurepedia style package.
+
+API (used by `scoreSound(k)` in each plan): `k.tone`, `k.noise`, `k.play(name)`, `k.bed`, `k.music`, `k.withMinor`,
+`k.hz`, `k.vo`; entry points `SOUND.live` and `SOUND.renderOffline`. Details are in the header comment of `sound.js`.
+
+Checked: offline render of both mixes matches the old kit's loudness profile (peak about 0.57, no errors, no NaN),
+and live playback starts, seeks and stops without errors. It has not been listened to by the author of the code,
+so give it a listen before publishing.
+
+Note: `archive/earth-water/` pages are kept as originally built and still contain the earlier copied sound code.
+Rebuild that video on this kit before selling it.

@@ -1,274 +1,190 @@
-// sound.js: a small synthesized sound kit for the style explainers. Plain Web Audio, no audio files.
-// Voiceover mode: SOUND.kit(ctx, { voiceover: true }) drops beds and music, plays anything marked minor
-// (play(..., { minor: true }), tone/noise { minor: true }, or scheduled inside k.withMinor(() => ...)) at about 60%
-// volume instead of full, and sits all effects a little lower, so the narration stays on top while the piece still
-// sounds alive. In the full mix, minor sounds play at full volume. Scores can read k.vo to branch further.
-// A style adds   explainerSound(k) { k.bed('room', 0, D); k.play('pop', 1.25); ... }   and the same
-// call schedules into a live AudioContext (the player) or an OfflineAudioContext (the video render).
-// Times are seconds on the explainer's own clock. Randomness is seeded, so every render is identical.
+// ===== SOUND: original synthesized sound kit (plain Web Audio, no audio files) =====
+// Written from scratch for this repo. API used by scoreSound(k) functions:
+//   k.hz(note)                      note name ("A3", "C#4", "Eb5") or number -> Hz
+//   k.tone(t, o)                    pitched voice: f (Hz | note | [[sec, f], ...] glide), type, dur, gain, a, hold,
+//                                   pan, verb, filter ('lowpass'|'highpass'|'bandpass'), f2 (cutoff), q, minor
+//   k.noise(t, o)                   filtered noise: color ('white'|'pink'|'brown'), filter, f (Hz | glide), q, dur, gain, a, pan, verb, minor
+//   k.play(name, t, o)              presets: tick tock click pop blip ding success impact thud stamp sparkle typing riser
+//   k.bed('room', t0, t1, o)        quiet room tone (dropped in voiceover mode)
+//   k.music('pad', t0, t1, o)       slow chord pad: bpm, gain, chords (dropped in voiceover mode)
+//   k.withMinor(fn)                 everything scheduled inside fn counts as minor
+//   k.vo                            true in voiceover mix
+// Voiceover mix: no bed or music, minor sounds at 60%, all effects a little lower.
+// Entry points: SOUND.live(score, fromT, {voiceover}) -> stop(); SOUND.renderOffline(score, dur, sampleRate, {voiceover}).
 (function () {
-  'use strict';
-  const SOUND = (window.SOUND = {});
-  const TINY = 1e-4;
-
-  // seeded random in [0,1), keyed by any string
-  function rand(key) {
-    let h = 2166136261;
-    for (let i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 16777619); }
-    let a = h >>> 0 || 1;
-    return () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-  }
-
-  // note names to Hz: 'A4' = 440, 'C#5', 'Eb3'
-  const STEP = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  const NOTE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
   function hz(n) {
     if (typeof n === 'number') return n;
-    const m = /^([A-G])([#b]?)(-?\d)$/.exec(n);
-    const semis = STEP[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0) + (Number(m[3]) - 4) * 12 - 9;
-    return 440 * Math.pow(2, semis / 12);
+    const m = /^([A-Ga-g])([#b]?)(-?\d)$/.exec(String(n));
+    if (!m) return 440;
+    const semis = NOTE[m[1].toUpperCase()] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0) + (parseInt(m[3], 10) + 1) * 12;
+    return 440 * Math.pow(2, (semis - 69) / 12);
   }
-  SOUND.hz = hz;
+  // Deterministic random so live playback, seeking and offline render agree.
+  function rng(seed) {
+    let s = (seed >>> 0) || 1;
+    return function () { s = (s + 0x6d2b79f5) >>> 0; let x = s; x = Math.imul(x ^ (x >>> 15), x | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
+  }
+  const seedOf = (name, t, i) => { let h = 2166136261; for (const ch of name) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return (h ^ Math.round(t * 1000) ^ (i || 0) * 7919) >>> 0; };
 
-  SOUND.kit = function (ctx, opts) {
-    const o = opts || {};
-    const VO = !!o.voiceover;
-    const MINOR = 0.6; // voiceover-mode volume for minor sounds
-    let inMinor = false;
-    const gainOf = (p, d) => (p.gain == null ? d : p.gain) * (VO && (p.minor || inMinor) ? MINOR : 1);
-    const T0 = (o.start || 0) - 0; // explainer time that maps to ctx time `base`
-    const base = ctx.currentTime + (o.delay || 0);
-    // Start times snap to the sample grid (+ a quarter sample): in Chrome a source started a hair off the grid can
-    // spike to about twice its set level.
-    const SR = ctx.sampleRate;
-    const at = (t) => (Math.round((base + (t - T0)) * SR) + 0.25) / SR;
+  const cache = new WeakMap();
+  function assets(ctx) {
+    let a = cache.get(ctx);
+    if (a) return a;
+    const sr = ctx.sampleRate, len = sr * 2, r = rng(12345);
+    const mk = (fn) => { const b = ctx.createBuffer(1, len, sr), d = b.getChannelData(0); fn(d); return b; };
+    const white = mk((d) => { for (let i = 0; i < len; i++) d[i] = r() * 2 - 1; });
+    const pink = mk((d) => { let b0 = 0, b1 = 0, b2 = 0; for (let i = 0; i < len; i++) { const w = r() * 2 - 1; b0 = 0.99765 * b0 + w * 0.099046; b1 = 0.963 * b1 + w * 0.2965164; b2 = 0.57 * b2 + w * 1.0526913; d[i] = (b0 + b1 + b2 + w * 0.1848) * 0.2; } });
+    const brown = mk((d) => { let l = 0; for (let i = 0; i < len; i++) { l = (l + 0.02 * (r() * 2 - 1)) / 1.02; d[i] = l * 3.5; } });
+    const irLen = Math.floor(sr * 1.6), ir = ctx.createBuffer(2, irLen, sr);
+    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c), rr = rng(777 + c); for (let i = 0; i < irLen; i++) d[i] = (rr() * 2 - 1) * Math.pow(1 - i / irLen, 3.2); }
+    a = { white, pink, brown, ir };
+    cache.set(ctx, a);
+    return a;
+  }
 
-    // ---- buses: sfx, amb, music -> compressor -> master; one shared reverb send
-    const master = ctx.createGain(); master.gain.value = o.master == null ? 0.9 : o.master;
+  // Build a kit on ctx. base = ctx time that score time 0 maps to; from = score time to start at (live seeking).
+  function kit(ctx, opts) {
+    opts = opts || {};
+    const vo = !!opts.voiceover, base = opts.base || 0, from = opts.from || 0, A = assets(ctx);
+    const master = ctx.createGain(); master.gain.value = opts.master == null ? 0.85 : opts.master;
     const comp = ctx.createDynamicsCompressor();
-    comp.threshold.value = -16; comp.knee.value = 8; comp.ratio.value = 3; comp.attack.value = 0.004; comp.release.value = 0.18;
-    comp.connect(master); master.connect(o.dest || ctx.destination);
-    const bus = {};
-    for (const [name, g] of Object.entries({ sfx: VO ? 0.7 : 0.85, amb: 0.5, music: 0.45 })) { bus[name] = ctx.createGain(); bus[name].gain.value = g; bus[name].connect(comp); }
+    comp.threshold.value = -16; comp.knee.value = 14; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.2;
+    master.connect(comp); comp.connect(ctx.destination);
+    const conv = ctx.createConvolver(); conv.buffer = A.ir;
+    const wet = ctx.createGain(); wet.gain.value = 0.8; conv.connect(wet); wet.connect(master);
+    const nodes = []; let minorDepth = 0;
+    const abs = (t) => base + t;
+    const live = (t, dur) => t + (dur || 0) >= from - 0.01 && t >= from - 0.01;
+    const level = (o) => { const minor = o.minor || minorDepth > 0; return vo ? (minor ? 0.6 : 0.85) : 1; };
 
-    // generated room reverb: decaying stereo noise, darker toward the tail
-    const verb = ctx.createConvolver();
-    {
-      const secs = 1.6, n = Math.floor(secs * ctx.sampleRate), ir = ctx.createBuffer(2, n, ctx.sampleRate);
-      for (let c = 0; c < 2; c++) {
-        const r = rand('verb' + c), d = ir.getChannelData(c); let lp = 0;
-        for (let i = 0; i < n; i++) { const u = i / n; lp += (0.6 - 0.45 * u) * ((r() * 2 - 1) - lp); d[i] = lp * Math.pow(1 - u, 3); }
-      }
-      verb.buffer = ir;
+    // pan -> dry out + reverb send
+    function out(node, o, t) {
+      let n = node;
+      if (o.pan && ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, o.pan)); n.connect(p); n = p; nodes.push(p); }
+      n.connect(master);
+      if (o.verb) { const s = ctx.createGain(); s.gain.value = o.verb; n.connect(s); s.connect(conv); nodes.push(s); }
     }
-    const verbIn = ctx.createGain(); verbIn.gain.value = 0.9; verbIn.connect(verb); verb.connect(comp);
+    function glide(param, f, s, dur) {
+      if (Array.isArray(f)) {
+        param.setValueAtTime(Math.max(1, hz(f[0][1])), s + f[0][0]);
+        for (let i = 1; i < f.length; i++) param.exponentialRampToValueAtTime(Math.max(1, hz(f[i][1])), s + Math.min(dur, f[i][0]));
+      } else param.setValueAtTime(Math.max(1, hz(f)), s);
+    }
+    function env(g, s, dur, peak, a, hold) {
+      a = Math.min(Math.max(a, 0.001), dur * 0.8);
+      g.gain.setValueAtTime(0.0001, s);
+      g.gain.linearRampToValueAtTime(peak, s + a);
+      const h = Math.min(hold || 0, dur - a - 0.01);
+      if (h > 0) g.gain.setValueAtTime(peak, s + a + h);
+      g.gain.exponentialRampToValueAtTime(0.0001, s + dur);
+    }
 
-    // seeded noise buffers: white, pink-ish and brown
-    const noiseBuf = {};
-    {
-      const n = Math.floor(2.5 * ctx.sampleRate);
-      for (const kind of ['white', 'pink', 'brown']) {
-        const b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0), r = rand('noise-' + kind);
-        let p0 = 0, p1 = 0, p2 = 0, br = 0;
-        for (let i = 0; i < n; i++) {
-          const w = r() * 2 - 1;
-          if (kind === 'white') d[i] = w;
-          else if (kind === 'pink') { p0 = 0.997 * p0 + 0.029 * w; p1 = 0.985 * p1 + 0.032 * w; p2 = 0.95 * p2 + 0.048 * w; d[i] = (p0 + p1 + p2 + w * 0.05) * 2.2; }
-          else { br = (br + 0.02 * w) / 1.02; d[i] = br * 3.2; }
+    const k = {
+      vo, hz, nodes,
+      withMinor(fn) { minorDepth++; try { fn(); } finally { minorDepth--; } },
+      tone(t, o) {
+        o = o || {}; const dur = o.dur || 0.3;
+        if (!live(t, dur)) return;
+        const s = abs(t), osc = ctx.createOscillator(); osc.type = o.type || 'sine';
+        glide(osc.frequency, o.f == null ? 440 : o.f, s, dur);
+        if (o.detune) osc.detune.value = o.detune;
+        const g = ctx.createGain(); env(g, s, dur, (o.gain == null ? 0.2 : o.gain) * level(o), o.a == null ? 0.005 : o.a, o.hold);
+        osc.connect(g);
+        let n = g;
+        if (o.filter || o.f2) { const f = ctx.createBiquadFilter(); f.type = o.filter || 'lowpass'; f.Q.value = o.q || 0.7; f.frequency.value = o.f2 || 2000; g.connect(f); n = f; nodes.push(f); }
+        out(n, o, t); osc.start(s); osc.stop(s + dur + 0.05); nodes.push(osc, g);
+      },
+      noise(t, o) {
+        o = o || {}; const dur = o.dur || 0.3;
+        if (!live(t, dur)) return;
+        const s = abs(t), src = ctx.createBufferSource(); src.buffer = A[o.color] || A.white; src.loop = true;
+        const r = rng(seedOf('n', t, Math.round(dur * 100)));
+        const g = ctx.createGain(); env(g, s, dur, (o.gain == null ? 0.2 : o.gain) * level(o), o.a == null ? 0.004 : o.a, 0);
+        src.connect(g);
+        let n = g;
+        if (o.filter) {
+          const f = ctx.createBiquadFilter(); f.type = o.filter; f.Q.value = o.q || 0.7;
+          glide(f.frequency, o.f == null ? 1000 : o.f, s, dur);
+          g.connect(f); n = f; nodes.push(f);
         }
-        noiseBuf[kind] = b;
-      }
-    }
-
-    // ---- automation helpers
-    // a value or [[dt, value], ...] from the voice start; ramps are exponential (frequencies)
-    function sweep(param, v, t) {
-      if (!Array.isArray(v)) { param.setValueAtTime(v, t); return; }
-      param.setValueAtTime(v[0][1], t + v[0][0]);
-      for (let i = 1; i < v.length; i++) param.exponentialRampToValueAtTime(Math.max(v[i][1], 1), t + v[i][0]);
-    }
-    // amplitude: linear attack to `gain`, optional hold, exponential release to silence by `dur`
-    function shape(param, t, gain, dur, a, hold) {
-      a = Math.min(a == null ? 0.004 : a, dur * 0.9);
-      hold = Math.min(hold || 0, dur - a);
-      param.setValueAtTime(0, t);
-      param.linearRampToValueAtTime(gain, t + a);
-      if (hold > 0) param.setValueAtTime(gain, t + a + hold);
-      param.exponentialRampToValueAtTime(TINY, t + dur);
-      param.setValueAtTime(0, t + dur + 0.001);
-    }
-    function out(node, p) {
-      const pan = ctx.createStereoPanner(); pan.pan.value = Math.max(-1, Math.min(1, p.pan || 0));
-      node.connect(pan); pan.connect(bus[p.bus || 'sfx']);
-      if (p.verb) { const s = ctx.createGain(); s.gain.value = p.verb; pan.connect(s); s.connect(verbIn); }
-    }
-    function filterNode(p, t) {
-      if (!p.filter) return null;
-      const f = ctx.createBiquadFilter(); f.type = p.filter; f.Q.value = p.q == null ? 1 : p.q;
-      sweep(f.frequency, p.f == null ? 1000 : p.f, t);
-      return f;
-    }
-
-    // ---- primitives
-    // tone(t, { f, type, dur, gain, a, hold, pan, verb, bus, filter, f2 (filter freq), q, detune })
-    function tone(time, p) {
-      const t = at(time), dur = p.dur || 0.2;
-      if (t + dur < ctx.currentTime || (time < T0 - 0.001 && dur < 1.5)) return;
-      const osc = ctx.createOscillator(); osc.type = p.type || 'sine';
-      sweep(osc.frequency, Array.isArray(p.f) ? p.f.map(([d, v]) => [d, hz(v)]) : hz(p.f || 440), t);
-      if (p.detune) osc.detune.value = p.detune;
-      const g = ctx.createGain(); shape(g.gain, t, gainOf(p, 0.3), dur, p.a, p.hold);
-      let node = osc;
-      if (p.filter) { const f = ctx.createBiquadFilter(); f.type = p.filter; f.Q.value = p.q == null ? 0.8 : p.q; sweep(f.frequency, p.f2 || 2000, t); osc.connect(f); node = f; }
-      node.connect(g); out(g, p);
-      osc.start(t); osc.stop(t + dur + 0.02);
-    }
-    // noise(t, { dur, color, filter, f, q, gain, a, hold, pan, verb, bus, rate })
-    function noise(time, p) {
-      const t = at(time), dur = p.dur || 0.2;
-      if (t + dur < ctx.currentTime || (time < T0 - 0.001 && dur < 1.5)) return;
-      const src = ctx.createBufferSource(); src.buffer = noiseBuf[p.color || 'white']; src.loop = true;
-      if (p.rate) src.playbackRate.value = p.rate;
-      const g = ctx.createGain(); shape(g.gain, t, gainOf(p, 0.3), dur, p.a, p.hold);
-      const f = filterNode(p, t);
-      if (f) { src.connect(f); f.connect(g); } else src.connect(g);
-      out(g, p);
-      const off = rand('off' + time + (p.f || ''))() * 2;
-      src.start(t, off); src.stop(t + dur + 0.02);
-    }
-
-    // ---- named sounds. play(name, t, opts): opts.gain scales the whole sound, opts.pan places it.
-    const S = {
-      // UI / motion graphics
-      pop: (t, o) => { tone(t, { f: [[0, o.f || 620], [0.07, (o.f || 620) * 0.45]], dur: 0.1, gain: 0.32 * o.g, pan: o.pan }); noise(t, { dur: 0.012, filter: 'highpass', f: 3000, gain: 0.12 * o.g, pan: o.pan }); },
-      tick: (t, o) => noise(t, { dur: 0.018, filter: 'bandpass', f: o.f || 4200, q: 2.5, gain: 0.3 * o.g, pan: o.pan }),
-      click: (t, o) => { tone(t, { f: o.f || 1900, type: 'square', dur: 0.02, gain: 0.08 * o.g, filter: 'lowpass', f2: 3000, pan: o.pan }); noise(t, { dur: 0.01, filter: 'highpass', f: 2500, gain: 0.15 * o.g, pan: o.pan }); },
-      tock: (t, o) => { tone(t, { f: o.f || 820, dur: 0.07, gain: 0.25 * o.g, pan: o.pan }); noise(t, { dur: 0.05, filter: 'bandpass', f: o.f || 820, q: 9, gain: 0.35 * o.g, pan: o.pan }); },
-      blip: (t, o) => tone(t, { f: o.f || 'E6', type: o.type || 'square', dur: o.dur || 0.07, gain: 0.07 * o.g, a: 0.002, hold: (o.dur || 0.07) * 0.6, pan: o.pan }),
-      whoosh: (t, o) => { const d = o.dur || 0.45; noise(t, { dur: d, color: 'pink', filter: 'bandpass', f: [[0, 350], [d * 0.55, o.top || 2600], [d, 700]], q: 0.9, gain: 0.32 * o.g, a: d * 0.5, pan: o.pan, verb: 0.15 }); },
-      swish: (t, o) => { const d = o.dur || 0.18; noise(t, { dur: d, filter: 'highpass', f: [[0, 1800], [d, 5200]], q: 0.7, gain: 0.22 * o.g, a: d * 0.35, pan: o.pan }); },
-      riser: (t, o) => { const d = o.dur || 0.8; noise(t, { dur: d, color: 'pink', filter: 'bandpass', f: [[0, 300], [d, 4000]], q: 1.2, gain: 0.25 * o.g, a: d * 0.95, pan: o.pan, verb: 0.2 }); tone(t, { f: [[0, 180], [d, 720]], type: 'triangle', dur: d, gain: 0.06 * o.g, a: d * 0.9 }); },
-      thud: (t, o) => { tone(t, { f: [[0, o.f || 130], [0.16, 42]], dur: 0.26, gain: 0.55 * o.g, pan: o.pan }); noise(t, { dur: 0.09, color: 'brown', filter: 'lowpass', f: 500, gain: 0.35 * o.g, pan: o.pan }); },
-      impact: (t, o) => { S.thud(t, o); noise(t, { dur: 0.7, color: 'pink', filter: 'lowpass', f: [[0, 2400], [0.6, 300]], gain: 0.3 * o.g, verb: 0.35, pan: o.pan }); },
-      stamp: (t, o) => { S.thud(t, { ...o, f: 160 }); noise(t, { dur: 0.05, filter: 'bandpass', f: 1300, q: 1.2, gain: 0.4 * o.g, pan: o.pan }); noise(t + 0.004, { dur: 0.012, filter: 'highpass', f: 3500, gain: 0.25 * o.g, pan: o.pan }); },
-      ding: (t, o) => { const f = hz(o.f || 'E6'); tone(t, { f, dur: 1.3, gain: 0.2 * o.g, verb: 0.3, pan: o.pan }); tone(t, { f: f * 2.76, dur: 0.5, gain: 0.05 * o.g, verb: 0.3, pan: o.pan }); },
-      success: (t, o) => { S.ding(t, { ...o, f: o.f || 'C6' }); S.ding(t + 0.09, { ...o, f: hz(o.f || 'C6') * 1.5, g: o.g * 0.9 }); },
-      error: (t, o) => { tone(t, { f: o.f || 'A3', type: 'square', dur: 0.13, gain: 0.09 * o.g, hold: 0.08, filter: 'lowpass', f2: 1400, pan: o.pan }); tone(t + 0.15, { f: hz(o.f || 'A3') * 0.8, type: 'square', dur: 0.22, gain: 0.09 * o.g, hold: 0.14, filter: 'lowpass', f2: 1200, pan: o.pan }); },
-      buzz: (t, o) => { const d = o.dur || 0.3; tone(t, { f: o.f || 110, type: 'sawtooth', dur: d, gain: 0.12 * o.g, hold: d * 0.7, filter: 'lowpass', f2: 900, pan: o.pan }); tone(t, { f: (o.f || 110) * 1.01, type: 'sawtooth', dur: d, gain: 0.1 * o.g, hold: d * 0.7, filter: 'lowpass', f2: 900, pan: o.pan }); },
-      sparkle: (t, o) => { const r = rand('sparkle' + t), notes = ['C6', 'D6', 'E6', 'G6', 'A6', 'C7']; for (let i = 0; i < (o.n || 6); i++) { const ti = t + i * 0.04 + r() * 0.01, f = hz(notes[Math.floor(r() * notes.length)]), pan = r() * 1.2 - 0.6; tone(ti, { f, dur: 0.6, gain: 0.04 * o.g, a: 0.002, verb: 0.35, pan }); tone(ti, { f: f * 2.76, dur: 0.2, gain: 0.012 * o.g, a: 0.002, pan }); } },
-      glitch: (t, o) => { const r = rand('glitch' + t); for (let i = 0; i < 7; i++) tone(t + i * 0.022, { f: 200 + r() * 1800, type: 'square', dur: 0.02, gain: 0.07 * o.g, a: 0.001, hold: 0.015, pan: r() * 1.4 - 0.7 }); noise(t, { dur: 0.16, filter: 'bandpass', f: 2500, q: 0.6, gain: 0.12 * o.g }); },
-      shutter: (t, o) => { S.click(t, o); noise(t + 0.06, { dur: 0.04, filter: 'bandpass', f: 2200, q: 1, gain: 0.2 * o.g, pan: o.pan }); },
-      count: (t, o) => S.tick(t, { ...o, f: o.f || 5200, g: o.g * 0.7 }),
-
-      // hand-made media
-      // stroke: a pen/marker/chalk/pencil stroke over `dur` seconds. material sets the surface sound.
-      stroke: (t, o) => {
-        const d = o.dur || 0.4, m = o.material || 'marker', r = rand('stroke' + m + t);
-        const M = {
-          marker: { f: 2900, q: 2.2, g: 0.16, grain: 0.05 },
-          chalk: { f: 1700, q: 0.6, g: 0.22, grain: 0.028 },
-          pencil: { f: 4600, q: 0.8, g: 0.16, grain: 0.04, filter: 'highpass' },
-          pen: { f: 4200, q: 1.6, g: 0.08, grain: 0.06 },
-          brush: { f: 900, q: 0.5, g: 0.1, grain: 0.09, color: 'pink' },
-          sharpie: { f: 2400, q: 1.4, g: 0.2, grain: 0.045 },
-        }[m];
-        for (let x = 0; x < d; x += M.grain * (0.7 + r() * 0.6)) {
-          const gd = M.grain * (0.8 + r() * 0.9);
-          noise(t + x, { dur: gd, color: M.color, filter: M.filter || 'bandpass', f: M.f * (0.8 + r() * 0.4), q: M.q, gain: M.g * o.g * (0.6 + r() * 0.5), a: gd * 0.3, pan: (o.pan || 0) + (r() - 0.5) * 0.2 });
+        out(n, o, t); src.start(s, r() * 1.5); src.stop(s + dur + 0.05); nodes.push(src, g);
+      },
+      bed(name, t0, t1, o) {
+        if (vo || t1 <= from) return; o = o || {};
+        const a = Math.max(t0, from), s = abs(a), dur = t1 - a, fade = Math.min(0.4, dur / 3);
+        const src = ctx.createBufferSource(); src.buffer = A.brown; src.loop = true;
+        const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 420;
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, s);
+        g.gain.linearRampToValueAtTime(0.09 * (o.gain == null ? 1 : o.gain), s + fade);
+        g.gain.setValueAtTime(0.09 * (o.gain == null ? 1 : o.gain), s + dur - fade);
+        g.gain.linearRampToValueAtTime(0.0001, s + dur);
+        src.connect(f); f.connect(g); g.connect(master); src.start(s); src.stop(s + dur + 0.05); nodes.push(src, f, g);
+      },
+      music(name, t0, t1, o) {
+        if (vo || t1 <= from) return; o = o || {};
+        const bpm = o.bpm || 70, bar = (60 / bpm) * 4, chords = o.chords || [['A3', 'C4', 'E4', 'G4']], gain = (o.gain == null ? 1 : o.gain) * 0.028;
+        for (let i = 0, t = t0; t < t1; i++, t += bar) {
+          const len = Math.min(bar * 1.25, t1 - t); if (t + len <= from) continue;
+          const st = Math.max(t, from), s = abs(st), d = t + len - st;
+          chords[i % chords.length].forEach((n, j) => {
+            const osc = ctx.createOscillator(); osc.type = 'triangle'; osc.frequency.value = hz(n); osc.detune.value = (j - 1.5) * 4;
+            const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1100;
+            const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, s);
+            g.gain.linearRampToValueAtTime(gain, s + Math.min(1.2, d * 0.4));
+            g.gain.setValueAtTime(gain, s + Math.max(0.01, d - 1.0)); g.gain.linearRampToValueAtTime(0.0001, s + d);
+            osc.connect(f); f.connect(g); g.connect(master); const sv = ctx.createGain(); sv.gain.value = 0.35; g.connect(sv); sv.connect(conv);
+            osc.start(s); osc.stop(s + d + 0.05); nodes.push(osc, f, g, sv);
+          });
         }
       },
-      // paper: picking up / slapping down / turning a sheet
-      paper: (t, o) => { const d = o.dur || 0.35, r = rand('paper' + t); for (let x = 0; x < d; x += 0.025 + r() * 0.03) noise(t + x, { dur: 0.05, filter: 'bandpass', f: 1200 + r() * 2600, q: 0.9, gain: 0.12 * o.g * (1 - x / d * 0.5), pan: o.pan }); },
-      slap: (t, o) => { noise(t, { dur: 0.07, filter: 'highpass', f: 900, gain: 0.45 * o.g, a: 0.001, pan: o.pan }); tone(t, { f: [[0, 180], [0.06, 70]], dur: 0.1, gain: 0.25 * o.g, pan: o.pan }); },
-      tape: (t, o) => { noise(t, { dur: o.dur || 0.5, filter: 'bandpass', f: [[0, 900], [o.dur || 0.5, 2200]], q: 1.8, gain: 0.18 * o.g, a: 0.02, pan: o.pan }); },
-      press: (t, o) => { S.thud(t, { ...o, f: 95, g: o.g * 0.9 }); noise(t + 0.01, { dur: 0.25, color: 'brown', filter: 'lowpass', f: 700, gain: 0.25 * o.g, pan: o.pan }); },
-      roller: (t, o) => { const d = o.dur || 0.6; noise(t, { dur: d, color: 'brown', filter: 'bandpass', f: 380, q: 1.5, gain: 0.3 * o.g, a: 0.05, hold: d * 0.6, pan: o.pan }); for (let x = 0; x < d; x += 0.07) S.tock(t + x, { f: 300, g: o.g * 0.15, pan: o.pan }); },
-      erase: (t, o) => { const d = o.dur || 0.6, r = rand('erase' + t); for (let x = 0; x < d; x += 0.06 + r() * 0.04) noise(t + x, { dur: 0.08, color: 'pink', filter: 'bandpass', f: 700 + r() * 500, q: 0.8, gain: 0.22 * o.g, a: 0.03, pan: (r() - 0.5) * 0.5 }); },
-
-      // machines and screens
-      key: (t, o) => { const r = rand('key' + t); noise(t, { dur: 0.025, filter: 'bandpass', f: 2600 + r() * 1200, q: 2, gain: 0.25 * o.g, a: 0.001, pan: o.pan }); tone(t, { f: 160 + r() * 40, dur: 0.04, gain: 0.12 * o.g, pan: o.pan }); },
-      typing: (t, o) => { const r = rand('typing' + t), n = o.n || 8, rate = o.rate || 0.09; for (let i = 0; i < n; i++) S.key(t + i * rate * (0.75 + r() * 0.5), { g: o.g * (0.7 + r() * 0.4), pan: o.pan }); },
-      typebar: (t, o) => { S.key(t, o); noise(t + 0.008, { dur: 0.03, filter: 'bandpass', f: 1100, q: 4, gain: 0.35 * o.g, pan: o.pan }); },
-      bell: (t, o) => S.ding(t, { ...o, f: o.f || 'A6' }),
-      boot: (t, o) => { tone(t, { f: [[0, 80], [0.35, 1600]], type: 'sine', dur: 0.5, gain: 0.08 * o.g, a: 0.3 }); S.blip(t + 0.45, { ...o, f: 'C6', dur: 0.12 }); },
-      crtOn: (t, o) => { noise(t, { dur: 0.25, filter: 'highpass', f: 2000, gain: 0.2 * o.g, a: 0.001 }); tone(t, { f: 15700, dur: 1.5, gain: 0.02 * o.g, a: 0.1, hold: 1 }); S.thud(t, { ...o, f: 90, g: o.g * 0.5 }); },
-      neon: (t, o) => { const d = o.dur || 0.25, r = rand('neon' + t); for (let x = 0; x < d; x += 0.035 + r() * 0.04) tone(t + x, { f: 120, type: 'sawtooth', dur: 0.03, gain: 0.3 * o.g * (0.5 + r() * 0.5), filter: 'bandpass', f2: 1200, q: 1.2, pan: o.pan }); },
-      // chip (8-bit console) sounds: raw square/triangle, no filtering
-      coin: (t, o) => { tone(t, { f: 'B5', type: 'square', dur: 0.07, gain: 0.07 * o.g, a: 0.001, hold: 0.06 }); tone(t + 0.07, { f: 'E6', type: 'square', dur: 0.3, gain: 0.07 * o.g, a: 0.001, hold: 0.1 }); },
-      jump: (t, o) => tone(t, { f: [[0, 260], [0.16, 820]], type: 'square', dur: 0.18, gain: 0.07 * o.g, a: 0.001, hold: 0.12 }),
-      hurt: (t, o) => { tone(t, { f: [[0, 600], [0.25, 90]], type: 'square', dur: 0.28, gain: 0.08 * o.g, a: 0.001, hold: 0.2 }); noise(t, { dur: 0.2, filter: 'lowpass', f: 1800, gain: 0.15 * o.g, rate: 0.25 }); },
-      powerup: (t, o) => ['C5', 'E5', 'G5', 'C6', 'E6', 'G6', 'C7'].forEach((n, i) => tone(t + i * 0.045, { f: n, type: 'square', dur: 0.06, gain: 0.06 * o.g, a: 0.001, hold: 0.05 })),
-      select: (t, o) => { S.blip(t, { ...o, f: 'A5', dur: 0.04 }); S.blip(t + 0.05, { ...o, f: 'E6', dur: 0.05 }); },
-      text: (t, o) => { const n = o.n || 10, rate = o.rate || 0.05; for (let i = 0; i < n; i++) tone(t + i * rate, { f: i % 2 ? 'C6' : 'G5', type: 'square', dur: 0.025, gain: 0.04 * o.g, a: 0.001, hold: 0.015 }); },
+      play(name, t, o) {
+        o = o || {}; const gn = o.gain == null ? 1 : o.gain, m = !!o.minor, mk = (x) => Object.assign({ minor: m }, x);
+        switch (name) {
+          case 'tick': k.noise(t, mk({ dur: 0.03, filter: 'highpass', f: 4000, gain: 0.16 * gn, a: 0.001, pan: o.pan })); k.tone(t, mk({ f: 2600, dur: 0.025, gain: 0.05 * gn, a: 0.001, pan: o.pan })); break;
+          case 'tock': k.tone(t, mk({ f: [[0, (o.f || 700) * 1.2], [0.04, o.f || 700]], dur: 0.07, gain: 0.14 * gn, a: 0.002, pan: o.pan })); break;
+          case 'click': k.noise(t, mk({ dur: 0.02, filter: 'highpass', f: 3000, gain: 0.3 * gn, a: 0.001, pan: o.pan })); k.tone(t, mk({ f: 1500, dur: 0.03, gain: 0.1 * gn, a: 0.001, pan: o.pan })); break;
+          case 'pop': k.tone(t, mk({ f: [[0, 380], [0.07, 980]], dur: 0.14, gain: 0.22 * gn, a: 0.003, pan: o.pan, verb: 0.12 })); break;
+          case 'blip': k.tone(t, mk({ f: o.f || 'E5', type: 'triangle', dur: o.dur || 0.09, gain: 0.16 * gn, a: 0.003, pan: o.pan, verb: 0.2 })); break;
+          case 'ding': { const f = hz(o.f || 'C6'); k.tone(t, mk({ f, dur: 1.0, gain: 0.14 * gn, a: 0.002, pan: o.pan, verb: 0.35 })); k.tone(t, mk({ f: f * 2.76, dur: 0.4, gain: 0.04 * gn, a: 0.002, pan: o.pan, verb: 0.3 })); break; }
+          case 'success': k.play('ding', t, { f: 'C6', gain: 0.8 * gn, pan: o.pan, minor: m }); k.play('ding', t + 0.11, { f: 'G6', gain: 0.9 * gn, pan: o.pan, minor: m }); break;
+          case 'impact': k.tone(t, mk({ f: [[0, 90], [0.5, 34]], dur: 0.9, gain: 0.5 * gn, a: 0.004, pan: o.pan, verb: 0.2 })); k.noise(t, mk({ dur: 0.5, filter: 'lowpass', f: [[0, 2400], [0.45, 200]], gain: 0.28 * gn, a: 0.002, color: 'brown' })); break;
+          case 'thud': { const f = o.f || 90; k.tone(t, mk({ f: [[0, f * 1.5], [0.25, f * 0.55]], dur: 0.4, gain: 0.4 * gn, a: 0.003, pan: o.pan })); break; }
+          case 'stamp': k.noise(t, mk({ dur: 0.06, filter: 'bandpass', f: 1800, q: 0.9, gain: 0.3 * gn, a: 0.001, pan: o.pan })); k.play('thud', t, { f: 140, gain: 0.7 * gn, minor: m }); break;
+          case 'sparkle': { const n = o.n || 5, r = rng(seedOf('sp', t)); for (let i = 0; i < n; i++) k.tone(t + i * 0.05 + r() * 0.02, mk({ f: 2200 + r() * 3600, dur: 0.22, gain: 0.07 * gn, a: 0.002, verb: 0.4, pan: (r() - 0.5) * 0.8 })); break; }
+          case 'typing': { const n = o.n || 8, rate = o.rate || 0.06, r = rng(seedOf('ty', t)); for (let i = 0; i < n; i++) { const tt = t + i * rate + r() * 0.012; k.noise(tt, mk({ dur: 0.025, filter: 'highpass', f: 2500 + r() * 1500, gain: 0.13 * gn, a: 0.001 })); k.tone(tt, mk({ f: 1100 + r() * 500, dur: 0.02, gain: 0.04 * gn, a: 0.001 })); } break; }
+          case 'riser': { const d = o.dur || 0.8; k.noise(t, mk({ dur: d, color: 'pink', filter: 'bandpass', f: [[0, 300], [d, 4200]], q: 0.8, gain: 0.3 * gn, a: d * 0.85, pan: o.pan, verb: 0.2 })); k.tone(t, mk({ f: [[0, 160], [d, 640]], type: 'triangle', dur: d, gain: 0.07 * gn, a: d * 0.85 })); break; }
+        }
+      },
     };
+    k.stop = function () { try { master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setTargetAtTime(0, ctx.currentTime, 0.02); } catch (e) {} setTimeout(() => { nodes.forEach((n) => { try { if (n.stop) n.stop(); } catch (e) {} try { n.disconnect(); } catch (e) {} }); try { master.disconnect(); comp.disconnect(); conv.disconnect(); wet.disconnect(); } catch (e) {} }, 120); };
+    return k;
+  }
 
-    function play(name, t, opts) {
-      const fn = S[name];
-      if (!fn) throw new Error('unknown sound: ' + name);
-      const o2 = Object.assign({}, opts); o2.g = o2.gain == null ? 1 : o2.gain;
-      if (opts && opts.minor) withMinor(() => fn(t, o2)); else fn(t, o2);
-    }
-
-    // everything scheduled inside fn counts as minor (quieter in voiceover mode)
-    function withMinor(fn) { const was = inMinor; inMinor = true; try { fn(); } finally { inMinor = was; } }
-
-    // ---- beds: continuous sound under a stretch of time. bed(name, t0, t1, opts)
-    function bed(name, t0, t1, p) {
-      if (VO) return;
-      p = p || {}; const g = p.gain == null ? 1 : p.gain, d = t1 - t0, fade = Math.min(0.4, d / 4);
-      const long = (q) => Object.assign({ dur: d, a: fade, hold: d - fade * 2, bus: 'amb' }, q);
-      if (name === 'room') noise(t0, long({ color: 'brown', filter: 'lowpass', f: 320, gain: 0.12 * g }));
-      else if (name === 'hiss') noise(t0, long({ color: 'pink', filter: 'highpass', f: 5000, gain: 0.02 * g }));
-      else if (name === 'hum') { tone(t0, long({ f: 60, gain: 0.05 * g })); tone(t0, long({ f: 120, gain: 0.025 * g })); tone(t0, long({ f: 180, type: 'triangle', gain: 0.012 * g })); }
-      else if (name === 'rain') { noise(t0, long({ color: 'pink', filter: 'bandpass', f: 2500, q: 0.4, gain: 0.08 * g })); const r = rand('rain'); for (let x = 0; x < d; x += 0.04 + r() * 0.08) noise(t0 + x, { dur: 0.01, filter: 'highpass', f: 4000, gain: 0.04 * g * r(), bus: 'amb', pan: r() * 1.6 - 0.8 }); }
-      else if (name === 'projector') { noise(t0, long({ color: 'pink', filter: 'highpass', f: 3000, gain: 0.03 * g })); for (let x = 0; x < d; x += 1 / 24) S.tock(t0 + x, { f: 700, g: 0.04 * g, pan: 0.3 }); }
-      else if (name === 'vinyl') { noise(t0, long({ color: 'pink', filter: 'bandpass', f: 1500, q: 0.5, gain: 0.025 * g })); const r = rand('vinyl'); for (let x = 0; x < d; x += 0.08 + r() * 0.4) noise(t0 + x, { dur: 0.006, filter: 'highpass', f: 2500, gain: 0.08 * g * r(), bus: 'amb' }); }
-      else throw new Error('unknown bed: ' + name);
-    }
-
-    // ---- music: optional light beds that sit under the effects. music(name, t0, t1, { bpm, chords, gain })
-    // chords: list of note arrays, one per bar, cycled. e.g. [['C4','E4','G4','B4'], ['A3','C4','E4','G4']]
-    function music(name, t0, t1, p) {
-      if (VO) return;
-      p = p || {}; const g = p.gain == null ? 1 : p.gain, bpm = p.bpm || 100, beat = 60 / bpm, bar = beat * 4;
-      const chords = p.chords || [['C4', 'E4', 'G4', 'B4'], ['A3', 'C4', 'E4', 'G4'], ['F3', 'A3', 'C4', 'E4'], ['G3', 'B3', 'D4', 'F4']];
-      let i = 0;
-      for (let t = t0; t < t1 - 0.05; t += bar, i++) {
-        const ch = chords[i % chords.length], len = Math.min(bar, t1 - t);
-        if (name === 'pad' || name === 'pulse') ch.forEach((n, k) => { tone(t, { f: n, type: 'triangle', dur: len + 0.3, gain: 0.035 * g, a: 0.25, hold: len - 0.3, bus: 'music', filter: 'lowpass', f2: 1400, pan: (k - 1.5) * 0.25, verb: 0.25 }); tone(t, { f: hz(n) * 1.004, type: 'sine', dur: len + 0.3, gain: 0.03 * g, a: 0.3, hold: len - 0.3, bus: 'music' }); });
-        if (name === 'pulse') for (let b = 0; b < 4 && t + b * beat < t1 - 0.05; b++) {
-          const tb = t + b * beat;
-          tone(tb, { f: [[0, 110], [0.1, 50]], dur: 0.18, gain: (b % 2 ? 0.16 : 0.26) * g, bus: 'music' });
-          noise(tb + beat / 2, { dur: 0.04, filter: 'highpass', f: 7000, gain: 0.05 * g, bus: 'music' });
-          tone(tb + beat / 2, { f: hz(ch[0]) / 2, type: 'triangle', dur: beat * 0.45, gain: 0.08 * g, bus: 'music' });
-        }
-        if (name === 'chip') for (let s = 0; s < 8 && t + s * beat / 2 < t1 - 0.05; s++) {
-          const ts = t + s * beat / 2;
-          tone(ts, { f: hz(ch[0]) / 2, type: 'triangle', dur: beat * 0.45, gain: 0.12 * g, a: 0.001, hold: beat * 0.35, bus: 'music' });
-          tone(ts, { f: ch[[0, 1, 2, 3, 2, 1, 2, 3][s]], type: 'square', dur: beat * 0.4, gain: 0.03 * g, a: 0.001, hold: beat * 0.25, bus: 'music' });
-        }
-      }
-    }
-
-    return { play, bed, music, tone, noise, withMinor, hz, vo: VO, sounds: Object.keys(S) };
+  let liveCtx = null;
+  const SOUND = {
+    kit,
+    hz,
+    // Start the score from explainer time fromT right now; returns stop().
+    live(fn, fromT, opts) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!liveCtx) liveCtx = new Ctx();
+      if (liveCtx.state === 'suspended') liveCtx.resume();
+      const k = kit(liveCtx, { voiceover: !!(opts && opts.voiceover), base: liveCtx.currentTime + 0.06 - (fromT || 0), from: fromT || 0 });
+      fn(k);
+      return function () { k.stop(); };
+    },
+    // Render the whole score offline. Returns { inter: Float32Array (interleaved stereo), peak }.
+    async renderOffline(fn, duration, sampleRate, kitOpts) {
+      const sr = sampleRate || 48000, ctx = new OfflineAudioContext(2, Math.ceil(duration * sr), sr);
+      const k = kit(ctx, Object.assign({}, kitOpts, { base: 0, from: 0 }));
+      fn(k);
+      const buf = await ctx.startRendering(), L = buf.getChannelData(0), R = buf.getChannelData(1), n = L.length, inter = new Float32Array(n * 2);
+      let peak = 0;
+      for (let i = 0; i < n; i++) { inter[2 * i] = L[i]; inter[2 * i + 1] = R[i]; const a = Math.max(Math.abs(L[i]), Math.abs(R[i])); if (a > peak) peak = a; }
+      if (peak > 0.95) { const s = 0.95 / peak; for (let i = 0; i < inter.length; i++) inter[i] *= s; peak = 0.95; }
+      return { inter, peak };
+    },
   };
-
-  // Live playback for a player: SOUND.live(scoreFn, fromT, { voiceover, master }) starts the score from explainer time
-  // fromT right now and returns stop(). Call stop() on pause or seek, and SOUND.live again on play.
-  SOUND.live = function (fn, fromT, opts) {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    fn(SOUND.kit(ctx, Object.assign({}, opts, { start: fromT || 0, delay: 0.03 })));
-    return () => { try { ctx.close(); } catch (e) {} };
-  };
-
-  // Render a style's explainerSound into an OfflineAudioContext; returns interleaved float stereo.
-  SOUND.renderOffline = async function (fn, duration, sampleRate, kitOpts) {
-    const sr = sampleRate || 48000, len = Math.ceil(duration * sr);
-    const ctx = new OfflineAudioContext(2, len, sr);
-    fn(SOUND.kit(ctx, kitOpts || {}));
-    const buf = await ctx.startRendering();
-    const L = buf.getChannelData(0), R = buf.getChannelData(1), inter = new Float32Array(len * 2);
-    let peak = 0;
-    for (let i = 0; i < len; i++) { inter[2 * i] = L[i]; inter[2 * i + 1] = R[i]; peak = Math.max(peak, Math.abs(L[i]), Math.abs(R[i])); }
-    return { inter, peak, frames: len, sr };
-  };
+  window.SOUND = SOUND;
 })();

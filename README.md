@@ -5,7 +5,7 @@ preview and the MP4 render match. Sound is synthesized (no audio files). Private
 
 ## Layout
 - `engine/` harness, player page, build and render scripts
-- `styles/` one folder per look (`flat-vector`, `tech-glow`); `_sound/` is the sound kit (see its README, licence unchecked)
+- `styles/` one folder per look (`flat-vector`, `tech-glow`); `_sound/` is the sound kit (original kit, see its README)
 - `plans/<name>/` one folder per video: `manifest.json` (script order), scene code, storyboard
 - `archive/earth-water/` the first video, kept as built
 - `docs/` workflow notes

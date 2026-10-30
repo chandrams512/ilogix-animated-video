@@ -8,4 +8,4 @@
 6. Claude only for new scene types, failed automatic checks, or high-stakes final review.
 7. Deliver via n8n (Drive or notification).
 
-Open items: rewrite the sound kit; style switcher; plan schema; check Futurepedia terms before selling styles.
+Open items: style switcher; plan schema; check Futurepedia terms before selling styles.
