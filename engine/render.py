@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Render a built player HTML to MP4.
-Usage: python3 engine/render.py <16x9|9x16> <outdir> [html_path] [name_prefix]
+Usage: python3 engine/render.py <16x9|9x16> <outdir> [html_path] [name_prefix] [style]
 Defaults: dist/ilogix_voice_agents.html, prefix 'ilogix'.
 Renders frames once (silent), renders both audio mixes offline, then muxes:
   ilogix_<aspect>_sound.mp4 (full effects + music pad)  and  ilogix_<aspect>_voiceover-mix.mp4 (quieter, no pad)."""
@@ -11,6 +11,7 @@ ASPECT, OUT = sys.argv[1], sys.argv[2]
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HTML_PATH = os.path.abspath(sys.argv[3]) if len(sys.argv) > 3 else os.path.join(ROOT, 'dist', 'ilogix_voice_agents.html')
 PREFIX = sys.argv[4] if len(sys.argv) > 4 else 'ilogix'
+STYLE = sys.argv[5] if len(sys.argv) > 5 else None
 FPS = 30
 HTML = 'file://' + HTML_PATH
 os.makedirs(OUT, exist_ok=True)
@@ -24,6 +25,7 @@ async def main():
         await pg.goto(HTML)
         await pg.wait_for_function('typeof window.seek === "function" && typeof window.DURATION === "number"')
         await pg.wait_for_timeout(3000)  # let fonts settle
+        if STYLE: await pg.evaluate(f"setStyle('{STYLE}')")
         await pg.evaluate(f"setAspect('{ASPECT}')")
         dur = await pg.evaluate('window.DURATION')
         n = round(dur * FPS)

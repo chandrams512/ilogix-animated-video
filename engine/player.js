@@ -13,6 +13,12 @@
   }
   window.ASPECT = '16x9';
   window.setAspect = (a) => { window.ASPECT = a; cv.width = a === '9x16' ? 720 : 1280; cv.height = a === '9x16' ? 1280 : 720; draw(cur); };
+  window.setStyle = (n) => { useStyle(n); const sel = $('style'); if (sel) sel.value = n; draw(cur); };
+  (function initStyles() {
+    const sel = $('style'); styleList().forEach((o) => { const e = document.createElement('option'); e.value = o.id; e.textContent = o.label; sel.appendChild(e); });
+    sel.value = ACTIVE_STYLE; sel.onchange = () => window.setStyle(sel.value);
+    try { const q = new URLSearchParams(location.search).get('style'); if (q && STYLES[q]) { useStyle(q); sel.value = q; } } catch (e) { /* default style */ }
+  })();
   window.seek = (t) => draw(Math.max(0, Math.min(DURATION, t)));
   function stopSnd() { if (stopSound) { stopSound(); stopSound = null; } }
   function startSnd() { stopSnd(); if (soundOn && playing) { try { stopSound = SOUND.live(scoreSound, cur, { voiceover: vo }); } catch (e) { stopSound = null; } } }

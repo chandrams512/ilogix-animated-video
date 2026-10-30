@@ -19,6 +19,14 @@ preview and the MP4 render match. Sound is synthesized (no audio files). Private
 
 `engine/export_mp4.js` is a Node (puppeteer) alternative for a local machine.
 
+## Styles
+Scenes draw through the style object `S` (see `engine/styles.js`), so one plan renders in any registered style:
+`tech-glow` (dark neon), `flat-vector` (warm paper, education), `isometric` (pastel slabs, travel).
+The player has a style dropdown; `?style=isometric` in the URL preselects one.
+Render a style: `python3 engine/render.py 9x16 out dist/ilogix_voice_agents.html ilogix_iso isometric`.
+New style = one file that calls `registerStyle(name, {...})` with the same shape (documented in `engine/styles.js`).
+Skins reuse the line icons from `styles/tech-glow/style.js` and helpers from `styles/flat-vector/style.js`.
+
 ## Rules
 - Keys go in environment variables, never in the repo. MP4s and voiceover clips are git-ignored.
-- Planned: JSON plan files and a style switcher (`--style`), so a new video needs a plan, not new code.
+- Planned: JSON plan files, so a new video needs a plan, not new code.
