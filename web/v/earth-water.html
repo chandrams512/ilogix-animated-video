@@ -1,0 +1,1055 @@
+<title>How Earth Got Water</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;700;800;900&display=block">
+<style>
+/* Layout: letterboxed 16:9 stage with a slim control bar underneath. */
+:root { --bg: #05061c; --bar: #11154a; --edge: #2a2f78; --fg: #eef0ff; --muted: #aab3e8; --accent: #ffd23f; --ice: #56e8ff; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { height: 100%; background: var(--bg); }
+body { margin: 0; color: var(--fg); font: 700 15px/1.2 "Nunito", system-ui, sans-serif; display: flex; flex-direction: column; padding-block: 12px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); gap: 12px; }
+.stage { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; position: relative; background: #000; border-radius: 10px; overflow: hidden; }
+canvas { display: block; width: 100%; height: 100%; object-fit: contain; max-width: 100%; }
+.big { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(5,6,28,.35); border: 0; cursor: pointer; color: #fff; }
+.big span { width: 92px; height: 92px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; box-shadow: 0 8px 30px rgba(0,0,0,.45); }
+.big svg { width: 38px; height: 38px; margin-left: 6px; fill: #141846; }
+.bar { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--bar); border: 1px solid var(--edge); border-radius: 12px; padding: 10px 14px; }
+button.ctl { font: 800 14px/1 "Nunito", system-ui, sans-serif; color: var(--fg); background: transparent; border: 1px solid var(--edge); border-radius: 999px; padding: 9px 14px; cursor: pointer; min-width: 44px; }
+button.ctl[aria-pressed="true"] { background: var(--accent); color: #141846; border-color: var(--accent); }
+button.ctl:focus-visible, input:focus-visible, .big:focus-visible { outline: 2px solid var(--ice); outline-offset: 2px; }
+#scrub { flex: 1 1 200px; min-width: 120px; accent-color: var(--accent); }
+.time { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 92px; text-align: right; }
+</style>
+<div class="stage" id="stage">
+  <canvas id="cv" width="1280" height="720" aria-label="Animated explainer: how Earth got its water"></canvas>
+  <button class="big" id="big" aria-label="Play"><span><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></span></button>
+</div>
+<div class="bar">
+  <button class="ctl" id="play" aria-label="Play">Play</button>
+  <input type="range" id="scrub" min="0" max="23" step="0.01" value="0" aria-label="Scrub">
+  <span class="time" id="time">0.0 / 23.0 s</span>
+  <button class="ctl" id="snd" aria-pressed="true">Sound on</button>
+  <button class="ctl" id="vo" aria-pressed="false" title="Quieter effects and no music bed, for laying a voiceover on top">Voiceover mix</button>
+  <button class="ctl" id="loop" aria-pressed="true">Loop</button>
+</div>
+<script>
+// ===== H helper library (unchanged from the style kit; registry/render parts omitted) =====
+(function () {
+  const H = (window.H = {});
+  H.rng = function (seed = 1) {
+    let a = typeof seed === 'string' ? hashStr(seed) : (seed >>> 0) || 1;
+    const r = function () {
+      a |= 0; a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    r.range = (lo, hi) => lo + r() * (hi - lo);
+    r.int = (lo, hi) => Math.floor(lo + r() * (hi - lo + 1));
+    r.pick = (arr) => arr[Math.floor(r() * arr.length)];
+    r.chance = (p) => r() < p;
+    r.gauss = () => { let u = 0, v = 0; while (!u) u = r(); while (!v) v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+    return r;
+  };
+  function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  H.makeNoise = function (seed = 1) {
+    const r = H.rng(seed), p = new Uint8Array(512), perm = [...Array(256).keys()];
+    for (let i = 255; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
+    for (let i = 0; i < 512; i++) p[i] = perm[i & 255];
+    const fade = (t) => t * t * t * (t * (t * 6 - 15) + 10);
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const g3 = (h, x, y, z) => { h &= 15; const u = h < 8 ? x : y, v = h < 4 ? y : h === 12 || h === 14 ? x : z; return ((h & 1) ? -u : u) + ((h & 2) ? -v : v); };
+    function n3(x, y, z) {
+      const X = Math.floor(x) & 255, Y = Math.floor(y) & 255, Z = Math.floor(z) & 255;
+      x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
+      const u = fade(x), v = fade(y), w = fade(z);
+      const A = p[X] + Y, AA = p[A] + Z, AB = p[A + 1] + Z, B = p[X + 1] + Y, BA = p[B] + Z, BB = p[B + 1] + Z;
+      return lerp(lerp(lerp(g3(p[AA], x, y, z), g3(p[BA], x - 1, y, z), u), lerp(g3(p[AB], x, y - 1, z), g3(p[BB], x - 1, y - 1, z), u), v),
+        lerp(lerp(g3(p[AA + 1], x, y, z - 1), g3(p[BA + 1], x - 1, y, z - 1), u), lerp(g3(p[AB + 1], x, y - 1, z - 1), g3(p[BB + 1], x - 1, y - 1, z - 1), u), v), w);
+    }
+    const n2 = (x, y) => n3(x, y, 0.5);
+    const fbm3 = (x, y, z, oct = 4) => { let s = 0, a = 0.5, f = 1, norm = 0; for (let i = 0; i < oct; i++) { s += a * n3(x * f, y * f, z * f); norm += a; a *= 0.5; f *= 2; } return s / norm; };
+    const fbm2 = (x, y, oct = 4) => fbm3(x, y, 0.5, oct);
+    return { n2, n3, fbm2, fbm3 };
+  };
+  H.lerp = (a, b, t) => a + (b - a) * t;
+  H.clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
+  H.map = (v, a, b, c, d) => c + ((v - a) / (b - a)) * (d - c);
+  H.smooth = (e0, e1, x) => { const t = H.clamp((x - e0) / (e1 - e0)); return t * t * (3 - 2 * t); };
+  H.ease = {
+    inOut: (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
+    out: (t) => 1 - Math.pow(1 - t, 3),
+    in: (t) => t * t * t,
+    back: (t) => { const c = 1.70158; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); },
+  };
+  H.hex = (h) => { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map((c) => c + c).join(''); const n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  H.rgba = (hexOrArr, a = 1) => { const [r, g, b] = Array.isArray(hexOrArr) ? hexOrArr : H.hex(hexOrArr); return `rgba(${r | 0},${g | 0},${b | 0},${a})`; };
+  H.mix = (c1, c2, t) => { const a = Array.isArray(c1) ? c1 : H.hex(c1), b = Array.isArray(c2) ? c2 : H.hex(c2); return [0, 1, 2].map((i) => a[i] + (b[i] - a[i]) * t); };
+  H.layer = (W, H_, ) => { const c = document.createElement('canvas'); c.width = W; c.height = H_; return c; };
+  H.grain = function (ctx, W, Hh, amount = 0.08, seed = 7, mono = true) {
+    const img = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height), d = img.data, r = H.rng(seed), k = amount * 255;
+    for (let i = 0; i < d.length; i += 4) {
+      const n = (r() - 0.5) * k;
+      if (mono) { d[i] += n; d[i + 1] += n; d[i + 2] += n; }
+      else { d[i] += (r() - 0.5) * k; d[i + 1] += (r() - 0.5) * k; d[i + 2] += (r() - 0.5) * k; }
+    }
+    ctx.putImageData(img, 0, 0);
+  };
+  H.paper = function (ctx, W, Hh, base = '#f3ecdc', seed = 3, strength = 0.06) {
+    ctx.save(); ctx.fillStyle = base; ctx.fillRect(0, 0, W, Hh);
+    const nz = H.makeNoise(seed), cell = 4, [br, bg, bb] = H.hex(base);
+    for (let y = 0; y < Hh; y += cell) for (let x = 0; x < W; x += cell) {
+      const v = nz.fbm2(x * 0.01, y * 0.01, 3) * 0.6 + nz.n2(x * 0.15, y * 0.04) * 0.4;
+      const s = 1 + v * strength * 2;
+      ctx.fillStyle = `rgb(${br * s | 0},${bg * s | 0},${bb * s | 0})`; ctx.fillRect(x, y, cell, cell);
+    }
+    ctx.restore();
+  };
+  H.vignette = function (ctx, W, Hh, strength = 0.5, color = '0,0,0') {
+    const g = ctx.createRadialGradient(W / 2, Hh / 2, Math.min(W, Hh) * 0.3, W / 2, Hh / 2, Math.hypot(W, Hh) * 0.6);
+    g.addColorStop(0, `rgba(${color},0)`); g.addColorStop(1, `rgba(${color},${strength})`);
+    ctx.save(); ctx.fillStyle = g; ctx.fillRect(0, 0, W, Hh); ctx.restore();
+  };
+  H.W = 1280; H.H = 720;
+})();
+// ===== Flat-Vector Science: drawing, texture and finishing functions (copied from the reference) =====
+const TAU = Math.PI * 2;
+const cl = H.clamp, lerp = H.lerp;
+const seg = (t, a, b) => cl((t - a) / (b - a));
+const eo = H.ease.out, eio = H.ease.inOut;
+const back = (u, s = 1.5) => { if (u <= 0) return 0; if (u >= 1) return 1; return 1 + (s + 1) * Math.pow(u - 1, 3) + s * Math.pow(u - 1, 2); };
+const FONT = '"Nunito", "Fredoka", sans-serif';
+const F = (w, px) => `${w} ${px}px ${FONT}`;
+const C = {
+  sky0: '#090b2c', sky1: '#18134f', sky2: '#3a1a6c',
+  ink: '#141846',
+  teal: ['#a4fbef', '#3ccbdc', '#1d64b0'],
+  yellow: '#ffd23f', pink: '#ff5d8f', red: '#ff3b5c', green: '#38e08e', cyan: '#56e8ff', violet: '#8b5cff',
+};
+function rr(x, X, Y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r);
+  x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath();
+}
+function glow(x, cx, cy, r, col, a) {
+  if (a <= 0 || r <= 0) return;
+  const g = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+  g.addColorStop(0, H.rgba(col, a)); g.addColorStop(0.35, H.rgba(col, a * 0.4)); g.addColorStop(1, H.rgba(col, 0));
+  x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.fill();
+}
+function spark(x, cx, cy, r, col, a) {
+  if (a <= 0 || r <= 0) return;
+  x.save(); x.globalAlpha *= a; x.fillStyle = col; x.beginPath();
+  x.moveTo(cx, cy - r); x.quadraticCurveTo(cx, cy, cx + r, cy); x.quadraticCurveTo(cx, cy, cx, cy + r);
+  x.quadraticCurveTo(cx, cy, cx - r, cy); x.quadraticCurveTo(cx, cy, cx, cy - r); x.fill(); x.restore();
+}
+function crescent(x, cx, cy, r, dx, dy, fill) {
+  x.save(); x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.clip();
+  x.beginPath(); x.rect(cx - r - 2, cy - r - 2, 2 * r + 4, 2 * r + 4); x.arc(cx + dx, cy + dy, r * 1.02, 0, TAU);
+  x.fillStyle = fill; x.fill('evenodd'); x.restore();
+}
+function ball(x, cx, cy, r, col, o = {}) {
+  if (r <= 0.3) return;
+  const la = o.la == null ? -2.25 : o.la, lx = Math.cos(la), ly = Math.sin(la);
+  const g = x.createLinearGradient(cx + lx * r, cy + ly * r, cx - lx * r, cy - ly * r);
+  g.addColorStop(0, col[0]); g.addColorStop(0.45, col[1]); g.addColorStop(1, H.rgba(H.mix(col[1], col[2], 0.6)));
+  x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.fill();
+  if (o.inner) { x.save(); x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.clip(); o.inner(); x.restore(); }
+  const sh = o.sh == null ? 0.3 : o.sh;
+  crescent(x, cx, cy, r, lx * r * sh, ly * r * sh, H.rgba(col[2], o.sha == null ? 0.5 : o.sha));
+  crescent(x, cx, cy, r, lx * r * sh * 2.2, ly * r * sh * 2.2, H.rgba(col[2], (o.sha == null ? 0.5 : o.sha) * 0.45));
+  crescent(x, cx, cy, r, -lx * r * 0.075, -ly * r * 0.075, H.rgba(o.rim || '#ffffff', o.rima == null ? 0.42 : o.rima));
+}
+const bez = (P, u) => { const v = 1 - u; return [v * v * v * P[0][0] + 3 * v * v * u * P[1][0] + 3 * v * u * u * P[2][0] + u * u * u * P[3][0], v * v * v * P[0][1] + 3 * v * v * u * P[1][1] + 3 * v * u * u * P[2][1] + u * u * u * P[3][1]]; };
+function arrow(x, P, prog, col, lw, o = {}) {
+  if (prog <= 0) return;
+  const n = 48, a = o.a == null ? 1 : o.a;
+  x.save(); x.globalAlpha *= a; x.strokeStyle = col; x.fillStyle = col; x.lineWidth = lw; x.lineCap = 'round'; x.lineJoin = 'round';
+  if (o.dots) x.setLineDash([0.01, lw * 1.9]);
+  x.beginPath(); const p0 = bez(P, o.from || 0); x.moveTo(p0[0], p0[1]);
+  for (let i = 1; i <= n; i++) { const u = (o.from || 0) + ((prog - (o.from || 0)) * i) / n; const p = bez(P, u); x.lineTo(p[0], p[1]); }
+  x.stroke(); x.setLineDash([]);
+  if (o.head !== false && prog > 0.08) {
+    const e = bez(P, prog), e0 = bez(P, prog - 0.02), ang = Math.atan2(e[1] - e0[1], e[0] - e0[0]), hs = lw * 1.5 * cl(prog * 5);
+    x.translate(e[0], e[1]); x.rotate(ang); x.beginPath(); x.moveTo(hs * 1.1, 0); x.lineTo(-hs * 0.8, hs); x.lineTo(-hs * 0.8, -hs); x.closePath();
+    x.lineWidth = lw * 0.7; x.fill(); x.stroke();
+  }
+  x.restore();
+}
+function text(x, s, cx, cy, px, col, o = {}) {
+  x.save(); x.font = F(o.w || 900, px); x.textAlign = o.align || 'center'; x.textBaseline = 'middle';
+  x.globalAlpha *= o.a == null ? 1 : o.a;
+  x.fillStyle = o.shadow || 'rgba(10,8,46,0.55)'; x.fillText(s, cx + px * 0.03, cy + px * 0.07);
+  x.fillStyle = col; x.fillText(s, cx, cy); x.restore();
+}
+function pill(x, cx, cy, s, px, o = {}) {
+  const sc = o.s == null ? 1 : o.s, a = o.a == null ? 1 : o.a;
+  if (sc <= 0.01 || a <= 0.01) return;
+  x.save(); x.font = F(o.w || 900, px);
+  const tw = x.measureText(s).width, w = tw + px * 1.15, h = px * 1.6;
+  x.translate(cx, cy); x.scale(sc, sc); x.globalAlpha *= a;
+  x.fillStyle = 'rgba(10,8,46,0.4)'; rr(x, -w / 2, -h / 2 + px * 0.2, w, h, h / 2); x.fill();
+  x.fillStyle = o.bg || '#ffffff';
+  if (o.ptr) { x.beginPath(); x.moveTo(-px * 0.35, h / 2 - 2); x.lineTo(0, h / 2 + px * 0.45); x.lineTo(px * 0.35, h / 2 - 2); x.fill(); }
+  rr(x, -w / 2, -h / 2, w, h, h / 2); x.fill();
+  x.fillStyle = 'rgba(255,255,255,0.35)'; rr(x, -w / 2 + h * 0.25, -h / 2 + h * 0.12, w - h * 0.5, h * 0.16, h * 0.08); x.fill();
+  x.fillStyle = o.fg || C.ink; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(s, 0, px * 0.06);
+  x.restore();
+  return w;
+}
+let STARS = null;
+function stars() {
+  if (STARS) return STARS;
+  const r = H.rng(77), a = [], sp = [];
+  for (let i = 0; i < 620; i++) a.push({ x: r.range(0, 1680), y: r.range(0, 1120), d: r.pick([0.15, 0.3, 0.3, 0.55, 1]), s: r.range(0.6, 2.0), ph: r.range(0, TAU), sp: r.range(0.8, 2.6), c: r.pick(['#ffffff', '#cfe4ff', '#ffe9c7', '#dccbff']) });
+  for (let i = 0; i < 16; i++) sp.push({ x: r.range(0, 1680), y: r.range(0, 1120), d: r.range(0.3, 0.9), s: r.range(6, 13), ph: r.range(0, TAU) });
+  STARS = { a, sp }; return STARS;
+}
+function sky(x, W, H_, t, cam = {}) {
+  const px = cam.x || 0, py = cam.y || 0, lz = Math.log(cam.z || 1);
+  const g = x.createLinearGradient(0, 0, W * 0.3, H_);
+  g.addColorStop(0, C.sky0); g.addColorStop(0.5, C.sky1); g.addColorStop(1, C.sky2);
+  x.fillStyle = g; x.fillRect(0, 0, W, H_);
+  glow(x, W * 0.86, H_ * 0.12, 700, '#7b34c6', 0.34);
+  glow(x, W * 0.05, H_ * 1.0, 620, '#2448b4', 0.4);
+  glow(x, W * 0.45, H_ * 0.6, 520, '#4a2a9c', 0.16);
+  const S = stars();
+  const place = (s) => {
+    const k = Math.exp(lz * s.d * 0.6);
+    let sx = (((s.x - px * s.d) % 1680) + 1680) % 1680 - 200, sy = (((s.y - py * s.d) % 1120) + 1120) % 1120 - 200;
+    return [(sx - 640) * k + 640, (sy - 360) * k + 360];
+  };
+  for (const s of S.a) {
+    const [sx, sy] = place(s);
+    if (sx < -4 || sx > W + 4 || sy < -4 || sy > H_ + 4) continue;
+    x.globalAlpha = (0.55 + 0.45 * Math.sin(t * s.sp + s.ph)) * (0.45 + s.d * 0.55);
+    x.fillStyle = s.c; x.beginPath(); x.arc(sx, sy, s.s * (0.7 + 0.35 * s.d), 0, TAU); x.fill();
+  }
+  x.globalAlpha = 1;
+  for (const s of S.sp) {
+    const [sx, sy] = place(s); const tw = 0.6 + 0.4 * Math.sin(t * 1.7 + s.ph);
+    glow(x, sx, sy, s.s * 2.2, '#bfa8ff', 0.25 * tw);
+    spark(x, sx, sy, s.s * tw, '#ffffff', 0.9);
+  }
+}
+const PL = {
+  coral: { c: ['#ffd29a', '#ff7a4a', '#7a1f4f'], glow: '#ff8a50', tilt: 0.1, atmo: [255, 226, 190],
+    bands: [[-0.7, -0.5, '#ffe2b8', 0.5], [-0.32, -0.12, '#e8553a', 0.6], [0.05, 0.22, '#ffb27a', 0.5], [0.4, 0.62, '#c43c46', 0.55]] },
+  moon: { c: ['#e8e6ff', '#a7a2d8', '#4a3f8c'], craters: true },
+};
+function bands(x, r, B, tilt) {
+  x.save(); x.rotate(tilt || 0);
+  for (const [v0, v1, col, a] of B) {
+    x.beginPath();
+    for (let i = 0; i <= 20; i++) { const u = (i / 20) * 2 - 1; x.lineTo(u * r * 1.1, (v0 + 0.13 * (1 - u * u)) * r); }
+    for (let i = 20; i >= 0; i--) { const u = (i / 20) * 2 - 1; x.lineTo(u * r * 1.1, (v1 + 0.13 * (1 - u * u)) * r); }
+    x.fillStyle = H.rgba(col, a == null ? 1 : a); x.fill();
+  }
+  x.restore();
+}
+function atmosphere(x, cx, cy, r, rgb, atA) {
+  x.save(); x.lineCap = 'round'; const ga0 = x.globalAlpha;
+  const la = -2.25, ag = x.createLinearGradient(cx + Math.cos(la) * r, cy + Math.sin(la) * r, cx - Math.cos(la) * r, cy - Math.sin(la) * r);
+  ag.addColorStop(0, H.rgba(rgb, 1)); ag.addColorStop(0.55, H.rgba(rgb, 0.5)); ag.addColorStop(1, H.rgba(rgb, 0.08));
+  x.strokeStyle = ag;
+  for (const [lw, a] of [[r * 0.05, 0.08], [r * 0.028, 0.16], [r * 0.014, 0.3], [Math.max(2, r * 0.006), 0.6]]) { x.globalAlpha = ga0 * a * atA; x.lineWidth = lw; x.beginPath(); x.arc(cx, cy, r + lw * 0.15, 0, TAU); x.stroke(); }
+  x.restore();
+}
+function planet(x, cx, cy, r, pal, o = {}) {
+  if (r <= 0.5) return;
+  if (pal.glow) glow(x, cx, cy, r * 1.7, pal.glow, o.glowA == null ? 0.32 : o.glowA);
+  ball(x, cx, cy, r, pal.c, {
+    sh: 0.34, sha: 0.55, rima: 0.35,
+    inner: () => {
+      x.save(); x.translate(cx, cy);
+      if (pal.bands) bands(x, r, pal.bands, pal.tilt);
+      if (pal.craters) { const q = H.rng(5); for (let i = 0; i < 5; i++) { const a = q.range(0, TAU), d = q.range(0.1, 0.65) * r, cr = q.range(0.1, 0.2) * r, qx = Math.cos(a) * d, qy = Math.sin(a) * d; x.fillStyle = 'rgba(80,66,150,0.38)'; x.beginPath(); x.arc(qx, qy, cr, 0, TAU); x.fill(); crescent(x, qx, qy, cr, -cr * 0.3, -cr * 0.3, 'rgba(255,255,255,0.3)'); } }
+      x.restore();
+    },
+  });
+  if (pal.atmo) atmosphere(x, cx, cy, r, pal.atmo, o.atmo == null ? 0.7 : o.atmo);
+}
+// print finish: fine animated grain + soft static mottling (overlay), kills gradient banding
+let GRAIN = null;
+function grainTex() {
+  if (GRAIN) return GRAIN;
+  const S = 256, tile = H.layer(S, S), tc = tile.getContext('2d'), img = tc.createImageData(S, S), d = img.data, r = H.rng(4242);
+  for (let i = 0; i < d.length; i += 4) { const v = 128 + (r() + r() + r() - 1.5) * 92; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
+  tc.putImageData(img, 0, 0);
+  const MW = 320, MH = 180, mot = H.layer(MW, MH), mc = mot.getContext('2d'), mi = mc.createImageData(MW, MH), md = mi.data, nz = H.makeNoise(88);
+  for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) { const v = 128 + nz.fbm2(x * 0.035, y * 0.035, 4) * 70 + nz.n2(x * 0.22, y * 0.22) * 14, k = (y * MW + x) * 4; md[k] = md[k + 1] = md[k + 2] = v; md[k + 3] = 255; }
+  mc.putImageData(mi, 0, 0);
+  GRAIN = { tile, mot };
+  return GRAIN;
+}
+function finish(x, W, H_, t) {
+  const G = grainTex(), f = Math.floor(t * 24);
+  x.save(); x.globalCompositeOperation = 'overlay';
+  x.globalAlpha = 0.12; x.imageSmoothingEnabled = true; x.drawImage(G.mot, 0, 0, W, H_);
+  const pat = x.createPattern(G.tile, 'repeat'); pat.setTransform(new DOMMatrix().translateSelf((f * 73) % 256, (f * 151) % 256));
+  x.globalAlpha = 0.09; x.fillStyle = pat; x.fillRect(0, 0, W, H_);
+  x.restore();
+}
+function eye(x, ex, ey, er, o) {
+  const look = o.look || [0, 0];
+  if ((o.happy || 0) > 0.5) {
+    x.save(); x.strokeStyle = '#ffffff'; x.lineWidth = er * 0.42; x.lineCap = 'round';
+    x.beginPath(); x.arc(ex, ey + er * 0.35, er * 0.62, Math.PI * 1.15, Math.PI * 1.85); x.stroke(); x.restore(); return;
+  }
+  const bl = 1 - 0.92 * (o.blink || 0);
+  x.save(); x.translate(ex, ey); x.scale(1, bl);
+  x.fillStyle = '#ffffff'; x.beginPath(); x.arc(0, 0, er, 0, TAU); x.fill();
+  const pr = er * (o.worry ? 0.5 : 0.56);
+  const px = look[0] * er * 0.36, py = look[1] * er * 0.36;
+  x.fillStyle = '#141638'; x.beginPath(); x.arc(px, py, pr, 0, TAU); x.fill();
+  x.fillStyle = '#ffffff'; x.beginPath(); x.arc(px - pr * 0.35, py - pr * 0.4, pr * 0.32, 0, TAU); x.fill();
+  x.beginPath(); x.arc(px + pr * 0.35, py + pr * 0.35, pr * 0.13, 0, TAU); x.fill();
+  x.restore();
+}
+function badge(x, cx, cy, r, ok, s) {
+  if (s <= 0.01) return;
+  x.save(); x.translate(cx, cy); x.scale(s, s);
+  glow(x, 0, 0, r * 2.4, ok ? C.green : C.red, 0.45);
+  ball(x, 0, 0, r, ok ? ['#9fffc8', C.green, '#178a5a'] : ['#ff9aa8', C.red, '#9c1638'], { sha: 0.4 });
+  x.strokeStyle = '#ffffff'; x.lineWidth = r * 0.26; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath();
+  if (ok) { x.moveTo(-r * 0.42, 0); x.lineTo(-r * 0.1, r * 0.32); x.lineTo(r * 0.45, -r * 0.3); }
+  else { x.moveTo(-r * 0.34, -r * 0.34); x.lineTo(r * 0.34, r * 0.34); x.moveTo(r * 0.34, -r * 0.34); x.lineTo(-r * 0.34, r * 0.34); }
+  x.stroke(); x.restore();
+}
+function flare(x, cx, cy, k, t) {
+  if (k <= 0) return;
+  glow(x, cx, cy, 420 * (0.6 + 0.4 * k), '#ffcf5a', 0.55 * k);
+  glow(x, cx, cy, 160, '#fff6d0', 0.6 * k);
+  x.save(); x.translate(cx, cy); x.rotate(t * 0.25); x.globalAlpha *= 0.32 * k; x.fillStyle = '#ffe28a';
+  for (let i = 0; i < 12; i++) { x.rotate(TAU / 12); x.beginPath(); x.moveTo(0, -12); x.lineTo(330 + 60 * (i % 2), 0); x.lineTo(0, 12); x.fill(); }
+  x.restore();
+}
+function burst(x, cx, cy, age, seed, spread) {
+  if (age < 0 || age > 1.4) return;
+  const r = H.rng(seed);
+  for (let i = 0; i < 18; i++) {
+    const a = r.range(0, TAU), d = (spread || 300) * r.range(0.45, 1) * eo(cl(age / 0.9)), sz = r.range(7, 16) * (1 - cl(age / 1.4));
+    spark(x, cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.8, sz, r.pick(['#ffffff', '#ffe28a', '#9ff7ff', '#ffb0d0']), 1);
+  }
+}
+const blinkAt = (t, ph) => { const u = (t + ph) % 3.3; return u < 0.14 ? Math.sin((u / 0.14) * Math.PI) : 0; };
+function header(x, a) { pill(x, 232, 44, 'How did Earth get water?', 28, { a, bg: 'rgba(255,255,255,0.95)' }); }
+// ===== Subject drawing: Earth, asteroids, droplets, clouds (built from the reference's ball/crescent/glow recipes) =====
+const mixHex = (a, b, t) => '#' + H.mix(a, b, cl(t)).map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+const EARTH_BLUE = ['#a4f2ff', '#3a9be0', '#1d2f86'], EARTH_HOT = ['#ffe2a8', '#ff7a3a', '#5a1840'];
+const W_ = 1280, H_ = 720;
+
+function drop(x, cx, cy, r, o = {}) {
+  if (r <= 0.5) return;
+  if (o.glow !== false) glow(x, cx, cy, r * 2.6, '#7fe6ff', 0.35);
+  const g = x.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+  g.addColorStop(0, '#d4fbff'); g.addColorStop(0.5, '#4fb8ff'); g.addColorStop(1, '#2a62d8');
+  x.fillStyle = g; x.beginPath(); x.moveTo(cx, cy - r * 1.7);
+  x.bezierCurveTo(cx + r * 0.3, cy - r * 0.9, cx + r, cy - r * 0.4, cx + r, cy + r * 0.15);
+  x.arc(cx, cy + r * 0.15, r, 0, Math.PI, false);
+  x.bezierCurveTo(cx - r, cy - r * 0.4, cx - r * 0.3, cy - r * 0.9, cx, cy - r * 1.7); x.fill();
+  x.fillStyle = 'rgba(255,255,255,0.7)'; x.beginPath(); x.ellipse(cx - r * 0.38, cy + r * 0.05, r * 0.14, r * 0.3, 0.25, 0, TAU); x.fill();
+}
+function earth(x, cx, cy, r, o = {}) {
+  const hot = o.hot || 0;
+  const pal = [0, 1, 2].map((i) => mixHex(EARTH_BLUE[i], EARTH_HOT[i], hot));
+  glow(x, cx, cy, r * 1.7, hot > 0.5 ? '#ff7a3a' : '#4fc9ff', 0.3);
+  ball(x, cx, cy, r, pal, { sh: 0.34, sha: 0.55, rima: 0.35, inner: () => {
+    x.save(); x.translate(cx, cy);
+    const q = H.rng(21);
+    for (const [fx, fy, fr] of [[-0.35, -0.3, 0.38], [0.4, -0.05, 0.3], [-0.1, 0.45, 0.3], [0.05, -0.62, 0.2]]) {
+      x.beginPath();
+      for (let i = 0; i <= 14; i++) { const a = (i / 14) * TAU, rad = fr * r * (0.78 + 0.3 * q()); const px = fx * r + Math.cos(a) * rad * 1.15, py = fy * r + Math.sin(a) * rad * 0.8; i ? x.lineTo(px, py) : x.moveTo(px, py); }
+      x.closePath(); x.globalAlpha = 0.92; x.fillStyle = mixHex('#7ae89a', '#3b2540', hot); x.fill(); x.globalAlpha = 1;
+    }
+    if (hot > 0.05) {
+      x.strokeStyle = H.rgba('#ffd23f', cl(hot * 1.2)); x.lineWidth = Math.max(2, r * 0.028); x.lineCap = 'round'; x.lineJoin = 'round';
+      const q2 = H.rng(33);
+      for (let k = 0; k < 6; k++) { let px = q2.range(-0.8, 0.8) * r, py = q2.range(-0.8, 0.8) * r; x.beginPath(); x.moveTo(px, py); for (let s = 0; s < 4; s++) { px += q2.range(-0.3, 0.3) * r; py += q2.range(-0.25, 0.25) * r; x.lineTo(px, py); } x.stroke(); }
+    }
+    x.restore();
+  } });
+  if (hot < 0.6) atmosphere(x, cx, cy, r, [190, 245, 255], 0.9 * (1 - hot));
+  if (o.face) {
+    const f = o.face, fy = cy + r * (o.faceDy == null ? -0.05 : o.faceDy), er = r * 0.17;
+    for (const sd of [-1, 1]) eye(x, cx + sd * r * 0.3, fy, er, { look: f.look, blink: f.blink, happy: f.happy, worry: f.worry });
+    x.save(); x.strokeStyle = '#16205e'; x.lineWidth = Math.max(3, r * 0.05); x.lineCap = 'round'; x.beginPath();
+    const my = fy + r * 0.3;
+    if (f.worry) { x.moveTo(cx - r * 0.12, my); x.quadraticCurveTo(cx - r * 0.06, my - r * 0.06, cx, my); x.quadraticCurveTo(cx + r * 0.06, my + r * 0.06, cx + r * 0.12, my); }
+    else if (f.happy) x.arc(cx, my - r * 0.08, r * 0.14, 0.15 * Math.PI, 0.85 * Math.PI);
+    else x.arc(cx, my - r * 0.06, r * 0.09, 0.2 * Math.PI, 0.8 * Math.PI);
+    x.stroke();
+    if (f.worry) { for (const sd of [-1, 1]) { x.beginPath(); x.moveTo(cx + sd * r * 0.46, fy - er * 1.15); x.lineTo(cx + sd * r * 0.16, fy - er * 1.6); x.stroke(); } drop(x, cx + r * 0.8, fy + er * 0.2, r * 0.07, { glow: false }); }
+    x.restore();
+  }
+}
+function rock(x, cx, cy, r, o = {}) {
+  if (r < 1) return;
+  if (o.trail) { const [dx, dy] = o.trail, L = o.L || 180; for (let i = 0; i <= 10; i++) glow(x, cx + dx * (i / 10) * L, cy + dy * (i / 10) * L, r * (1.25 - 0.09 * i), i < 4 ? '#ffd27a' : '#ff8a50', 0.42 * (1 - i / 11)); }
+  x.save(); x.translate(cx, cy); x.rotate(o.rot || 0);
+  ball(x, 0, 0, r, ['#ddd6ff', '#8e86c9', '#463d86'], { sha: 0.5, inner: () => {
+    x.fillStyle = 'rgba(70,61,134,0.45)';
+    for (const [fx, fy, fr] of [[0.45, -0.4, 0.22], [-0.5, 0.45, 0.2], [0.5, 0.5, 0.14]]) { x.beginPath(); x.arc(fx * r, fy * r, fr * r, 0, TAU); x.fill(); crescent(x, fx * r, fy * r, fr * r, -fr * r * 0.3, -fr * r * 0.3, 'rgba(255,255,255,0.28)'); }
+  } });
+  for (const sd of [-1, 1]) eye(x, sd * r * 0.34, -r * 0.1, r * 0.24, { look: o.look, blink: o.blink, happy: o.happy });
+  x.strokeStyle = '#2a2058'; x.lineWidth = Math.max(2, r * 0.06); x.lineCap = 'round'; x.beginPath(); x.arc(0, r * 0.2, r * 0.16, 0.15 * Math.PI, 0.85 * Math.PI); x.stroke();
+  x.restore();
+  if (o.drop) drop(x, cx + r * 0.62, cy - r * 1.02, r * 0.36);
+}
+function dropChar(x, cx, cy, r, o = {}) {
+  drop(x, cx, cy, r);
+  for (const sd of [-1, 1]) eye(x, cx + sd * r * 0.3, cy + r * 0.12, r * 0.22, { look: o.look, blink: o.blink, happy: o.happy });
+}
+function cloud(x, cx, cy, s) {
+  const cs = [[-1, 0, 0.7], [-0.35, -0.4, 0.85], [0.4, -0.3, 0.75], [1, 0.05, 0.6], [0, 0.15, 0.9]];
+  glow(x, cx, cy, s * 2.2, '#cfc8ff', 0.18);
+  for (const [fx, fy, fr] of cs) { x.fillStyle = '#a9a3e8'; x.beginPath(); x.arc(cx + fx * s, cy + fy * s + s * 0.16, fr * s, 0, TAU); x.fill(); }
+  for (const [fx, fy, fr] of cs) { x.fillStyle = '#f1f0ff'; x.beginPath(); x.arc(cx + fx * s, cy + fy * s, fr * s, 0, TAU); x.fill(); }
+}
+function sparkles(x, t, seed, n, x0, x1, y0, y1) {
+  const q = H.rng(seed);
+  for (let i = 0; i < n; i++) spark(x, q.range(x0, x1), q.range(y0, y1), q.range(8, 15) * (0.55 + 0.45 * Math.sin(t * 3 + i)), '#ffffff', 0.9);
+}
+const hdr = (x) => header(x, 1);
+
+// sound.js: a small synthesized sound kit for the style explainers. Plain Web Audio, no audio files.
+// Voiceover mode: SOUND.kit(ctx, { voiceover: true }) drops beds and music, plays anything marked minor
+// (play(..., { minor: true }), tone/noise { minor: true }, or scheduled inside k.withMinor(() => ...)) at about 60%
+// volume instead of full, and sits all effects a little lower, so the narration stays on top while the piece still
+// sounds alive. In the full mix, minor sounds play at full volume. Scores can read k.vo to branch further.
+// A style adds   explainerSound(k) { k.bed('room', 0, D); k.play('pop', 1.25); ... }   and the same
+// call schedules into a live AudioContext (the player) or an OfflineAudioContext (the video render).
+// Times are seconds on the explainer's own clock. Randomness is seeded, so every render is identical.
+(function () {
+  'use strict';
+  const SOUND = (window.SOUND = {});
+  const TINY = 1e-4;
+
+  // seeded random in [0,1), keyed by any string
+  function rand(key) {
+    let h = 2166136261;
+    for (let i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 16777619); }
+    let a = h >>> 0 || 1;
+    return () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+
+  // note names to Hz: 'A4' = 440, 'C#5', 'Eb3'
+  const STEP = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  function hz(n) {
+    if (typeof n === 'number') return n;
+    const m = /^([A-G])([#b]?)(-?\d)$/.exec(n);
+    const semis = STEP[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0) + (Number(m[3]) - 4) * 12 - 9;
+    return 440 * Math.pow(2, semis / 12);
+  }
+  SOUND.hz = hz;
+
+  SOUND.kit = function (ctx, opts) {
+    const o = opts || {};
+    const VO = !!o.voiceover;
+    const MINOR = 0.6; // voiceover-mode volume for minor sounds
+    let inMinor = false;
+    const gainOf = (p, d) => (p.gain == null ? d : p.gain) * (VO && (p.minor || inMinor) ? MINOR : 1);
+    const T0 = (o.start || 0) - 0; // explainer time that maps to ctx time `base`
+    const base = ctx.currentTime + (o.delay || 0);
+    // Start times snap to the sample grid (+ a quarter sample): in Chrome a source started a hair off the grid can
+    // spike to about twice its set level.
+    const SR = ctx.sampleRate;
+    const at = (t) => (Math.round((base + (t - T0)) * SR) + 0.25) / SR;
+
+    // ---- buses: sfx, amb, music -> compressor -> master; one shared reverb send
+    const master = ctx.createGain(); master.gain.value = o.master == null ? 0.9 : o.master;
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.knee.value = 8; comp.ratio.value = 3; comp.attack.value = 0.004; comp.release.value = 0.18;
+    comp.connect(master); master.connect(o.dest || ctx.destination);
+    const bus = {};
+    for (const [name, g] of Object.entries({ sfx: VO ? 0.7 : 0.85, amb: 0.5, music: 0.45 })) { bus[name] = ctx.createGain(); bus[name].gain.value = g; bus[name].connect(comp); }
+
+    // generated room reverb: decaying stereo noise, darker toward the tail
+    const verb = ctx.createConvolver();
+    {
+      const secs = 1.6, n = Math.floor(secs * ctx.sampleRate), ir = ctx.createBuffer(2, n, ctx.sampleRate);
+      for (let c = 0; c < 2; c++) {
+        const r = rand('verb' + c), d = ir.getChannelData(c); let lp = 0;
+        for (let i = 0; i < n; i++) { const u = i / n; lp += (0.6 - 0.45 * u) * ((r() * 2 - 1) - lp); d[i] = lp * Math.pow(1 - u, 3); }
+      }
+      verb.buffer = ir;
+    }
+    const verbIn = ctx.createGain(); verbIn.gain.value = 0.9; verbIn.connect(verb); verb.connect(comp);
+
+    // seeded noise buffers: white, pink-ish and brown
+    const noiseBuf = {};
+    {
+      const n = Math.floor(2.5 * ctx.sampleRate);
+      for (const kind of ['white', 'pink', 'brown']) {
+        const b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0), r = rand('noise-' + kind);
+        let p0 = 0, p1 = 0, p2 = 0, br = 0;
+        for (let i = 0; i < n; i++) {
+          const w = r() * 2 - 1;
+          if (kind === 'white') d[i] = w;
+          else if (kind === 'pink') { p0 = 0.997 * p0 + 0.029 * w; p1 = 0.985 * p1 + 0.032 * w; p2 = 0.95 * p2 + 0.048 * w; d[i] = (p0 + p1 + p2 + w * 0.05) * 2.2; }
+          else { br = (br + 0.02 * w) / 1.02; d[i] = br * 3.2; }
+        }
+        noiseBuf[kind] = b;
+      }
+    }
+
+    // ---- automation helpers
+    // a value or [[dt, value], ...] from the voice start; ramps are exponential (frequencies)
+    function sweep(param, v, t) {
+      if (!Array.isArray(v)) { param.setValueAtTime(v, t); return; }
+      param.setValueAtTime(v[0][1], t + v[0][0]);
+      for (let i = 1; i < v.length; i++) param.exponentialRampToValueAtTime(Math.max(v[i][1], 1), t + v[i][0]);
+    }
+    // amplitude: linear attack to `gain`, optional hold, exponential release to silence by `dur`
+    function shape(param, t, gain, dur, a, hold) {
+      a = Math.min(a == null ? 0.004 : a, dur * 0.9);
+      hold = Math.min(hold || 0, dur - a);
+      param.setValueAtTime(0, t);
+      param.linearRampToValueAtTime(gain, t + a);
+      if (hold > 0) param.setValueAtTime(gain, t + a + hold);
+      param.exponentialRampToValueAtTime(TINY, t + dur);
+      param.setValueAtTime(0, t + dur + 0.001);
+    }
+    function out(node, p) {
+      const pan = ctx.createStereoPanner(); pan.pan.value = Math.max(-1, Math.min(1, p.pan || 0));
+      node.connect(pan); pan.connect(bus[p.bus || 'sfx']);
+      if (p.verb) { const s = ctx.createGain(); s.gain.value = p.verb; pan.connect(s); s.connect(verbIn); }
+    }
+    function filterNode(p, t) {
+      if (!p.filter) return null;
+      const f = ctx.createBiquadFilter(); f.type = p.filter; f.Q.value = p.q == null ? 1 : p.q;
+      sweep(f.frequency, p.f == null ? 1000 : p.f, t);
+      return f;
+    }
+
+    // ---- primitives
+    // tone(t, { f, type, dur, gain, a, hold, pan, verb, bus, filter, f2 (filter freq), q, detune })
+    function tone(time, p) {
+      const t = at(time), dur = p.dur || 0.2;
+      if (t + dur < ctx.currentTime || (time < T0 - 0.001 && dur < 1.5)) return;
+      const osc = ctx.createOscillator(); osc.type = p.type || 'sine';
+      sweep(osc.frequency, Array.isArray(p.f) ? p.f.map(([d, v]) => [d, hz(v)]) : hz(p.f || 440), t);
+      if (p.detune) osc.detune.value = p.detune;
+      const g = ctx.createGain(); shape(g.gain, t, gainOf(p, 0.3), dur, p.a, p.hold);
+      let node = osc;
+      if (p.filter) { const f = ctx.createBiquadFilter(); f.type = p.filter; f.Q.value = p.q == null ? 0.8 : p.q; sweep(f.frequency, p.f2 || 2000, t); osc.connect(f); node = f; }
+      node.connect(g); out(g, p);
+      osc.start(t); osc.stop(t + dur + 0.02);
+    }
+    // noise(t, { dur, color, filter, f, q, gain, a, hold, pan, verb, bus, rate })
+    function noise(time, p) {
+      const t = at(time), dur = p.dur || 0.2;
+      if (t + dur < ctx.currentTime || (time < T0 - 0.001 && dur < 1.5)) return;
+      const src = ctx.createBufferSource(); src.buffer = noiseBuf[p.color || 'white']; src.loop = true;
+      if (p.rate) src.playbackRate.value = p.rate;
+      const g = ctx.createGain(); shape(g.gain, t, gainOf(p, 0.3), dur, p.a, p.hold);
+      const f = filterNode(p, t);
+      if (f) { src.connect(f); f.connect(g); } else src.connect(g);
+      out(g, p);
+      const off = rand('off' + time + (p.f || ''))() * 2;
+      src.start(t, off); src.stop(t + dur + 0.02);
+    }
+
+    // ---- named sounds. play(name, t, opts): opts.gain scales the whole sound, opts.pan places it.
+    const S = {
+      // UI / motion graphics
+      pop: (t, o) => { tone(t, { f: [[0, o.f || 620], [0.07, (o.f || 620) * 0.45]], dur: 0.1, gain: 0.32 * o.g, pan: o.pan }); noise(t, { dur: 0.012, filter: 'highpass', f: 3000, gain: 0.12 * o.g, pan: o.pan }); },
+      tick: (t, o) => noise(t, { dur: 0.018, filter: 'bandpass', f: o.f || 4200, q: 2.5, gain: 0.3 * o.g, pan: o.pan }),
+      click: (t, o) => { tone(t, { f: o.f || 1900, type: 'square', dur: 0.02, gain: 0.08 * o.g, filter: 'lowpass', f2: 3000, pan: o.pan }); noise(t, { dur: 0.01, filter: 'highpass', f: 2500, gain: 0.15 * o.g, pan: o.pan }); },
+      tock: (t, o) => { tone(t, { f: o.f || 820, dur: 0.07, gain: 0.25 * o.g, pan: o.pan }); noise(t, { dur: 0.05, filter: 'bandpass', f: o.f || 820, q: 9, gain: 0.35 * o.g, pan: o.pan }); },
+      blip: (t, o) => tone(t, { f: o.f || 'E6', type: o.type || 'square', dur: o.dur || 0.07, gain: 0.07 * o.g, a: 0.002, hold: (o.dur || 0.07) * 0.6, pan: o.pan }),
+      whoosh: (t, o) => { const d = o.dur || 0.45; noise(t, { dur: d, color: 'pink', filter: 'bandpass', f: [[0, 350], [d * 0.55, o.top || 2600], [d, 700]], q: 0.9, gain: 0.32 * o.g, a: d * 0.5, pan: o.pan, verb: 0.15 }); },
+      swish: (t, o) => { const d = o.dur || 0.18; noise(t, { dur: d, filter: 'highpass', f: [[0, 1800], [d, 5200]], q: 0.7, gain: 0.22 * o.g, a: d * 0.35, pan: o.pan }); },
+      riser: (t, o) => { const d = o.dur || 0.8; noise(t, { dur: d, color: 'pink', filter: 'bandpass', f: [[0, 300], [d, 4000]], q: 1.2, gain: 0.25 * o.g, a: d * 0.95, pan: o.pan, verb: 0.2 }); tone(t, { f: [[0, 180], [d, 720]], type: 'triangle', dur: d, gain: 0.06 * o.g, a: d * 0.9 }); },
+      thud: (t, o) => { tone(t, { f: [[0, o.f || 130], [0.16, 42]], dur: 0.26, gain: 0.55 * o.g, pan: o.pan }); noise(t, { dur: 0.09, color: 'brown', filter: 'lowpass', f: 500, gain: 0.35 * o.g, pan: o.pan }); },
+      impact: (t, o) => { S.thud(t, o); noise(t, { dur: 0.7, color: 'pink', filter: 'lowpass', f: [[0, 2400], [0.6, 300]], gain: 0.3 * o.g, verb: 0.35, pan: o.pan }); },
+      stamp: (t, o) => { S.thud(t, { ...o, f: 160 }); noise(t, { dur: 0.05, filter: 'bandpass', f: 1300, q: 1.2, gain: 0.4 * o.g, pan: o.pan }); noise(t + 0.004, { dur: 0.012, filter: 'highpass', f: 3500, gain: 0.25 * o.g, pan: o.pan }); },
+      ding: (t, o) => { const f = hz(o.f || 'E6'); tone(t, { f, dur: 1.3, gain: 0.2 * o.g, verb: 0.3, pan: o.pan }); tone(t, { f: f * 2.76, dur: 0.5, gain: 0.05 * o.g, verb: 0.3, pan: o.pan }); },
+      success: (t, o) => { S.ding(t, { ...o, f: o.f || 'C6' }); S.ding(t + 0.09, { ...o, f: hz(o.f || 'C6') * 1.5, g: o.g * 0.9 }); },
+      error: (t, o) => { tone(t, { f: o.f || 'A3', type: 'square', dur: 0.13, gain: 0.09 * o.g, hold: 0.08, filter: 'lowpass', f2: 1400, pan: o.pan }); tone(t + 0.15, { f: hz(o.f || 'A3') * 0.8, type: 'square', dur: 0.22, gain: 0.09 * o.g, hold: 0.14, filter: 'lowpass', f2: 1200, pan: o.pan }); },
+      buzz: (t, o) => { const d = o.dur || 0.3; tone(t, { f: o.f || 110, type: 'sawtooth', dur: d, gain: 0.12 * o.g, hold: d * 0.7, filter: 'lowpass', f2: 900, pan: o.pan }); tone(t, { f: (o.f || 110) * 1.01, type: 'sawtooth', dur: d, gain: 0.1 * o.g, hold: d * 0.7, filter: 'lowpass', f2: 900, pan: o.pan }); },
+      sparkle: (t, o) => { const r = rand('sparkle' + t), notes = ['C6', 'D6', 'E6', 'G6', 'A6', 'C7']; for (let i = 0; i < (o.n || 6); i++) { const ti = t + i * 0.04 + r() * 0.01, f = hz(notes[Math.floor(r() * notes.length)]), pan = r() * 1.2 - 0.6; tone(ti, { f, dur: 0.6, gain: 0.04 * o.g, a: 0.002, verb: 0.35, pan }); tone(ti, { f: f * 2.76, dur: 0.2, gain: 0.012 * o.g, a: 0.002, pan }); } },
+      glitch: (t, o) => { const r = rand('glitch' + t); for (let i = 0; i < 7; i++) tone(t + i * 0.022, { f: 200 + r() * 1800, type: 'square', dur: 0.02, gain: 0.07 * o.g, a: 0.001, hold: 0.015, pan: r() * 1.4 - 0.7 }); noise(t, { dur: 0.16, filter: 'bandpass', f: 2500, q: 0.6, gain: 0.12 * o.g }); },
+      shutter: (t, o) => { S.click(t, o); noise(t + 0.06, { dur: 0.04, filter: 'bandpass', f: 2200, q: 1, gain: 0.2 * o.g, pan: o.pan }); },
+      count: (t, o) => S.tick(t, { ...o, f: o.f || 5200, g: o.g * 0.7 }),
+
+      // hand-made media
+      // stroke: a pen/marker/chalk/pencil stroke over `dur` seconds. material sets the surface sound.
+      stroke: (t, o) => {
+        const d = o.dur || 0.4, m = o.material || 'marker', r = rand('stroke' + m + t);
+        const M = {
+          marker: { f: 2900, q: 2.2, g: 0.16, grain: 0.05 },
+          chalk: { f: 1700, q: 0.6, g: 0.22, grain: 0.028 },
+          pencil: { f: 4600, q: 0.8, g: 0.16, grain: 0.04, filter: 'highpass' },
+          pen: { f: 4200, q: 1.6, g: 0.08, grain: 0.06 },
+          brush: { f: 900, q: 0.5, g: 0.1, grain: 0.09, color: 'pink' },
+          sharpie: { f: 2400, q: 1.4, g: 0.2, grain: 0.045 },
+        }[m];
+        for (let x = 0; x < d; x += M.grain * (0.7 + r() * 0.6)) {
+          const gd = M.grain * (0.8 + r() * 0.9);
+          noise(t + x, { dur: gd, color: M.color, filter: M.filter || 'bandpass', f: M.f * (0.8 + r() * 0.4), q: M.q, gain: M.g * o.g * (0.6 + r() * 0.5), a: gd * 0.3, pan: (o.pan || 0) + (r() - 0.5) * 0.2 });
+        }
+      },
+      // paper: picking up / slapping down / turning a sheet
+      paper: (t, o) => { const d = o.dur || 0.35, r = rand('paper' + t); for (let x = 0; x < d; x += 0.025 + r() * 0.03) noise(t + x, { dur: 0.05, filter: 'bandpass', f: 1200 + r() * 2600, q: 0.9, gain: 0.12 * o.g * (1 - x / d * 0.5), pan: o.pan }); },
+      slap: (t, o) => { noise(t, { dur: 0.07, filter: 'highpass', f: 900, gain: 0.45 * o.g, a: 0.001, pan: o.pan }); tone(t, { f: [[0, 180], [0.06, 70]], dur: 0.1, gain: 0.25 * o.g, pan: o.pan }); },
+      tape: (t, o) => { noise(t, { dur: o.dur || 0.5, filter: 'bandpass', f: [[0, 900], [o.dur || 0.5, 2200]], q: 1.8, gain: 0.18 * o.g, a: 0.02, pan: o.pan }); },
+      press: (t, o) => { S.thud(t, { ...o, f: 95, g: o.g * 0.9 }); noise(t + 0.01, { dur: 0.25, color: 'brown', filter: 'lowpass', f: 700, gain: 0.25 * o.g, pan: o.pan }); },
+      roller: (t, o) => { const d = o.dur || 0.6; noise(t, { dur: d, color: 'brown', filter: 'bandpass', f: 380, q: 1.5, gain: 0.3 * o.g, a: 0.05, hold: d * 0.6, pan: o.pan }); for (let x = 0; x < d; x += 0.07) S.tock(t + x, { f: 300, g: o.g * 0.15, pan: o.pan }); },
+      erase: (t, o) => { const d = o.dur || 0.6, r = rand('erase' + t); for (let x = 0; x < d; x += 0.06 + r() * 0.04) noise(t + x, { dur: 0.08, color: 'pink', filter: 'bandpass', f: 700 + r() * 500, q: 0.8, gain: 0.22 * o.g, a: 0.03, pan: (r() - 0.5) * 0.5 }); },
+
+      // machines and screens
+      key: (t, o) => { const r = rand('key' + t); noise(t, { dur: 0.025, filter: 'bandpass', f: 2600 + r() * 1200, q: 2, gain: 0.25 * o.g, a: 0.001, pan: o.pan }); tone(t, { f: 160 + r() * 40, dur: 0.04, gain: 0.12 * o.g, pan: o.pan }); },
+      typing: (t, o) => { const r = rand('typing' + t), n = o.n || 8, rate = o.rate || 0.09; for (let i = 0; i < n; i++) S.key(t + i * rate * (0.75 + r() * 0.5), { g: o.g * (0.7 + r() * 0.4), pan: o.pan }); },
+      typebar: (t, o) => { S.key(t, o); noise(t + 0.008, { dur: 0.03, filter: 'bandpass', f: 1100, q: 4, gain: 0.35 * o.g, pan: o.pan }); },
+      bell: (t, o) => S.ding(t, { ...o, f: o.f || 'A6' }),
+      boot: (t, o) => { tone(t, { f: [[0, 80], [0.35, 1600]], type: 'sine', dur: 0.5, gain: 0.08 * o.g, a: 0.3 }); S.blip(t + 0.45, { ...o, f: 'C6', dur: 0.12 }); },
+      crtOn: (t, o) => { noise(t, { dur: 0.25, filter: 'highpass', f: 2000, gain: 0.2 * o.g, a: 0.001 }); tone(t, { f: 15700, dur: 1.5, gain: 0.02 * o.g, a: 0.1, hold: 1 }); S.thud(t, { ...o, f: 90, g: o.g * 0.5 }); },
+      neon: (t, o) => { const d = o.dur || 0.25, r = rand('neon' + t); for (let x = 0; x < d; x += 0.035 + r() * 0.04) tone(t + x, { f: 120, type: 'sawtooth', dur: 0.03, gain: 0.3 * o.g * (0.5 + r() * 0.5), filter: 'bandpass', f2: 1200, q: 1.2, pan: o.pan }); },
+      // chip (8-bit console) sounds: raw square/triangle, no filtering
+      coin: (t, o) => { tone(t, { f: 'B5', type: 'square', dur: 0.07, gain: 0.07 * o.g, a: 0.001, hold: 0.06 }); tone(t + 0.07, { f: 'E6', type: 'square', dur: 0.3, gain: 0.07 * o.g, a: 0.001, hold: 0.1 }); },
+      jump: (t, o) => tone(t, { f: [[0, 260], [0.16, 820]], type: 'square', dur: 0.18, gain: 0.07 * o.g, a: 0.001, hold: 0.12 }),
+      hurt: (t, o) => { tone(t, { f: [[0, 600], [0.25, 90]], type: 'square', dur: 0.28, gain: 0.08 * o.g, a: 0.001, hold: 0.2 }); noise(t, { dur: 0.2, filter: 'lowpass', f: 1800, gain: 0.15 * o.g, rate: 0.25 }); },
+      powerup: (t, o) => ['C5', 'E5', 'G5', 'C6', 'E6', 'G6', 'C7'].forEach((n, i) => tone(t + i * 0.045, { f: n, type: 'square', dur: 0.06, gain: 0.06 * o.g, a: 0.001, hold: 0.05 })),
+      select: (t, o) => { S.blip(t, { ...o, f: 'A5', dur: 0.04 }); S.blip(t + 0.05, { ...o, f: 'E6', dur: 0.05 }); },
+      text: (t, o) => { const n = o.n || 10, rate = o.rate || 0.05; for (let i = 0; i < n; i++) tone(t + i * rate, { f: i % 2 ? 'C6' : 'G5', type: 'square', dur: 0.025, gain: 0.04 * o.g, a: 0.001, hold: 0.015 }); },
+    };
+
+    function play(name, t, opts) {
+      const fn = S[name];
+      if (!fn) throw new Error('unknown sound: ' + name);
+      const o2 = Object.assign({}, opts); o2.g = o2.gain == null ? 1 : o2.gain;
+      if (opts && opts.minor) withMinor(() => fn(t, o2)); else fn(t, o2);
+    }
+
+    // everything scheduled inside fn counts as minor (quieter in voiceover mode)
+    function withMinor(fn) { const was = inMinor; inMinor = true; try { fn(); } finally { inMinor = was; } }
+
+    // ---- beds: continuous sound under a stretch of time. bed(name, t0, t1, opts)
+    function bed(name, t0, t1, p) {
+      if (VO) return;
+      p = p || {}; const g = p.gain == null ? 1 : p.gain, d = t1 - t0, fade = Math.min(0.4, d / 4);
+      const long = (q) => Object.assign({ dur: d, a: fade, hold: d - fade * 2, bus: 'amb' }, q);
+      if (name === 'room') noise(t0, long({ color: 'brown', filter: 'lowpass', f: 320, gain: 0.12 * g }));
+      else if (name === 'hiss') noise(t0, long({ color: 'pink', filter: 'highpass', f: 5000, gain: 0.02 * g }));
+      else if (name === 'hum') { tone(t0, long({ f: 60, gain: 0.05 * g })); tone(t0, long({ f: 120, gain: 0.025 * g })); tone(t0, long({ f: 180, type: 'triangle', gain: 0.012 * g })); }
+      else if (name === 'rain') { noise(t0, long({ color: 'pink', filter: 'bandpass', f: 2500, q: 0.4, gain: 0.08 * g })); const r = rand('rain'); for (let x = 0; x < d; x += 0.04 + r() * 0.08) noise(t0 + x, { dur: 0.01, filter: 'highpass', f: 4000, gain: 0.04 * g * r(), bus: 'amb', pan: r() * 1.6 - 0.8 }); }
+      else if (name === 'projector') { noise(t0, long({ color: 'pink', filter: 'highpass', f: 3000, gain: 0.03 * g })); for (let x = 0; x < d; x += 1 / 24) S.tock(t0 + x, { f: 700, g: 0.04 * g, pan: 0.3 }); }
+      else if (name === 'vinyl') { noise(t0, long({ color: 'pink', filter: 'bandpass', f: 1500, q: 0.5, gain: 0.025 * g })); const r = rand('vinyl'); for (let x = 0; x < d; x += 0.08 + r() * 0.4) noise(t0 + x, { dur: 0.006, filter: 'highpass', f: 2500, gain: 0.08 * g * r(), bus: 'amb' }); }
+      else throw new Error('unknown bed: ' + name);
+    }
+
+    // ---- music: optional light beds that sit under the effects. music(name, t0, t1, { bpm, chords, gain })
+    // chords: list of note arrays, one per bar, cycled. e.g. [['C4','E4','G4','B4'], ['A3','C4','E4','G4']]
+    function music(name, t0, t1, p) {
+      if (VO) return;
+      p = p || {}; const g = p.gain == null ? 1 : p.gain, bpm = p.bpm || 100, beat = 60 / bpm, bar = beat * 4;
+      const chords = p.chords || [['C4', 'E4', 'G4', 'B4'], ['A3', 'C4', 'E4', 'G4'], ['F3', 'A3', 'C4', 'E4'], ['G3', 'B3', 'D4', 'F4']];
+      let i = 0;
+      for (let t = t0; t < t1 - 0.05; t += bar, i++) {
+        const ch = chords[i % chords.length], len = Math.min(bar, t1 - t);
+        if (name === 'pad' || name === 'pulse') ch.forEach((n, k) => { tone(t, { f: n, type: 'triangle', dur: len + 0.3, gain: 0.035 * g, a: 0.25, hold: len - 0.3, bus: 'music', filter: 'lowpass', f2: 1400, pan: (k - 1.5) * 0.25, verb: 0.25 }); tone(t, { f: hz(n) * 1.004, type: 'sine', dur: len + 0.3, gain: 0.03 * g, a: 0.3, hold: len - 0.3, bus: 'music' }); });
+        if (name === 'pulse') for (let b = 0; b < 4 && t + b * beat < t1 - 0.05; b++) {
+          const tb = t + b * beat;
+          tone(tb, { f: [[0, 110], [0.1, 50]], dur: 0.18, gain: (b % 2 ? 0.16 : 0.26) * g, bus: 'music' });
+          noise(tb + beat / 2, { dur: 0.04, filter: 'highpass', f: 7000, gain: 0.05 * g, bus: 'music' });
+          tone(tb + beat / 2, { f: hz(ch[0]) / 2, type: 'triangle', dur: beat * 0.45, gain: 0.08 * g, bus: 'music' });
+        }
+        if (name === 'chip') for (let s = 0; s < 8 && t + s * beat / 2 < t1 - 0.05; s++) {
+          const ts = t + s * beat / 2;
+          tone(ts, { f: hz(ch[0]) / 2, type: 'triangle', dur: beat * 0.45, gain: 0.12 * g, a: 0.001, hold: beat * 0.35, bus: 'music' });
+          tone(ts, { f: ch[[0, 1, 2, 3, 2, 1, 2, 3][s]], type: 'square', dur: beat * 0.4, gain: 0.03 * g, a: 0.001, hold: beat * 0.25, bus: 'music' });
+        }
+      }
+    }
+
+    return { play, bed, music, tone, noise, withMinor, hz, vo: VO, sounds: Object.keys(S) };
+  };
+
+  // Live playback for a player: SOUND.live(scoreFn, fromT, { voiceover, master }) starts the score from explainer time
+  // fromT right now and returns stop(). Call stop() on pause or seek, and SOUND.live again on play.
+  SOUND.live = function (fn, fromT, opts) {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    fn(SOUND.kit(ctx, Object.assign({}, opts, { start: fromT || 0, delay: 0.03 })));
+    return () => { try { ctx.close(); } catch (e) {} };
+  };
+
+  // Render a style's explainerSound into an OfflineAudioContext; returns interleaved float stereo.
+  SOUND.renderOffline = async function (fn, duration, sampleRate, kitOpts) {
+    const sr = sampleRate || 48000, len = Math.ceil(duration * sr);
+    const ctx = new OfflineAudioContext(2, len, sr);
+    fn(SOUND.kit(ctx, kitOpts || {}));
+    const buf = await ctx.startRendering();
+    const L = buf.getChannelData(0), R = buf.getChannelData(1), inter = new Float32Array(len * 2);
+    let peak = 0;
+    for (let i = 0; i < len; i++) { inter[2 * i] = L[i]; inter[2 * i + 1] = R[i]; peak = Math.max(peak, Math.abs(L[i]), Math.abs(R[i])); }
+    return { inter, peak, frames: len, sr };
+  };
+})();
+// ===== Timeline shared by the picture and the sound =====
+const DURATION = 23;
+const TL = {
+  title: 0.15, earthIn: [0.3, 1.1], q: [1.25, 1.55], shrink: [1.8, 2.4],
+  earthMove: [1.9, 2.9], hot: [2.0, 3.0], worry: 2.6, count45: [2.4, 3.4], bya: 3.2, hotPill: 3.5, numOut: [4.2, 4.7],
+  zoom: [4.2, 5.4], earthPill: 5.5, arc: [5.4, 6.4], ice: [5.8, 6.6], frostPill: 6.2, ice1: 6.4, ice2: 6.55, nts: 6.7,
+  sweep: [6.7, 7.5],
+  jup: 7.6, popR: [7.5, 7.8, 8.0, 8.2], rockPill: 7.7, arrow: [8.0, 8.6], l1: 8.3, l2: 8.5,
+  cam: [9.3, 10.3], impTitle: 9.8, rockPill2: 10.0, imp: [10.3, 10.7, 11.0, 11.4],
+  dive: [11.4, 12.1], swapC: 12.1,
+  chTitle: 12.3, chPill: 12.6, bars: [[12.7, 13.3], [13.3, 13.9], [13.9, 14.5]], ok: 13.95, okPill: 14.1, no: 14.55,
+  swapD: 15.0, surf: [15.0, 15.6],
+  clouds: [15.4, 15.55, 15.7], t7: [15.6, 15.9, 16.2], p7: [16.3, 16.6], cool: [15.2, 17.6], rainIn: 15.9, rainOut: [17.4, 17.8],
+  split: [17.6, 18.3], num45: 18.0, bya8: 18.1, arr8: [18.2, 18.8], cnt: [18.8, 19.4], hit: 19.4, l8: [19.5, 19.7],
+  out9: [20.0, 20.5], glide: [20.0, 20.8], r9: [20.5, 20.65], l9: [20.9, 21.2], p9: 21.7,
+};
+const RK = [[560, 330, 44], [665, 250, 36], [760, 345, 40], [690, 440, 32]];
+const RT = [[560, 451], [640, 440], [740, 457], [700, 446]];
+const popv = (t, a, d = 0.3, s = 1.5) => back(seg(t, a, a + d), s);
+function popText(x, s, cx, cy, px, col, u, a = 1) {
+  if (u <= 0.01 || a <= 0.01) return;
+  x.save(); x.translate(cx, cy); x.scale(u, u); text(x, s, 0, 0, px, col, { a }); x.restore();
+}
+function whiteout(x, wo) {
+  if (wo <= 0) return;
+  const g = x.createRadialGradient(640, 360, 0, 640, 360, 800);
+  g.addColorStop(0, H.rgba('#fff6d0', wo)); g.addColorStop(0.5, H.rgba('#8ff0ff', wo * 0.95)); g.addColorStop(1, H.rgba('#6a4cff', wo * 0.9));
+  x.fillStyle = g; x.fillRect(0, 0, W_, H_);
+}
+function titleGroup(x, t) {
+  const tp = eio(seg(t, TL.shrink[0], TL.shrink[1]));
+  if (tp >= 1) return;
+  const L = [['Where', 'did', 'Earth’s'], ['water', 'come', 'from?']], px = 82;
+  x.save(); x.translate(lerp(640, 232, tp), lerp(175, 44, tp)); x.scale(lerp(1, 0.3, tp), lerp(1, 0.3, tp)); x.globalAlpha = 1 - seg(tp, 0.6, 0.95);
+  L.forEach((ws, li) => {
+    x.font = F(900, px); const sp = x.measureText(' ').width, w = ws.map((s) => x.measureText(s).width), tot = w.reduce((a, b) => a + b, 0) + sp * 2; let wx = -tot / 2;
+    ws.forEach((s, i) => {
+      const u = back(seg(t, TL.title + (li * 3 + i) * 0.1, TL.title + (li * 3 + i) * 0.1 + 0.4), 1.2);
+      x.save(); x.translate(wx + w[i] / 2, (li ? 47 : -47) + (1 - u) * 40); x.scale(u, u); text(x, s, 0, 0, px, li ? C.yellow : '#ffffff'); x.restore(); wx += w[i] + sp;
+    });
+  });
+  x.restore();
+}
+
+// ===== A: hook, hot dry Earth, frost line (one continuous camera) =====
+function sceneA(x, t) {
+  const zo = eio(seg(t, TL.zoom[0], TL.zoom[1])), mv = eio(seg(t, TL.earthMove[0], TL.earthMove[1])), hot = eio(seg(t, TL.hot[0], TL.hot[1]));
+  const pull = 1 + 1.8 * (1 - eo(seg(t, 0, 1.4)));
+  sky(x, W_, H_, t, { z: pull, x: t * 12 + zo * 80 });
+  if (mv < 0.99) { x.save(); x.globalAlpha = 1 - mv; planet(x, 1140, 175, 36, PL.moon); planet(x, 105, 610, 44, PL.coral, { glowA: 0.25 }); x.restore(); }
+  if (zo > 0.001) {
+    const S = [lerp(-440, -40, zo), 360];
+    x.save(); x.globalAlpha = zo;
+    const iceA = eio(seg(t, TL.ice[0], TL.ice[1]));
+    if (iceA > 0) { x.save(); x.beginPath(); x.rect(0, 0, W_, H_); x.arc(S[0], S[1], 800, 0, TAU, true); x.fillStyle = 'rgba(127,240,255,' + (0.13 * iceA) + ')'; x.fill('evenodd'); x.restore(); }
+    glow(x, S[0], S[1], 520, '#ffb83a', 0.45);
+    const sg = x.createRadialGradient(S[0], S[1], 0, S[0], S[1], 230); sg.addColorStop(0, '#fff6c0'); sg.addColorStop(0.7, '#ffc83a'); sg.addColorStop(1, '#ff8a3a');
+    x.fillStyle = sg; x.beginPath(); x.arc(S[0], S[1], 230, 0, TAU); x.fill();
+    x.save(); x.strokeStyle = 'rgba(255,255,255,0.28)'; x.lineWidth = 3; x.setLineDash([8, 12]); x.beginPath(); x.arc(S[0], S[1], 330, -0.9, 0.9); x.stroke(); x.restore();
+    const q = H.rng(11);
+    for (let i = 0; i < 34; i++) { const R = q.range(700, 930), a = q.range(-0.5, 0.5), px = S[0] + R * Math.cos(a), py = S[1] + R * Math.sin(a), rd = q.range(8, 17); if (px > 810 + (S[0] + 40) && py > 500) continue; ball(x, px, py, rd, ['#ddd6ff', '#8e86c9', '#463d86'], { sha: 0.5 }); }
+    const ap = eio(seg(t, TL.arc[0], TL.arc[1]));
+    if (ap > 0) { x.save(); x.strokeStyle = '#9ff7ff'; x.lineWidth = 8; x.lineCap = 'round'; x.setLineDash([0.01, 15]); x.beginPath(); x.arc(S[0], S[1], 800, -0.47, -0.47 + 0.94 * ap); x.stroke(); x.restore(); }
+    x.restore();
+  }
+  const rin = back(seg(t, TL.earthIn[0], TL.earthIn[1]), 1.2);
+  const bx = lerp(640, 430, mv), by = lerp(530, 410, mv), br = lerp(170, 200, mv);
+  const ex = lerp(bx, 290, zo), ey = lerp(by, 360, zo) + Math.sin(t * 1.8) * 6 * (1 - zo), er = lerp(br, 46, zo) * rin;
+  if (hot * (1 - zo) > 0.02) glow(x, ex, ey, er * 2.6, '#ff5a2a', 0.22 * hot * (1 - zo));
+  earth(x, ex, ey, er, { t, hot, face: { worry: t > TL.worry ? 1 : 0, look: t < TL.worry ? [0, -0.3] : [0.4, 0.2], blink: blinkAt(t, 0.3) } });
+  const emA = hot * (1 - zo);
+  if (emA > 0.05) { const q = H.rng(8); for (let i = 0; i < 9; i++) { const a = q.range(0, TAU), d = er * 1.08 + q.range(0, 90); spark(x, ex + Math.cos(a) * d, ey + Math.sin(a) * d, q.range(7, 14) * (0.6 + 0.4 * Math.sin(t * 4 + i)), '#ffd23f', 0.9 * emA); } }
+  // "?" thought in the hook
+  const qa = seg(t, TL.q[0], TL.q[0] + 0.2) * (1 - seg(t, 2.2, 2.4));
+  if (qa > 0) { x.save(); x.globalAlpha = qa; const qs = popv(t, TL.q[0], 0.3); ball(x, 905, 395, 38 * qs, ['#ffffff', '#e8e4ff', '#9a8fe0'], { sha: 0.3 }); text(x, '?', 905, 396, 54 * qs, C.violet, { shadow: 'rgba(0,0,0,0)' }); x.restore(); }
+  titleGroup(x, t);
+  // 4.5 billion years ago
+  const oy = -240 * eio(seg(t, TL.numOut[0], TL.numOut[1])), na = seg(t, TL.count45[0] - 0.1, TL.count45[0]) * (1 - seg(t, TL.numOut[0] + 0.2, TL.numOut[1]));
+  if (na > 0) {
+    const v = 4.5 * eo(seg(t, TL.count45[0], TL.count45[1])), land = seg(t, TL.count45[1], TL.count45[1] + 0.35), pop = 1 + 0.18 * Math.sin(land * Math.PI);
+    x.save(); x.translate(0, oy); x.save(); x.translate(960, 245); x.scale(pop, pop); text(x, v.toFixed(1), 0, 0, 170, land > 0 ? C.yellow : '#ffffff', { a: na }); x.restore();
+    popText(x, 'billion years ago', 960, 365, 46, '#ffffff', popv(t, TL.bya), na);
+    pill(x, 960, 468, 'hot, dry rock', 32, { bg: '#ffb27a', s: popv(t, TL.hotPill), a: na });
+    x.restore();
+  }
+  // frost-line labels
+  pill(x, ex, ey + er + 36, 'Earth', 30, { bg: '#ffb27a', s: popv(t, TL.earthPill) * zo });
+  const fx = 740 + (zo < 1 ? 0 : 0);
+  pill(x, fx, 175, 'frost line', 30, { bg: C.cyan, s: popv(t, TL.frostPill) });
+  popText(x, 'Water ice survives', 1040, 585, 44, '#ffffff', popv(t, TL.ice1));
+  popText(x, 'only out here', 1040, 640, 44, C.cyan, popv(t, TL.ice2));
+  x.save(); x.globalAlpha = seg(t, TL.nts, TL.nts + 0.2); text(x, 'not to scale', 1060, 692, 28, '#bfe9ff', { w: 800 }); x.restore();
+}
+
+// ===== B: Jupiter's push, then impacts =====
+function sceneB(x, t) {
+  const cd = eio(seg(t, TL.cam[0], TL.cam[1]));
+  sky(x, W_, H_, t, { z: 1, x: 200 + cd * 100 + t * 10 });
+  const jy = lerp(170, -260, cd);
+  planet(x, 1070, jy, 190, PL.coral, { glowA: 0.35 });
+  pill(x, 1070, jy + 235, 'Jupiter', 30, { bg: '#ffb27a', s: popv(t, TL.jup) * (1 - cd) });
+  const ex = lerp(230, 640, cd), ey = lerp(560, 740, cd), er = lerp(105, 300, cd);
+  let sh = 0; for (const ti of TL.imp) { const a = t - ti; if (a > 0 && a < 0.4) sh += Math.sin(a * 70) * 7 * (1 - a / 0.4); }
+  earth(x, ex + sh, ey, er, { t, hot: lerp(1, 0.6, seg(t, 10.3, 11.8)), face: { worry: 1, look: cd < 0.5 ? [0.6, -0.3] : [0, -0.6], blink: blinkAt(t, 0.5) }, faceDy: lerp(-0.05, -0.45, cd) });
+  const outA = 1 - seg(t, 9.2, 9.6);
+  const ap = eio(seg(t, TL.arrow[0], TL.arrow[1]));
+  arrow(x, [[600, 340], [540, 500], [470, 570], [350, 530]], ap, '#7ff0ff', 9, { dots: true, a: 0.9 * outA });
+  const pos = [];
+  RK.forEach((r, i) => {
+    const pop = popv(t, TL.popR[i], 0.3, 1.6), ti = TL.imp[i], u = seg(t, ti - 0.9, ti), k = H.ease.in(u);
+    const sx = r[0], sy = r[1] + Math.sin(t * 2 + i) * 7 * (1 - u), tx = RT[i][0], ty = RT[i][1];
+    const px = lerp(sx, tx, k), py = lerp(sy, ty, k); pos.push([px, py]);
+    if (t < ti && pop > 0) { const dx = tx - sx, dy = ty - sy, d = Math.hypot(dx, dy); rock(x, px, py, r[2] * (1 + 0.35 * u) * pop, { drop: true, t, look: [0.4 + 0.3 * u, 0.5], blink: blinkAt(t, i * 0.7), trail: u > 0 ? [-dx / d, -dy / d] : null, L: 200 * u }); }
+  });
+  pill(x, 640, 150, 'water-rich asteroids', 30, { bg: '#ffffff', s: popv(t, TL.rockPill), a: outA });
+  popText(x, 'Jupiter’s pull', 990, 570, 50, '#ffffff', popv(t, TL.l1), outA);
+  popText(x, 'sends rocks inward', 990, 632, 50, C.yellow, popv(t, TL.l2), outA);
+  popText(x, 'Impact after impact', 640, 105, 64, '#ffffff', popv(t, TL.impTitle));
+  if (t > TL.rockPill2 && t < TL.imp[0]) pill(x, pos[0][0], pos[0][1] - 85, 'each carries water', 30, { bg: '#ffffff', ptr: true, s: popv(t, TL.rockPill2) });
+  const dr = [[-150, -70, 16], [160, -80, 15], [-60, -130, 13], [90, -150, 14]];
+  TL.imp.forEach((ti, i) => {
+    const a = t - ti; if (a < 0 || a > 1.5) return; const [tx, ty] = RT[i];
+    flare(x, tx, ty, 0.8 * (1 - seg(a, 0, 0.7)), t); burst(x, tx, ty, a, 14 + i, 260);
+    dr.forEach(([dx, dy, r], j) => { const e = eo(seg(a, 0, 0.8)); x.save(); x.globalAlpha = 1 - seg(a, 0.9, 1.4); drop(x, tx + dx * e * (j % 2 ? -0.8 : 0.8), ty + dy * e, r); x.restore(); });
+  });
+  if (t > TL.dive[0]) drop(x, 640, 450, 14 + 520 * H.ease.in(seg(t, TL.dive[0], TL.dive[1])));
+}
+
+// ===== C: the fingerprint chart =====
+const ROWS = [
+  { lab: 'Earth’s ocean', v: 1.56, dec: 2, y: 300, c: ['#d4fbff', '#3aa0ff'] },
+  { lab: 'Asteroids', v: 1.4, dec: 1, y: 435, c: ['#c6fff2', '#3ccbdc'] },
+  { lab: 'Oort-cloud comets', v: 3.0, dec: 1, y: 570, c: ['#ffc2a8', '#ff5d8f'] },
+];
+function sceneC(x, t) {
+  sky(x, W_, H_, t, { z: 1, x: 520 + t * 8 });
+  dropChar(x, 1150, 150, 46 * popv(t, 12.2, 0.4), { look: [-0.5, 0.3], blink: blinkAt(t, 0.3), happy: t > TL.ok ? 1 : 0 });
+  popText(x, 'Water has a fingerprint', 640, 125, 56, '#ffffff', popv(t, TL.chTitle, 0.4, 1.2));
+  pill(x, 640, 197, 'heavy-hydrogen ratio (D/H)', 30, { bg: C.yellow, s: popv(t, TL.chPill) });
+  ROWS.forEach((r, i) => {
+    const [a, b] = TL.bars[i], g = eo(seg(t, a, b)), bx = 390, bh = 74, bw = r.v * 180 * g;
+    x.save(); x.globalAlpha = seg(t, a - 0.2, a); text(x, r.lab, 50, r.y, 32, '#bfe9ff', { align: 'left', w: 800 }); x.restore();
+    if (bw < 2) return;
+    x.fillStyle = 'rgba(10,8,46,0.4)'; rr(x, bx + 3, r.y - bh / 2 + 6, bw, bh, bh / 2); x.fill();
+    const gr = x.createLinearGradient(bx, 0, bx + r.v * 180, 0); gr.addColorStop(0, r.c[0]); gr.addColorStop(1, r.c[1]);
+    x.fillStyle = gr; rr(x, bx, r.y - bh / 2, bw, bh, bh / 2); x.fill();
+    text(x, (r.v * g).toFixed(r.dec), bx + bw + 28, r.y + 2, 68, '#ffffff', { align: 'left' });
+  });
+  badge(x, 880, 435, 34, true, back(seg(t, TL.ok, TL.ok + 0.3), 2.2));
+  pill(x, 1070, 435, 'same fingerprint', 30, { bg: C.green, fg: '#06371f', s: popv(t, TL.okPill) });
+  badge(x, 1150, 570, 34, false, back(seg(t, TL.no, TL.no + 0.3), 2.2));
+  burst(x, 880, 435, (t - TL.ok) * 1.2, 51, 160);
+  x.save(); x.globalAlpha = seg(t, 12.8, 13.1); text(x, 'D/H ratio × 0.0001', 640, 685, 28, '#bfe9ff', { w: 800 }); x.restore();
+}
+
+// ===== D: it cooled, the key number, the takeaway (Earth carries through) =====
+function sceneD(x, t) {
+  const em = 1 + 1.3 * (1 - eo(seg(t, TL.surf[0], TL.surf[1])));
+  sky(x, W_, H_, t, { z: em, x: 620 + t * 10 });
+  const sp = eio(seg(t, TL.split[0], TL.split[1])), g = eio(seg(t, TL.glide[0], TL.glide[1]));
+  let ex = lerp(440, 880, sp), ey = lerp(490, 390, sp), er = lerp(200, 175, sp);
+  ex = lerp(ex, 640, g); ey = lerp(ey, 500, g); er = lerp(er, 140, g);
+  const hot = lerp(0.7, 0, eio(seg(t, TL.cool[0], TL.cool[1])));
+  const fade8 = 1 - seg(t, TL.out9[0], TL.out9[1]);
+  x.save(); x.translate(440, 490); x.scale(em, em); x.translate(-440, -490);
+  if (t > TL.split[0]) {
+    const ga = seg(t, TL.split[0], TL.split[0] + 0.15) * fade8;
+    x.save(); x.globalAlpha = ga; earth(x, lerp(440, 240, sp), lerp(490, 390, sp), lerp(200, 120, sp), { t, hot: 1, face: { worry: 1, look: [0.5, 0], blink: 0 } }); x.restore();
+  }
+  earth(x, ex, ey, er, { t, hot, face: { worry: t < 15.9 ? 1 : 0, happy: t >= 16.2 ? 1 : 0, blink: blinkAt(t, 0.3) } });
+  const rainA = seg(t, TL.rainIn, TL.rainIn + 0.3) * (1 - seg(t, TL.rainOut[0], TL.rainOut[1]));
+  if (rainA > 0) { const q = H.rng(41); x.save(); x.globalAlpha = rainA; for (let i = 0; i < 16; i++) { const px = q.range(300, 600), ph = q.range(0, 1); drop(x, px, lerp(250, 400, (t * 0.9 + ph) % 1), 9, { glow: false }); } x.restore(); }
+  const ca = 1 - seg(t, TL.rainOut[0], TL.rainOut[1] + 0.1);
+  [[320, 215, 62], [470, 165, 78], [615, 220, 58]].forEach(([cx, cy, s], i) => { const p = popv(t, TL.clouds[i], 0.35); if (p > 0.05 && ca > 0.01) { x.save(); x.globalAlpha = ca; cloud(x, cx, cy + Math.sin(t * 1.5 + i) * 4, s * p); x.restore(); } });
+  x.restore();
+  const a7 = 1 - seg(t, TL.rainOut[0], TL.rainOut[1]);
+  popText(x, 'It cooled,', 990, 210, 58, '#ffffff', popv(t, TL.t7[0]), a7);
+  popText(x, 'it rained,', 990, 285, 58, '#ffffff', popv(t, TL.t7[1]), a7);
+  popText(x, 'oceans filled', 990, 360, 58, C.cyan, popv(t, TL.t7[2]), a7);
+  pill(x, 990, 470, 'steam becomes clouds', 30, { bg: '#ffffff', s: popv(t, TL.p7[0]), a: a7 });
+  pill(x, 990, 545, 'rain fills the basins', 30, { bg: C.cyan, s: popv(t, TL.p7[1]), a: a7 });
+  // beat 8
+  const ap = eio(seg(t, TL.arr8[0], TL.arr8[1]));
+  arrow(x, [[385, 310], [480, 190], [640, 190], [735, 255]], ap, '#7ff0ff', 10, { dots: true, a: fade8 });
+  popText(x, '4.5', 240, 195, 100, '#ffffff', popv(t, TL.num45), fade8);
+  pill(x, 640, 100, 'billion years ago', 30, { bg: '#ffffff', s: popv(t, TL.bya8), a: fade8 });
+  if (t > TL.cnt[0]) {
+    const land = seg(t, TL.hit, TL.hit + 0.35), pop = 1 + 0.25 * Math.sin(land * Math.PI), v = 4.5 - 0.1 * eo(seg(t, TL.cnt[0], TL.cnt[1]));
+    x.save(); x.translate(880, 150); x.scale(pop, pop); text(x, v.toFixed(t >= TL.hit ? 1 : 2), 0, 0, 110, t >= TL.hit ? C.yellow : '#ffffff', { a: seg(t, TL.cnt[0], TL.cnt[0] + 0.15) * fade8 }); x.restore();
+    if (t >= TL.hit && fade8 > 0) { x.save(); x.globalAlpha = fade8; flare(x, 880, 390, 0.35 * Math.max(0, 1 - (t - TL.hit) / 1.2) + 0.12, t); x.restore(); }
+  }
+  popText(x, 'Oceans may have appeared', 640, 622, 44, '#ffffff', popv(t, TL.l8[0]), fade8);
+  popText(x, 'within ~150 million years', 640, 678, 44, C.yellow, popv(t, TL.l8[1]), fade8);
+  // beat 9
+  [[340, 520, -0.1, 0], [940, 520, 0.1, 1]].forEach(([rx, ry, rot, i]) => { const p = popv(t, TL.r9 === undefined ? 20.5 : (i ? 20.65 : 20.5), 0.35, 1.8); if (p > 0.02) rock(x, rx, ry + Math.sin(t * 2.2 + i) * 6, 62 * p, { drop: true, t, happy: 1, rot }); });
+  popText(x, 'Space rocks delivered', 640, 120, 66, '#ffffff', popv(t, TL.l9[0], 0.4, 1.4));
+  popText(x, 'a big share of our water', 640, 205, 66, C.yellow, popv(t, TL.l9[1], 0.4, 1.4));
+  pill(x, 640, 690, 'some may have been here from the start', 30, { bg: 'rgba(255,255,255,0.95)', s: popv(t, TL.p9) });
+  if (t > TL.l9[1]) { x.save(); x.globalAlpha = seg(t, TL.l9[1], TL.l9[1] + 0.4); sparkles(x, t, 9, 8, 100, 1180, 250, 640); x.restore(); }
+  if (t < TL.surf[1]) drop(x, 640, 450, 520 * (1 - eo(seg(t, TL.surf[0], TL.surf[1]))));
+}
+
+function explainer(ctx, W, H_, t) {
+  const x = ctx;
+  const sw = eio(seg(t, TL.sweep[0], TL.sweep[1])), spx = lerp(W + 980, -980, sw);
+  if (t < TL.sweep[0] || spx > 640) sceneA(x, t);
+  else if (t < TL.swapC) sceneB(x, t);
+  else if (t < TL.swapD) sceneC(x, t);
+  else sceneD(x, t);
+  if (sw > 0 && sw < 1) planet(x, spx, 380 + (sw - 0.5) * 120, 880, PL.coral, { glowA: 0.4 });
+  whiteout(x, seg(t, 11.6, 12.1) * (1 - seg(t, 12.1, 12.5)));
+  whiteout(x, seg(t, 14.6, 15.0) * (1 - seg(t, 15.0, 15.5)));
+  const tp = eio(seg(t, TL.shrink[0], TL.shrink[1]));
+  if (t >= TL.shrink[1]) header(x, 1); else if (tp > 0.75) header(x, seg(tp, 0.75, 1));
+  finish(x, W, H_, t);
+}
+
+// ===== Sound: soft cinematic-science palette (marimba plucks, boops, airy whooshes, warm pad) =====
+function scoreSound(k) {
+  const D = DURATION, hz = k.hz;
+  const pan = (px) => cl((px / 1280) * 2 - 1, -1, 1) * 0.6;
+  const when = (t0, t1, ease, u) => { for (let i = 0; i <= 400; i++) { const tt = t0 + ((t1 - t0) * i) / 400; if (ease(i / 400) >= u - 1e-6) return tt; } return t1; };
+  const backPeak = (t0, t1) => when(t0, t1, (u) => back(u), 1);
+  const pluck = (t, n, g = 1, p = 0, minor = false) => {
+    const f = hz(n);
+    k.tone(t, { f, dur: 0.9, gain: 0.2 * g, a: 0.003, pan: p, verb: 0.25, minor });
+    k.tone(t, { f: f * 4, dur: 0.09, gain: 0.04 * g, a: 0.001, pan: p, minor });
+    k.tone(t, { f: f * 2, type: 'triangle', dur: 0.32, gain: 0.045 * g, a: 0.003, pan: p, minor });
+  };
+  const boop = (t, f0, g = 1, p = 0, minor = true) => {
+    k.tone(t, { f: [[0, f0], [0.07, f0 * 1.45], [0.16, f0 * 1.3]], dur: 0.2, gain: 0.17 * g, a: 0.008, pan: p, verb: 0.15, minor });
+    k.tone(t, { f: [[0, f0 * 0.5], [0.08, f0 * 0.72]], type: 'triangle', dur: 0.14, gain: 0.06 * g, a: 0.006, pan: p, minor });
+  };
+  const air = (t, dur, top, g = 1, p = 0, peak = 0.55, minor = false) =>
+    k.noise(t, { dur, color: 'pink', filter: 'bandpass', f: [[0, 260], [dur * peak, top], [dur, 340]], q: 0.55, gain: 0.26 * g, a: dur * peak, pan: p, verb: 0.3, minor });
+  const chord = (t, notes, g = 1, dur = 2.2) => notes.forEach((n, i) => {
+    k.tone(t + i * 0.012, { f: n, type: 'triangle', dur, gain: 0.07 * g, a: 0.02, verb: 0.35, filter: 'lowpass', f2: 1800, pan: (i / (notes.length - 1) - 0.5) * 0.6 });
+    k.tone(t + i * 0.012, { f: hz(n) * 1.003, dur, gain: 0.06 * g, a: 0.03, verb: 0.35 });
+  });
+  const shimmer = (t, notes, g = 1, p = 0) => k.withMinor(() => notes.forEach((n, i) => k.tone(t + i * 0.055, { f: n, dur: 0.7, gain: 0.07 * g, a: 0.004, verb: 0.4, pan: p + (i % 2 ? 0.25 : -0.25) })));
+  const ticks = (t0, t1, rate, f0, f1, g = 0.45, p = 0) => { for (let tt = t0; tt < t1; tt += rate) k.play('tock', tt, { f: lerp(f0, f1, (tt - t0) / (t1 - t0)), gain: g, pan: p, minor: true }); };
+
+  k.music('pad', 0, D, { bpm: 64, gain: 0.45, chords: [['A3', 'C4', 'E4', 'G4'], ['F3', 'A3', 'C4', 'E4'], ['D3', 'F3', 'A3', 'C4'], ['C3', 'E3', 'G3', 'B3']] });
+
+  // 1 HOOK
+  air(0, 1.4, 1500, 0.8, 0, 0.35);
+  ['A3', 'C4', 'E4', 'A4', 'C5', 'E5'].forEach((n, i) => pluck(TL.title + i * 0.1 + 0.06, n, 0.8, (i - 2.5) * 0.15, i < 4));
+  boop(backPeak(TL.earthIn[0], TL.earthIn[1]), 330, 1.0, 0, false);
+  boop(1.4, 470, 0.8, 0.2);
+  k.noise(TL.shrink[0], { dur: 0.6, color: 'pink', filter: 'bandpass', f: [[0, 700], [0.6, 300]], q: 0.7, gain: 0.08, a: 0.2, pan: -0.3, minor: true });
+  // 2 HOT, DRY
+  k.noise(2.0, { dur: 1.4, color: 'brown', filter: 'lowpass', f: [[0, 500], [1.4, 220]], gain: 0.22, a: 0.6, verb: 0.2 });
+  { const r = H.rng(5); for (let i = 0; i < 12; i++) k.play('tick', 2.3 + i * 0.16 + r() * 0.08, { f: 2600 + r() * 1500, gain: 0.25, pan: pan(430) + (r() - 0.5) * 0.3, minor: true }); }
+  k.tone(TL.worry, { f: 'E3', type: 'triangle', dur: 0.26, gain: 0.2, hold: 0.1, filter: 'lowpass', f2: 900, pan: pan(430) });
+  k.tone(TL.worry + 0.2, { f: 'C3', type: 'triangle', dur: 0.5, gain: 0.2, hold: 0.18, filter: 'lowpass', f2: 800, pan: pan(430) });
+  for (let tt = TL.count45[0] + 0.1; tt < TL.count45[1] - 0.05; tt += 0.2 - 0.1 * seg(tt, TL.count45[0], TL.count45[1])) k.play('tock', tt, { f: 700 + 160 * seg(tt, TL.count45[0], TL.count45[1]), gain: 0.5, pan: 0.5, minor: true });
+  pluck(TL.count45[1], 'A3', 1.1, 0.3); pluck(TL.count45[1] + 0.07, 'E4', 0.9, 0.3); pluck(TL.count45[1] + 0.14, 'A4', 0.7, 0.3);
+  pluck(backPeak(TL.bya, TL.bya + 0.3), 'E4', 0.7, 0.4, true); pluck(backPeak(TL.hotPill, TL.hotPill + 0.3), 'C4', 0.8, 0.4, true);
+  // 3 FROST LINE
+  air(TL.zoom[0], TL.zoom[1] - TL.zoom[0] + 0.5, 1900, 1.0, 0, 0.5);
+  pluck(backPeak(TL.earthPill, TL.earthPill + 0.3), 'E4', 0.8, pan(290));
+  ticks(TL.arc[0], TL.arc[1], 0.2, 520, 900, 0.35, 0.2);
+  shimmer(TL.ice[0] + 0.1, ['E5', 'A5'], 0.5, 0.3);
+  pluck(backPeak(TL.frostPill, TL.frostPill + 0.3), 'C4', 0.9, pan(740));
+  pluck(backPeak(TL.ice1, TL.ice1 + 0.3), 'E4', 0.7, 0.4, true); pluck(backPeak(TL.ice2, TL.ice2 + 0.3), 'G4', 0.7, 0.4, true);
+  // wipe
+  air(TL.sweep[0], TL.sweep[1] - TL.sweep[0], 1300, 1.3, 0, 0.5);
+  k.noise(TL.sweep[0] + 0.1, { dur: 0.75, color: 'brown', filter: 'lowpass', f: 260, gain: 0.32, a: 0.35, verb: 0.2 });
+  k.tone(TL.sweep[0] + 0.1, { f: [[0, 70], [0.4, 58], [0.75, 46]], dur: 0.75, gain: 0.16, a: 0.3 });
+  // 4 JUPITER
+  pluck(backPeak(TL.jup, TL.jup + 0.3), 'D4', 0.8, 0.5);
+  TL.popR.forEach((tp, i) => boop(backPeak(tp, tp + 0.3, 1.6) || tp + 0.2, [440, 520, 480, 400][i], 0.8, pan(RK[i][0]), true));
+  pluck(backPeak(TL.rockPill, TL.rockPill + 0.3), 'G4', 0.8, 0);
+  ticks(TL.arrow[0], TL.arrow[1], 0.15, 520, 700, 0.3, -0.3);
+  pluck(backPeak(TL.l1, TL.l1 + 0.3), 'E4', 0.8, 0.3); pluck(backPeak(TL.l2, TL.l2 + 0.3), 'C4', 0.9, 0.3);
+  // 5 IMPACTS
+  pluck(backPeak(TL.impTitle, TL.impTitle + 0.3), 'A3', 0.9, 0);
+  TL.imp.forEach((ti, i) => {
+    air(ti - 0.9, 0.9, 1800, 0.5, pan(RT[i][0]), 0.9, true);
+    k.play(i === 2 ? 'impact' : 'thud', ti, { f: 120 - i * 10, gain: i === 2 ? 0.7 : 0.35, pan: pan(RT[i][0]) });
+    k.play('sparkle', ti + 0.04, { gain: 0.6, n: 5 });
+    boop(ti + 0.25, 800 + i * 90, 0.5, pan(RT[i][0]) + 0.2, true);
+  });
+  // dive into the droplet
+  air(TL.dive[0], 1.1, 2200, 1.2, 0, 0.9);
+  k.tone(TL.dive[0], { f: [[0, 110], [0.7, 330]], type: 'triangle', dur: 0.75, gain: 0.07, a: 0.6 });
+  chord(TL.swapC, ['C3', 'G3', 'E4'], 0.6, 1.4);
+  // 6 FINGERPRINT
+  pluck(backPeak(TL.chTitle, TL.chTitle + 0.4), 'E4', 0.8, 0);
+  boop(TL.chTitle + 0.1, 560, 0.8, 0.5);
+  pluck(backPeak(TL.chPill, TL.chPill + 0.3), 'C4', 0.8, 0, true);
+  TL.bars.forEach(([a, b], i) => ticks(a, b, 0.08, 500 + i * 80, 800 + i * 80, 0.35, -0.2 + i * 0.2));
+  k.play('success', TL.ok, { gain: 0.8, pan: 0.2 });
+  pluck(backPeak(TL.okPill, TL.okPill + 0.3), 'G4', 0.8, 0.4, true);
+  k.tone(TL.no, { f: 'E3', type: 'triangle', dur: 0.26, gain: 0.22, hold: 0.1, filter: 'lowpass', f2: 900, pan: 0.5 });
+  k.tone(TL.no + 0.2, { f: 'C3', type: 'triangle', dur: 0.5, gain: 0.22, hold: 0.18, filter: 'lowpass', f2: 800, pan: 0.5 });
+  k.play('thud', TL.no, { f: 95, gain: 0.25, pan: 0.5 });
+  // surface again
+  air(TL.swapD - 0.5, 1.2, 2200, 1.0, 0, 0.4);
+  chord(TL.swapD, ['G3', 'D4', 'B4'], 0.6, 1.6);
+  // 7 COOLED, RAINED
+  k.bed('hiss', 15.0, 16.6, { gain: 0.9 }); k.bed('rain', 15.6, 17.9, { gain: 0.7 });
+  TL.clouds.forEach((tc, i) => boop(backPeak(tc, tc + 0.35), [380, 440, 400][i], 0.6, -0.3 + i * 0.25, true));
+  pluck(backPeak(TL.t7[0], TL.t7[0] + 0.3), 'E4', 0.8, 0.4); pluck(backPeak(TL.t7[1], TL.t7[1] + 0.3), 'D4', 0.8, 0.4); pluck(backPeak(TL.t7[2], TL.t7[2] + 0.3), 'C4', 0.9, 0.4);
+  pluck(backPeak(TL.p7[0], TL.p7[0] + 0.3), 'G4', 0.6, 0.4, true); pluck(backPeak(TL.p7[1], TL.p7[1] + 0.3), 'E4', 0.6, 0.4, true);
+  ticks(16.0, 17.6, 0.3, 700, 450, 0.25, -0.2);
+  // 8 KEY NUMBER
+  air(TL.split[0], 0.9, 1400, 0.6, 0.2, 0.5, true);
+  pluck(backPeak(TL.num45, TL.num45 + 0.3), 'A3', 0.8, -0.4); pluck(backPeak(TL.bya8, TL.bya8 + 0.3), 'E4', 0.6, 0, true);
+  ticks(TL.arr8[0], TL.arr8[1], 0.15, 500, 700, 0.3, 0);
+  k.noise(TL.cnt[0], { dur: 0.6, color: 'pink', filter: 'bandpass', f: [[0, 250], [0.6, 2000]], q: 0.8, gain: 0.24, a: 0.55, verb: 0.3 });
+  k.tone(TL.cnt[0], { f: [[0, 110], [0.6, 220]], type: 'triangle', dur: 0.62, gain: 0.08, a: 0.55 });
+  for (let i = 0; i < 4; i++) k.play('tock', TL.cnt[0] + 0.1 + i * 0.15, { f: 760 + i * 40, gain: 0.4, pan: 0.3, minor: true });
+  k.play('impact', TL.hit, { gain: 0.75 });
+  chord(TL.hit, ['A2', 'E3', 'A3', 'C4', 'E4', 'B4'], 1.6, 2.4);
+  shimmer(TL.hit + 0.08, ['E5', 'A5', 'C6', 'E5', 'B5'], 0.8, 0.3);
+  pluck(backPeak(TL.l8[0], TL.l8[0] + 0.3), 'E4', 0.7, 0, true); pluck(backPeak(TL.l8[1], TL.l8[1] + 0.3), 'C4', 0.7, 0, true);
+  // 9 TAKEAWAY
+  air(TL.glide[0], 0.8, 1000, 0.6, 0, 0.5, true);
+  boop(backPeak(20.5, 20.85, 1.8), 540, 0.8, pan(340)); boop(backPeak(20.65, 21.0, 1.8), 440, 0.8, pan(940));
+  pluck(backPeak(TL.l9[0], TL.l9[0] + 0.4), 'E4', 0.8, 0);
+  chord(backPeak(TL.l9[1], TL.l9[1] + 0.4), ['C3', 'G3', 'C4', 'E4', 'G4', 'D5'], 1.1, 1.8);
+  pluck(backPeak(TL.l9[1], TL.l9[1] + 0.4), 'C4', 1.0, 0);
+  k.play('sparkle', TL.l9[1] + 0.2, { gain: 0.7, n: 7 });
+  pluck(backPeak(TL.p9, TL.p9 + 0.3), 'G4', 0.5, 0, true);
+}
+window.DURATION = DURATION;
+window.scoreSound = scoreSound;
+// ===== Player =====
+(function () {
+  const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  const $ = (id) => document.getElementById(id);
+  const scrub = $('scrub'), timeEl = $('time'), playBtn = $('play'), big = $('big');
+  scrub.max = String(DURATION);
+  let cur = 0, playing = false, last = 0, stopSound = null, soundOn = true, loop = true, vo = false, poster = true;
+  function draw(t) {
+    cur = t;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.clearRect(0, 0, 1280, 720);
+    explainer(ctx, 1280, 720, t);
+    scrub.value = String(t); timeEl.textContent = t.toFixed(1) + ' / ' + DURATION.toFixed(1) + ' s';
+  }
+  window.seek = (t) => draw(Math.max(0, Math.min(DURATION, t)));
+  function stopSnd() { if (stopSound) { stopSound(); stopSound = null; } }
+  function startSnd() { stopSnd(); if (soundOn && playing) { try { stopSound = SOUND.live(scoreSound, cur, { voiceover: vo }); } catch (e) { stopSound = null; } } }
+  function setPlaying(p) {
+    playing = p; playBtn.textContent = p ? 'Pause' : 'Play'; playBtn.setAttribute('aria-label', p ? 'Pause' : 'Play'); big.hidden = p || !poster;
+    if (p) { if (poster) { poster = false; draw(0); } last = performance.now(); startSnd(); requestAnimationFrame(frame); } else stopSnd();
+  }
+  function frame(ts) {
+    if (!playing) return;
+    let t = cur + (ts - last) / 1000; last = ts;
+    if (t >= DURATION) {
+      if (loop) { t = 0; draw(0); startSnd(); } else { draw(DURATION); setPlaying(false); return; }
+    }
+    draw(t); requestAnimationFrame(frame);
+  }
+  playBtn.onclick = big.onclick = () => { if (!playing && cur >= DURATION) draw(0); setPlaying(!playing); };
+  scrub.oninput = () => { poster = false; big.hidden = true; draw(parseFloat(scrub.value)); if (playing) { last = performance.now(); startSnd(); } else stopSnd(); };
+  $('snd').onclick = (e) => { soundOn = !soundOn; e.target.setAttribute('aria-pressed', soundOn); e.target.textContent = soundOn ? 'Sound on' : 'Sound off'; if (soundOn) startSnd(); else stopSnd(); };
+  $('vo').onclick = (e) => { vo = !vo; e.target.setAttribute('aria-pressed', vo); if (playing) startSnd(); };
+  $('loop').onclick = (e) => { loop = !loop; e.target.setAttribute('aria-pressed', loop); };
+  document.addEventListener('keydown', (e) => { if (e.code === 'Space' && e.target.tagName !== 'BUTTON') { e.preventDefault(); playBtn.click(); } });
+  (async function init() {
+    try { await Promise.all(['900 64px "Nunito"', '800 32px "Nunito"', '700 28px "Nunito"', '600 28px "Fredoka"'].map((f) => document.fonts.load(f, 'AaZz09?'))); await document.fonts.ready; } catch (e) { /* draw with fallback */ }
+    draw(1.2); scrub.value = '0'; timeEl.textContent = '0.0 / ' + DURATION.toFixed(1) + ' s'; cur = 0;
+  })();
+})();
+</script>

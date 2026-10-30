@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iLogix Video Studio</title>
+<style>
+:root{--bg:#050816;--panel:#0d1538;--edge:#1c2a63;--text:#eaf0ff;--muted:#8fa0d0;--accent:#2fe3ff;--ok:#5dffb0}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f4f7ff;--panel:#fff;--edge:#d5dcf2;--text:#0d1538;--muted:#51608f;--accent:#0a7ea4;--ok:#0a7a4d}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:28px;margin:0 0 4px}h2{font-size:18px;margin:36px 0 12px}
+p.sub{color:var(--muted);margin:0 0 24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.card h3{margin:0;font-size:17px}.card p{margin:0;color:var(--muted);font-size:14px}
+.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--edge);color:var(--muted);width:fit-content}
+.tag.ok{color:var(--ok);border-color:var(--ok)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+a.btn,button.btn{background:var(--accent);color:#031018;border:0;border-radius:8px;padding:8px 14px;font:600 14px system-ui;text-decoration:none;cursor:pointer}
+a.btn.alt{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.stage{margin-top:12px;background:#000;border:1px solid var(--edge);border-radius:14px;overflow:hidden}
+.stage iframe{display:block;width:100%;height:min(78vh,640px);border:0}
+.muted{color:var(--muted);font-size:14px}
+li{margin:4px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>iLogix Video Studio</h1>
+  <p class="sub">Animated explainer videos. Preview here; MP4 rendering runs on a separate machine.</p>
+
+  <h2>Videos</h2>
+  <div class="grid">
+    <div class="card">
+      <span class="tag ok">Ready · 35 s · 16:9 + 9:16</span>
+      <h3>Voice agents and agentic AI</h3>
+      <p>iLogix explainer in the Tech Glow style. Player has sound, a voiceover mix and a 9:16 toggle.</p>
+      <div class="row">
+        <button class="btn" data-play="v/ilogix-voice-agents.html">Preview</button>
+        <a class="btn alt" href="s/ilogix-voice-agents.html">Storyboard</a>
+        <a class="btn alt" href="v/ilogix-voice-agents.html">Open full page</a>
+      </div>
+    </div>
+    <div class="card">
+      <span class="tag ok">Ready · 23 s</span>
+      <h3>How Earth got its water</h3>
+      <p>The first video, in the Flat-Vector Science style. Kept as built.</p>
+      <div class="row">
+        <button class="btn" data-play="v/earth-water.html">Preview</button>
+        <a class="btn alt" href="s/earth-water.html">Storyboard</a>
+        <a class="btn alt" href="v/earth-water.html">Open full page</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage" id="stage" hidden><iframe id="frame" title="Video preview" allow="autoplay"></iframe></div>
+
+  <h2>Styles</h2>
+  <ul class="muted">
+    <li><b>Tech Glow</b> — available (iLogix)</li>
+    <li><b>Flat-Vector Science</b> — available (education)</li>
+    <li><b>Isometric Pastel</b> — planned (TripNido); a style switcher comes with it</li>
+  </ul>
+
+  <h2>Not built yet</h2>
+  <p class="muted">Topic form, cheap-model script drafting, ElevenLabs voiceover and one-click render are still to come. They need a server with Chromium and ffmpeg, so they will not run on Vercel itself. Plans and styles live in the GitHub repo.</p>
+</div>
+<script>
+document.querySelectorAll('[data-play]').forEach(function(b){
+  b.addEventListener('click',function(){
+    var s=document.getElementById('stage'),f=document.getElementById('frame');
+    f.src=b.getAttribute('data-play');s.hidden=false;s.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+});
+</script>
+</body>
+</html>

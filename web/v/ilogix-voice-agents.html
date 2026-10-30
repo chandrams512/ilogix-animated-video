@@ -1,0 +1,1339 @@
+<title>iLogix Voice Agents Explainer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600&family=Nunito:wght@700;800&display=block">
+<style>
+/* Layout: letterboxed 16:9 stage with a slim control bar underneath. */
+:root { --bg: #050816; --bar: #0d1538; --edge: #2a3478; --fg: #eaf1ff; --muted: #8fa3d8; --accent: #38e8ff; --ice: #8b6bff; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { height: 100%; background: var(--bg); }
+body { margin: 0; color: var(--fg); font: 700 15px/1.2 "Nunito", system-ui, sans-serif; display: flex; flex-direction: column; padding-block: 12px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); gap: 12px; }
+.stage { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; position: relative; background: #000; border-radius: 10px; overflow: hidden; }
+canvas { display: block; width: 100%; height: 100%; object-fit: contain; max-width: 100%; }
+.big { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(5,6,28,.35); border: 0; cursor: pointer; color: #fff; }
+.big span { width: 92px; height: 92px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; box-shadow: 0 8px 30px rgba(0,0,0,.45); }
+.big svg { width: 38px; height: 38px; margin-left: 6px; fill: #050816; }
+.bar { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--bar); border: 1px solid var(--edge); border-radius: 12px; padding: 10px 14px; }
+button.ctl { font: 800 14px/1 "Nunito", system-ui, sans-serif; color: var(--fg); background: transparent; border: 1px solid var(--edge); border-radius: 999px; padding: 9px 14px; cursor: pointer; min-width: 44px; }
+button.ctl[aria-pressed="true"] { background: var(--accent); color: #050816; border-color: var(--accent); }
+button.ctl:focus-visible, input:focus-visible, .big:focus-visible { outline: 2px solid var(--ice); outline-offset: 2px; }
+#scrub { flex: 1 1 200px; min-width: 120px; accent-color: var(--accent); }
+.time { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 92px; text-align: right; }
+</style>
+<div class="stage" id="stage">
+  <canvas id="cv" width="1280" height="720" aria-label="Animated explainer: iLogix voice agents and agentic AI"></canvas>
+  <button class="big" id="big" aria-label="Play"><span><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></span></button>
+</div>
+<div class="bar">
+  <button class="ctl" id="play" aria-label="Play">Play</button>
+  <input type="range" id="scrub" min="0" max="35" step="0.01" value="0" aria-label="Scrub">
+  <span class="time" id="time">0.0 / 35.0 s</span>
+  <button class="ctl" id="snd" aria-pressed="true">Sound on</button>
+  <button class="ctl" id="vo" aria-pressed="false" title="Quieter effects and no music bed, for laying a voiceover on top">Voiceover mix</button>
+  <button class="ctl" id="loop" aria-pressed="true">Loop</button>
+  <button class="ctl" id="ar" aria-pressed="false" title="Switch between 16:9 and 9:16">9:16 vertical</button>
+</div>
+<script>
+// ===== H helper library (unchanged from the style kit; registry/render parts omitted) =====
+(function () {
+  const H = (window.H = {});
+  H.rng = function (seed = 1) {
+    let a = typeof seed === 'string' ? hashStr(seed) : (seed >>> 0) || 1;
+    const r = function () {
+      a |= 0; a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    r.range = (lo, hi) => lo + r() * (hi - lo);
+    r.int = (lo, hi) => Math.floor(lo + r() * (hi - lo + 1));
+    r.pick = (arr) => arr[Math.floor(r() * arr.length)];
+    r.chance = (p) => r() < p;
+    r.gauss = () => { let u = 0, v = 0; while (!u) u = r(); while (!v) v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+    return r;
+  };
+  function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  H.makeNoise = function (seed = 1) {
+    const r = H.rng(seed), p = new Uint8Array(512), perm = [...Array(256).keys()];
+    for (let i = 255; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
+    for (let i = 0; i < 512; i++) p[i] = perm[i & 255];
+    const fade = (t) => t * t * t * (t * (t * 6 - 15) + 10);
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const g3 = (h, x, y, z) => { h &= 15; const u = h < 8 ? x : y, v = h < 4 ? y : h === 12 || h === 14 ? x : z; return ((h & 1) ? -u : u) + ((h & 2) ? -v : v); };
+    function n3(x, y, z) {
+      const X = Math.floor(x) & 255, Y = Math.floor(y) & 255, Z = Math.floor(z) & 255;
+      x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
+      const u = fade(x), v = fade(y), w = fade(z);
+      const A = p[X] + Y, AA = p[A] + Z, AB = p[A + 1] + Z, B = p[X + 1] + Y, BA = p[B] + Z, BB = p[B + 1] + Z;
+      return lerp(lerp(lerp(g3(p[AA], x, y, z), g3(p[BA], x - 1, y, z), u), lerp(g3(p[AB], x, y - 1, z), g3(p[BB], x - 1, y - 1, z), u), v),
+        lerp(lerp(g3(p[AA + 1], x, y, z - 1), g3(p[BA + 1], x - 1, y, z - 1), u), lerp(g3(p[AB + 1], x, y - 1, z - 1), g3(p[BB + 1], x - 1, y - 1, z - 1), u), v), w);
+    }
+    const n2 = (x, y) => n3(x, y, 0.5);
+    const fbm3 = (x, y, z, oct = 4) => { let s = 0, a = 0.5, f = 1, norm = 0; for (let i = 0; i < oct; i++) { s += a * n3(x * f, y * f, z * f); norm += a; a *= 0.5; f *= 2; } return s / norm; };
+    const fbm2 = (x, y, oct = 4) => fbm3(x, y, 0.5, oct);
+    return { n2, n3, fbm2, fbm3 };
+  };
+  H.lerp = (a, b, t) => a + (b - a) * t;
+  H.clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
+  H.map = (v, a, b, c, d) => c + ((v - a) / (b - a)) * (d - c);
+  H.smooth = (e0, e1, x) => { const t = H.clamp((x - e0) / (e1 - e0)); return t * t * (3 - 2 * t); };
+  H.ease = {
+    inOut: (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
+    out: (t) => 1 - Math.pow(1 - t, 3),
+    in: (t) => t * t * t,
+    back: (t) => { const c = 1.70158; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); },
+  };
+  H.hex = (h) => { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map((c) => c + c).join(''); const n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  H.rgba = (hexOrArr, a = 1) => { const [r, g, b] = Array.isArray(hexOrArr) ? hexOrArr : H.hex(hexOrArr); return `rgba(${r | 0},${g | 0},${b | 0},${a})`; };
+  H.mix = (c1, c2, t) => { const a = Array.isArray(c1) ? c1 : H.hex(c1), b = Array.isArray(c2) ? c2 : H.hex(c2); return [0, 1, 2].map((i) => a[i] + (b[i] - a[i]) * t); };
+  H.layer = (W, H_, ) => { const c = document.createElement('canvas'); c.width = W; c.height = H_; return c; };
+  H.grain = function (ctx, W, Hh, amount = 0.08, seed = 7, mono = true) {
+    const img = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height), d = img.data, r = H.rng(seed), k = amount * 255;
+    for (let i = 0; i < d.length; i += 4) {
+      const n = (r() - 0.5) * k;
+      if (mono) { d[i] += n; d[i + 1] += n; d[i + 2] += n; }
+      else { d[i] += (r() - 0.5) * k; d[i + 1] += (r() - 0.5) * k; d[i + 2] += (r() - 0.5) * k; }
+    }
+    ctx.putImageData(img, 0, 0);
+  };
+  H.paper = function (ctx, W, Hh, base = '#f3ecdc', seed = 3, strength = 0.06) {
+    ctx.save(); ctx.fillStyle = base; ctx.fillRect(0, 0, W, Hh);
+    const nz = H.makeNoise(seed), cell = 4, [br, bg, bb] = H.hex(base);
+    for (let y = 0; y < Hh; y += cell) for (let x = 0; x < W; x += cell) {
+      const v = nz.fbm2(x * 0.01, y * 0.01, 3) * 0.6 + nz.n2(x * 0.15, y * 0.04) * 0.4;
+      const s = 1 + v * strength * 2;
+      ctx.fillStyle = `rgb(${br * s | 0},${bg * s | 0},${bb * s | 0})`; ctx.fillRect(x, y, cell, cell);
+    }
+    ctx.restore();
+  };
+  H.vignette = function (ctx, W, Hh, strength = 0.5, color = '0,0,0') {
+    const g = ctx.createRadialGradient(W / 2, Hh / 2, Math.min(W, Hh) * 0.3, W / 2, Hh / 2, Math.hypot(W, Hh) * 0.6);
+    g.addColorStop(0, `rgba(${color},0)`); g.addColorStop(1, `rgba(${color},${strength})`);
+    ctx.save(); ctx.fillStyle = g; ctx.fillRect(0, 0, W, Hh); ctx.restore();
+  };
+  H.W = 1280; H.H = 720;
+})();
+// ===== Flat-Vector Science: drawing, texture and finishing functions (copied from the reference) =====
+const TAU = Math.PI * 2;
+const cl = H.clamp, lerp = H.lerp;
+const seg = (t, a, b) => cl((t - a) / (b - a));
+const eo = H.ease.out, eio = H.ease.inOut;
+const back = (u, s = 1.5) => { if (u <= 0) return 0; if (u >= 1) return 1; return 1 + (s + 1) * Math.pow(u - 1, 3) + s * Math.pow(u - 1, 2); };
+const FONT = '"Nunito", "Fredoka", sans-serif';
+const F = (w, px) => `${w} ${px}px ${FONT}`;
+const C = {
+  sky0: '#090b2c', sky1: '#18134f', sky2: '#3a1a6c',
+  ink: '#141846',
+  teal: ['#a4fbef', '#3ccbdc', '#1d64b0'],
+  yellow: '#ffd23f', pink: '#ff5d8f', red: '#ff3b5c', green: '#38e08e', cyan: '#56e8ff', violet: '#8b5cff',
+};
+function rr(x, X, Y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r);
+  x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath();
+}
+function glow(x, cx, cy, r, col, a) {
+  if (a <= 0 || r <= 0) return;
+  const g = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+  g.addColorStop(0, H.rgba(col, a)); g.addColorStop(0.35, H.rgba(col, a * 0.4)); g.addColorStop(1, H.rgba(col, 0));
+  x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.fill();
+}
+function spark(x, cx, cy, r, col, a) {
+  if (a <= 0 || r <= 0) return;
+  x.save(); x.globalAlpha *= a; x.fillStyle = col; x.beginPath();
+  x.moveTo(cx, cy - r); x.quadraticCurveTo(cx, cy, cx + r, cy); x.quadraticCurveTo(cx, cy, cx, cy + r);
+  x.quadraticCurveTo(cx, cy, cx - r, cy); x.quadraticCurveTo(cx, cy, cx, cy - r); x.fill(); x.restore();
+}
+function crescent(x, cx, cy, r, dx, dy, fill) {
+  x.save(); x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.clip();
+  x.beginPath(); x.rect(cx - r - 2, cy - r - 2, 2 * r + 4, 2 * r + 4); x.arc(cx + dx, cy + dy, r * 1.02, 0, TAU);
+  x.fillStyle = fill; x.fill('evenodd'); x.restore();
+}
+function ball(x, cx, cy, r, col, o = {}) {
+  if (r <= 0.3) return;
+  const la = o.la == null ? -2.25 : o.la, lx = Math.cos(la), ly = Math.sin(la);
+  const g = x.createLinearGradient(cx + lx * r, cy + ly * r, cx - lx * r, cy - ly * r);
+  g.addColorStop(0, col[0]); g.addColorStop(0.45, col[1]); g.addColorStop(1, H.rgba(H.mix(col[1], col[2], 0.6)));
+  x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.fill();
+  if (o.inner) { x.save(); x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.clip(); o.inner(); x.restore(); }
+  const sh = o.sh == null ? 0.3 : o.sh;
+  crescent(x, cx, cy, r, lx * r * sh, ly * r * sh, H.rgba(col[2], o.sha == null ? 0.5 : o.sha));
+  crescent(x, cx, cy, r, lx * r * sh * 2.2, ly * r * sh * 2.2, H.rgba(col[2], (o.sha == null ? 0.5 : o.sha) * 0.45));
+  crescent(x, cx, cy, r, -lx * r * 0.075, -ly * r * 0.075, H.rgba(o.rim || '#ffffff', o.rima == null ? 0.42 : o.rima));
+}
+const bez = (P, u) => { const v = 1 - u; return [v * v * v * P[0][0] + 3 * v * v * u * P[1][0] + 3 * v * u * u * P[2][0] + u * u * u * P[3][0], v * v * v * P[0][1] + 3 * v * v * u * P[1][1] + 3 * v * u * u * P[2][1] + u * u * u * P[3][1]]; };
+function arrow(x, P, prog, col, lw, o = {}) {
+  if (prog <= 0) return;
+  const n = 48, a = o.a == null ? 1 : o.a;
+  x.save(); x.globalAlpha *= a; x.strokeStyle = col; x.fillStyle = col; x.lineWidth = lw; x.lineCap = 'round'; x.lineJoin = 'round';
+  if (o.dots) x.setLineDash([0.01, lw * 1.9]);
+  x.beginPath(); const p0 = bez(P, o.from || 0); x.moveTo(p0[0], p0[1]);
+  for (let i = 1; i <= n; i++) { const u = (o.from || 0) + ((prog - (o.from || 0)) * i) / n; const p = bez(P, u); x.lineTo(p[0], p[1]); }
+  x.stroke(); x.setLineDash([]);
+  if (o.head !== false && prog > 0.08) {
+    const e = bez(P, prog), e0 = bez(P, prog - 0.02), ang = Math.atan2(e[1] - e0[1], e[0] - e0[0]), hs = lw * 1.5 * cl(prog * 5);
+    x.translate(e[0], e[1]); x.rotate(ang); x.beginPath(); x.moveTo(hs * 1.1, 0); x.lineTo(-hs * 0.8, hs); x.lineTo(-hs * 0.8, -hs); x.closePath();
+    x.lineWidth = lw * 0.7; x.fill(); x.stroke();
+  }
+  x.restore();
+}
+function text(x, s, cx, cy, px, col, o = {}) {
+  x.save(); x.font = F(o.w || 900, px); x.textAlign = o.align || 'center'; x.textBaseline = 'middle';
+  x.globalAlpha *= o.a == null ? 1 : o.a;
+  x.fillStyle = o.shadow || 'rgba(10,8,46,0.55)'; x.fillText(s, cx + px * 0.03, cy + px * 0.07);
+  x.fillStyle = col; x.fillText(s, cx, cy); x.restore();
+}
+function pill(x, cx, cy, s, px, o = {}) {
+  const sc = o.s == null ? 1 : o.s, a = o.a == null ? 1 : o.a;
+  if (sc <= 0.01 || a <= 0.01) return;
+  x.save(); x.font = F(o.w || 900, px);
+  const tw = x.measureText(s).width, w = tw + px * 1.15, h = px * 1.6;
+  x.translate(cx, cy); x.scale(sc, sc); x.globalAlpha *= a;
+  x.fillStyle = 'rgba(10,8,46,0.4)'; rr(x, -w / 2, -h / 2 + px * 0.2, w, h, h / 2); x.fill();
+  x.fillStyle = o.bg || '#ffffff';
+  if (o.ptr) { x.beginPath(); x.moveTo(-px * 0.35, h / 2 - 2); x.lineTo(0, h / 2 + px * 0.45); x.lineTo(px * 0.35, h / 2 - 2); x.fill(); }
+  rr(x, -w / 2, -h / 2, w, h, h / 2); x.fill();
+  x.fillStyle = 'rgba(255,255,255,0.35)'; rr(x, -w / 2 + h * 0.25, -h / 2 + h * 0.12, w - h * 0.5, h * 0.16, h * 0.08); x.fill();
+  x.fillStyle = o.fg || C.ink; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(s, 0, px * 0.06);
+  x.restore();
+  return w;
+}
+let STARS = null;
+function stars() {
+  if (STARS) return STARS;
+  const r = H.rng(77), a = [], sp = [];
+  for (let i = 0; i < 620; i++) a.push({ x: r.range(0, 1680), y: r.range(0, 1120), d: r.pick([0.15, 0.3, 0.3, 0.55, 1]), s: r.range(0.6, 2.0), ph: r.range(0, TAU), sp: r.range(0.8, 2.6), c: r.pick(['#ffffff', '#cfe4ff', '#ffe9c7', '#dccbff']) });
+  for (let i = 0; i < 16; i++) sp.push({ x: r.range(0, 1680), y: r.range(0, 1120), d: r.range(0.3, 0.9), s: r.range(6, 13), ph: r.range(0, TAU) });
+  STARS = { a, sp }; return STARS;
+}
+function sky(x, W, H_, t, cam = {}) {
+  const px = cam.x || 0, py = cam.y || 0, lz = Math.log(cam.z || 1);
+  const g = x.createLinearGradient(0, 0, W * 0.3, H_);
+  g.addColorStop(0, C.sky0); g.addColorStop(0.5, C.sky1); g.addColorStop(1, C.sky2);
+  x.fillStyle = g; x.fillRect(0, 0, W, H_);
+  glow(x, W * 0.86, H_ * 0.12, 700, '#7b34c6', 0.34);
+  glow(x, W * 0.05, H_ * 1.0, 620, '#2448b4', 0.4);
+  glow(x, W * 0.45, H_ * 0.6, 520, '#4a2a9c', 0.16);
+  const S = stars();
+  const place = (s) => {
+    const k = Math.exp(lz * s.d * 0.6);
+    let sx = (((s.x - px * s.d) % 1680) + 1680) % 1680 - 200, sy = (((s.y - py * s.d) % 1120) + 1120) % 1120 - 200;
+    return [(sx - 640) * k + 640, (sy - 360) * k + 360];
+  };
+  for (const s of S.a) {
+    const [sx, sy] = place(s);
+    if (sx < -4 || sx > W + 4 || sy < -4 || sy > H_ + 4) continue;
+    x.globalAlpha = (0.55 + 0.45 * Math.sin(t * s.sp + s.ph)) * (0.45 + s.d * 0.55);
+    x.fillStyle = s.c; x.beginPath(); x.arc(sx, sy, s.s * (0.7 + 0.35 * s.d), 0, TAU); x.fill();
+  }
+  x.globalAlpha = 1;
+  for (const s of S.sp) {
+    const [sx, sy] = place(s); const tw = 0.6 + 0.4 * Math.sin(t * 1.7 + s.ph);
+    glow(x, sx, sy, s.s * 2.2, '#bfa8ff', 0.25 * tw);
+    spark(x, sx, sy, s.s * tw, '#ffffff', 0.9);
+  }
+}
+const PL = {
+  coral: { c: ['#ffd29a', '#ff7a4a', '#7a1f4f'], glow: '#ff8a50', tilt: 0.1, atmo: [255, 226, 190],
+    bands: [[-0.7, -0.5, '#ffe2b8', 0.5], [-0.32, -0.12, '#e8553a', 0.6], [0.05, 0.22, '#ffb27a', 0.5], [0.4, 0.62, '#c43c46', 0.55]] },
+  moon: { c: ['#e8e6ff', '#a7a2d8', '#4a3f8c'], craters: true },
+};
+function bands(x, r, B, tilt) {
+  x.save(); x.rotate(tilt || 0);
+  for (const [v0, v1, col, a] of B) {
+    x.beginPath();
+    for (let i = 0; i <= 20; i++) { const u = (i / 20) * 2 - 1; x.lineTo(u * r * 1.1, (v0 + 0.13 * (1 - u * u)) * r); }
+    for (let i = 20; i >= 0; i--) { const u = (i / 20) * 2 - 1; x.lineTo(u * r * 1.1, (v1 + 0.13 * (1 - u * u)) * r); }
+    x.fillStyle = H.rgba(col, a == null ? 1 : a); x.fill();
+  }
+  x.restore();
+}
+function atmosphere(x, cx, cy, r, rgb, atA) {
+  x.save(); x.lineCap = 'round'; const ga0 = x.globalAlpha;
+  const la = -2.25, ag = x.createLinearGradient(cx + Math.cos(la) * r, cy + Math.sin(la) * r, cx - Math.cos(la) * r, cy - Math.sin(la) * r);
+  ag.addColorStop(0, H.rgba(rgb, 1)); ag.addColorStop(0.55, H.rgba(rgb, 0.5)); ag.addColorStop(1, H.rgba(rgb, 0.08));
+  x.strokeStyle = ag;
+  for (const [lw, a] of [[r * 0.05, 0.08], [r * 0.028, 0.16], [r * 0.014, 0.3], [Math.max(2, r * 0.006), 0.6]]) { x.globalAlpha = ga0 * a * atA; x.lineWidth = lw; x.beginPath(); x.arc(cx, cy, r + lw * 0.15, 0, TAU); x.stroke(); }
+  x.restore();
+}
+function planet(x, cx, cy, r, pal, o = {}) {
+  if (r <= 0.5) return;
+  if (pal.glow) glow(x, cx, cy, r * 1.7, pal.glow, o.glowA == null ? 0.32 : o.glowA);
+  ball(x, cx, cy, r, pal.c, {
+    sh: 0.34, sha: 0.55, rima: 0.35,
+    inner: () => {
+      x.save(); x.translate(cx, cy);
+      if (pal.bands) bands(x, r, pal.bands, pal.tilt);
+      if (pal.craters) { const q = H.rng(5); for (let i = 0; i < 5; i++) { const a = q.range(0, TAU), d = q.range(0.1, 0.65) * r, cr = q.range(0.1, 0.2) * r, qx = Math.cos(a) * d, qy = Math.sin(a) * d; x.fillStyle = 'rgba(80,66,150,0.38)'; x.beginPath(); x.arc(qx, qy, cr, 0, TAU); x.fill(); crescent(x, qx, qy, cr, -cr * 0.3, -cr * 0.3, 'rgba(255,255,255,0.3)'); } }
+      x.restore();
+    },
+  });
+  if (pal.atmo) atmosphere(x, cx, cy, r, pal.atmo, o.atmo == null ? 0.7 : o.atmo);
+}
+// print finish: fine animated grain + soft static mottling (overlay), kills gradient banding
+let GRAIN = null;
+function grainTex() {
+  if (GRAIN) return GRAIN;
+  const S = 256, tile = H.layer(S, S), tc = tile.getContext('2d'), img = tc.createImageData(S, S), d = img.data, r = H.rng(4242);
+  for (let i = 0; i < d.length; i += 4) { const v = 128 + (r() + r() + r() - 1.5) * 92; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
+  tc.putImageData(img, 0, 0);
+  const MW = 320, MH = 180, mot = H.layer(MW, MH), mc = mot.getContext('2d'), mi = mc.createImageData(MW, MH), md = mi.data, nz = H.makeNoise(88);
+  for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) { const v = 128 + nz.fbm2(x * 0.035, y * 0.035, 4) * 70 + nz.n2(x * 0.22, y * 0.22) * 14, k = (y * MW + x) * 4; md[k] = md[k + 1] = md[k + 2] = v; md[k + 3] = 255; }
+  mc.putImageData(mi, 0, 0);
+  GRAIN = { tile, mot };
+  return GRAIN;
+}
+function finish(x, W, H_, t) {
+  const G = grainTex(), f = Math.floor(t * 24);
+  x.save(); x.globalCompositeOperation = 'overlay';
+  x.globalAlpha = 0.12; x.imageSmoothingEnabled = true; x.drawImage(G.mot, 0, 0, W, H_);
+  const pat = x.createPattern(G.tile, 'repeat'); pat.setTransform(new DOMMatrix().translateSelf((f * 73) % 256, (f * 151) % 256));
+  x.globalAlpha = 0.09; x.fillStyle = pat; x.fillRect(0, 0, W, H_);
+  x.restore();
+}
+function eye(x, ex, ey, er, o) {
+  const look = o.look || [0, 0];
+  if ((o.happy || 0) > 0.5) {
+    x.save(); x.strokeStyle = '#ffffff'; x.lineWidth = er * 0.42; x.lineCap = 'round';
+    x.beginPath(); x.arc(ex, ey + er * 0.35, er * 0.62, Math.PI * 1.15, Math.PI * 1.85); x.stroke(); x.restore(); return;
+  }
+  const bl = 1 - 0.92 * (o.blink || 0);
+  x.save(); x.translate(ex, ey); x.scale(1, bl);
+  x.fillStyle = '#ffffff'; x.beginPath(); x.arc(0, 0, er, 0, TAU); x.fill();
+  const pr = er * (o.worry ? 0.5 : 0.56);
+  const px = look[0] * er * 0.36, py = look[1] * er * 0.36;
+  x.fillStyle = '#141638'; x.beginPath(); x.arc(px, py, pr, 0, TAU); x.fill();
+  x.fillStyle = '#ffffff'; x.beginPath(); x.arc(px - pr * 0.35, py - pr * 0.4, pr * 0.32, 0, TAU); x.fill();
+  x.beginPath(); x.arc(px + pr * 0.35, py + pr * 0.35, pr * 0.13, 0, TAU); x.fill();
+  x.restore();
+}
+function badge(x, cx, cy, r, ok, s) {
+  if (s <= 0.01) return;
+  x.save(); x.translate(cx, cy); x.scale(s, s);
+  glow(x, 0, 0, r * 2.4, ok ? C.green : C.red, 0.45);
+  ball(x, 0, 0, r, ok ? ['#9fffc8', C.green, '#178a5a'] : ['#ff9aa8', C.red, '#9c1638'], { sha: 0.4 });
+  x.strokeStyle = '#ffffff'; x.lineWidth = r * 0.26; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath();
+  if (ok) { x.moveTo(-r * 0.42, 0); x.lineTo(-r * 0.1, r * 0.32); x.lineTo(r * 0.45, -r * 0.3); }
+  else { x.moveTo(-r * 0.34, -r * 0.34); x.lineTo(r * 0.34, r * 0.34); x.moveTo(r * 0.34, -r * 0.34); x.lineTo(-r * 0.34, r * 0.34); }
+  x.stroke(); x.restore();
+}
+function flare(x, cx, cy, k, t) {
+  if (k <= 0) return;
+  glow(x, cx, cy, 420 * (0.6 + 0.4 * k), '#ffcf5a', 0.55 * k);
+  glow(x, cx, cy, 160, '#fff6d0', 0.6 * k);
+  x.save(); x.translate(cx, cy); x.rotate(t * 0.25); x.globalAlpha *= 0.32 * k; x.fillStyle = '#ffe28a';
+  for (let i = 0; i < 12; i++) { x.rotate(TAU / 12); x.beginPath(); x.moveTo(0, -12); x.lineTo(330 + 60 * (i % 2), 0); x.lineTo(0, 12); x.fill(); }
+  x.restore();
+}
+function burst(x, cx, cy, age, seed, spread) {
+  if (age < 0 || age > 1.4) return;
+  const r = H.rng(seed);
+  for (let i = 0; i < 18; i++) {
+    const a = r.range(0, TAU), d = (spread || 300) * r.range(0.45, 1) * eo(cl(age / 0.9)), sz = r.range(7, 16) * (1 - cl(age / 1.4));
+    spark(x, cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.8, sz, r.pick(['#ffffff', '#ffe28a', '#9ff7ff', '#ffb0d0']), 1);
+  }
+}
+const blinkAt = (t, ph) => { const u = (t + ph) % 3.3; return u < 0.14 ? Math.sin((u / 0.14) * Math.PI) : 0; };
+function header(x, a) { pill(x, 232, 44, 'How did Earth get water?', 28, { a, bg: 'rgba(255,255,255,0.95)' }); }
+// ===== Tech Glow: palette, helpers and the nine key frames (uses H, glow, rr, seg, back, finish from the kit) =====
+const W_ = 1280, H_ = 720;
+const T = { bg0: '#050816', bg1: '#0a1030', bg2: '#140f3d', cyan: '#38e8ff', violet: '#8b6bff', pink: '#ff5fa8', green: '#3dffa0', amber: '#ffc94a', red: '#ff4d6d', ink: '#eaf1ff', mute: '#8fa3d8' };
+const FS = '"Sora", "Segoe UI", system-ui, sans-serif', FM = '"IBM Plex Mono", ui-monospace, Menlo, monospace';
+const tf = (w, px) => `${w} ${px}px ${FS}`, mf = (w, px) => `${w} ${px}px ${FM}`;
+
+const hexOf = (c) => '#' + c.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+function tbg(x, t) {
+  const CW = x.canvas.width, CH = x.canvas.height;
+  const g = x.createLinearGradient(0, 0, CW * 0.4, CH);
+  g.addColorStop(0, T.bg0); g.addColorStop(0.6, T.bg1); g.addColorStop(1, T.bg2);
+  x.fillStyle = g; x.fillRect(0, 0, CW, CH);
+  glow(x, CW * 0.86, CH * 0.08, 640, '#6a3df0', 0.28); glow(x, CW * 0.06, CH * 0.98, 580, '#1aa7e8', 0.24);
+  x.save(); x.strokeStyle = 'rgba(120,160,255,0.07)'; x.lineWidth = 1;
+  for (let X = 0; X < CW; X += 64) { x.beginPath(); x.moveTo(X, 0); x.lineTo(X, CH); x.stroke(); }
+  for (let Y = 0; Y < CH; Y += 64) { x.beginPath(); x.moveTo(0, Y); x.lineTo(CW, Y); x.stroke(); }
+  x.restore();
+  const r = H.rng(31);
+  for (let i = 0; i < 70; i++) {
+    const px = (r() * CW + t * 6 * (0.3 + r())) % CW, py = (r() * CH + CH * 2 - t * 4 * (0.3 + r())) % CH, s = r.range(0.8, 2.2), ph = r.range(0, TAU);
+    x.globalAlpha = 0.25 + 0.35 * Math.sin(t * 1.6 + ph) ** 2; x.fillStyle = r.pick(['#8fe9ff', '#b9a8ff', '#ffffff']); x.beginPath(); x.arc(px, py, s, 0, TAU); x.fill();
+  }
+  x.globalAlpha = 1;
+}
+function tfinish(x, t) { const CW = x.canvas.width, CH = x.canvas.height; H.vignette(x, CW, CH, 0.5, '2,4,16'); finish(x, CW, CH, t); }
+function ttext(x, s, cx, cy, px, col, o = {}) {
+  x.save(); x.font = o.mono ? mf(o.w || 600, px) : tf(o.w || 700, px); x.textAlign = o.align || 'center'; x.textBaseline = 'middle';
+  x.globalAlpha *= o.a == null ? 1 : o.a;
+  if (o.glow) { x.shadowColor = H.rgba(o.glow, 0.75); x.shadowBlur = px * 0.55; }
+  x.fillStyle = col; x.fillText(s, cx, cy); x.restore();
+}
+function tchip(x, cx, cy, s, px, o = {}) {
+  const col = o.col || T.cyan; x.save(); x.font = mf(600, px);
+  const w = x.measureText(s).width + px * 1.6, h = px * 2; x.globalAlpha *= o.a == null ? 1 : o.a;
+  if (o.solid) { x.shadowColor = H.rgba(col, 0.7); x.shadowBlur = 22; }
+  x.fillStyle = H.rgba(col, o.solid ? 0.95 : 0.14); rr(x, cx - w / 2, cy - h / 2, w, h, h / 2); x.fill(); x.shadowBlur = 0;
+  x.lineWidth = 1.5; x.strokeStyle = H.rgba(col, 0.9); rr(x, cx - w / 2, cy - h / 2, w, h, h / 2); x.stroke();
+  x.fillStyle = o.solid ? '#06102a' : col; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(s, cx, cy + 1); x.restore(); return w;
+}
+function tcard(x, X, Y, w, h, o = {}) {
+  const col = o.col || T.cyan, r = o.r || 22; x.save(); x.globalAlpha *= o.a == null ? 1 : o.a;
+  x.shadowColor = H.rgba(col, 0.5); x.shadowBlur = 28; x.fillStyle = 'rgba(13,21,56,0.92)'; rr(x, X, Y, w, h, r); x.fill(); x.shadowBlur = 0;
+  const g = x.createLinearGradient(X, Y, X + w, Y + h); g.addColorStop(0, H.rgba(col, 0.95)); g.addColorStop(1, H.rgba(o.col2 || T.violet, 0.85));
+  x.lineWidth = 2.5; x.strokeStyle = g; rr(x, X, Y, w, h, r); x.stroke();
+  x.fillStyle = 'rgba(255,255,255,0.05)'; rr(x, X + 4, Y + 4, w - 8, h * 0.28, Math.max(2, r - 4)); x.fill(); x.restore();
+}
+function tnode(x, cx, cy, r, col, t, o = {}) {
+  const p = 0.5 + 0.5 * Math.sin(t * 3 + (o.ph || 0));
+  glow(x, cx, cy, r * (2.4 + 0.3 * p), col, 0.3 + 0.12 * p);
+  const g = x.createRadialGradient(cx, cy - r * 0.3, r * 0.1, cx, cy, r); g.addColorStop(0, H.rgba(col, 0.38)); g.addColorStop(1, 'rgba(10,16,48,0.96)');
+  x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.fill();
+  x.save(); x.lineWidth = 3; x.strokeStyle = H.rgba(col, 0.95); x.shadowColor = H.rgba(col, 0.8); x.shadowBlur = 18; x.stroke(); x.restore();
+  if (o.ring) { x.save(); x.lineWidth = 1.5; x.strokeStyle = H.rgba(col, 0.4 * (1 - p)); x.beginPath(); x.arc(cx, cy, r * (1.15 + 0.25 * p), 0, TAU); x.stroke(); x.restore(); }
+  if (o.icon) o.icon(x, cx, cy, r * 0.5, Array.isArray(col) ? hexOf(col) : col, t);
+  if (o.label) ttext(x, o.label, cx, cy + r + (o.ly || 32), o.lpx || 26, T.ink, { w: 700 });
+}
+function tlink(x, ax, ay, bx, by, col, t, o = {}) {
+  x.save(); x.lineCap = 'round'; x.strokeStyle = H.rgba(col, 0.38); x.lineWidth = o.lw || 3; x.beginPath(); x.moveTo(ax, ay); x.lineTo(bx, by); x.stroke();
+  const n = o.dots == null ? 2 : o.dots;
+  for (let i = 0; i < n; i++) { const u = (t * 0.45 + i / Math.max(n, 1) + (o.ph || 0)) % 1, px = lerp(ax, bx, u), py = lerp(ay, by, u); glow(x, px, py, 18, col, 0.8); x.fillStyle = '#ffffff'; x.beginPath(); x.arc(px, py, 3.5, 0, TAU); x.fill(); }
+  if (o.head) { const ang = Math.atan2(by - ay, bx - ax); x.translate(bx, by); x.rotate(ang); x.fillStyle = H.rgba(col, 0.95); x.beginPath(); x.moveTo(2, 0); x.lineTo(-15, -9); x.lineTo(-15, 9); x.closePath(); x.fill(); }
+  x.restore();
+}
+function wordmark(x, big) {
+  if (big) { ttext(x, 'iLogix Digital', 640, 120, 66, T.ink, { w: 800, glow: T.cyan }); return; }
+  glow(x, 56, 46, 22, T.cyan, 0.8); x.fillStyle = T.cyan; x.beginPath(); x.arc(56, 46, 7, 0, TAU); x.fill();
+  ttext(x, 'iLogix Digital', 76, 46, 22, T.ink, { w: 700, align: 'left' });
+}
+// icons: (x, cx, cy, s, col)
+const ln = (x, col, s) => { x.strokeStyle = col; x.lineWidth = Math.max(2, s * 0.11); x.lineCap = 'round'; x.lineJoin = 'round'; };
+function iPhone(x, cx, cy, s, col) { x.save(); ln(x, col, s); rr(x, cx - s * 0.5, cy - s * 0.9, s, s * 1.8, s * 0.18); x.stroke(); x.beginPath(); x.moveTo(cx - s * 0.14, cy + s * 0.7); x.lineTo(cx + s * 0.14, cy + s * 0.7); x.stroke(); x.restore(); }
+function iMail(x, cx, cy, s, col) { x.save(); ln(x, col, s); rr(x, cx - s * 0.9, cy - s * 0.62, s * 1.8, s * 1.24, s * 0.14); x.stroke(); x.beginPath(); x.moveTo(cx - s * 0.85, cy - s * 0.5); x.lineTo(cx, cy + s * 0.1); x.lineTo(cx + s * 0.85, cy - s * 0.5); x.stroke(); x.restore(); }
+function iChat(x, cx, cy, s, col) { x.save(); ln(x, col, s); x.fillStyle = col; rr(x, cx - s * 0.9, cy - s * 0.7, s * 1.8, s * 1.2, s * 0.35); x.stroke(); x.beginPath(); x.moveTo(cx - s * 0.4, cy + s * 0.5); x.lineTo(cx - s * 0.65, cy + s * 0.95); x.lineTo(cx - s * 0.05, cy + s * 0.5); x.stroke(); for (let i = -1; i <= 1; i++) { x.beginPath(); x.arc(cx + i * s * 0.45, cy - s * 0.1, s * 0.09, 0, TAU); x.fill(); } x.restore(); }
+function iCal(x, cx, cy, s, col) { x.save(); ln(x, col, s); x.fillStyle = col; rr(x, cx - s * 0.85, cy - s * 0.7, s * 1.7, s * 1.5, s * 0.16); x.stroke(); x.beginPath(); x.moveTo(cx - s * 0.85, cy - s * 0.25); x.lineTo(cx + s * 0.85, cy - s * 0.25); x.moveTo(cx - s * 0.4, cy - s * 0.95); x.lineTo(cx - s * 0.4, cy - s * 0.5); x.moveTo(cx + s * 0.4, cy - s * 0.95); x.lineTo(cx + s * 0.4, cy - s * 0.5); x.stroke(); for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) { x.beginPath(); x.arc(cx - s * 0.45 + i * s * 0.45, cy + s * 0.12 + j * s * 0.4, s * 0.07, 0, TAU); x.fill(); } x.restore(); }
+function iPerson(x, cx, cy, s, col) { x.save(); ln(x, col, s); x.beginPath(); x.arc(cx, cy - s * 0.35, s * 0.38, 0, TAU); x.stroke(); x.beginPath(); x.arc(cx, cy + s * 1.0, s * 0.85, Math.PI * 1.15, Math.PI * 1.85); x.stroke(); x.restore(); }
+function iDoc(x, cx, cy, s, col) { x.save(); ln(x, col, s); x.beginPath(); x.moveTo(cx - s * 0.65, cy - s * 0.9); x.lineTo(cx + s * 0.25, cy - s * 0.9); x.lineTo(cx + s * 0.65, cy - s * 0.5); x.lineTo(cx + s * 0.65, cy + s * 0.9); x.lineTo(cx - s * 0.65, cy + s * 0.9); x.closePath(); x.stroke(); x.beginPath(); x.moveTo(cx - s * 0.35, cy - s * 0.1); x.lineTo(cx + s * 0.35, cy - s * 0.1); x.moveTo(cx - s * 0.35, cy + s * 0.25); x.lineTo(cx + s * 0.35, cy + s * 0.25); x.moveTo(cx - s * 0.35, cy + s * 0.6); x.lineTo(cx + s * 0.1, cy + s * 0.6); x.stroke(); x.restore(); }
+function iCheck(x, cx, cy, s, col) { x.save(); ln(x, col, s * 1.1); x.beginPath(); x.moveTo(cx - s * 0.6, cy + s * 0.05); x.lineTo(cx - s * 0.15, cy + s * 0.5); x.lineTo(cx + s * 0.65, cy - s * 0.45); x.stroke(); x.restore(); }
+function iBolt(x, cx, cy, s, col) { x.save(); ln(x, col, s); x.fillStyle = H.rgba(col, 0.25); x.beginPath(); x.moveTo(cx + s * 0.2, cy - s); x.lineTo(cx - s * 0.55, cy + s * 0.1); x.lineTo(cx - s * 0.05, cy + s * 0.1); x.lineTo(cx - s * 0.2, cy + s); x.lineTo(cx + s * 0.55, cy - s * 0.2); x.lineTo(cx + s * 0.05, cy - s * 0.2); x.closePath(); x.fill(); x.stroke(); x.restore(); }
+function iPlan(x, cx, cy, s, col) { x.save(); ln(x, col, s); x.fillStyle = col; for (let i = -1; i <= 1; i++) { x.beginPath(); x.arc(cx - s * 0.65, cy + i * s * 0.6, s * 0.1, 0, TAU); x.fill(); x.beginPath(); x.moveTo(cx - s * 0.3, cy + i * s * 0.6); x.lineTo(cx + s * 0.7, cy + i * s * 0.6); x.stroke(); } x.restore(); }
+function iShield(x, cx, cy, s, col) { x.save(); ln(x, col, s); x.beginPath(); x.moveTo(cx, cy - s); x.lineTo(cx + s * 0.85, cy - s * 0.6); x.lineTo(cx + s * 0.85, cy + s * 0.1); x.quadraticCurveTo(cx + s * 0.8, cy + s * 0.75, cx, cy + s); x.quadraticCurveTo(cx - s * 0.8, cy + s * 0.75, cx - s * 0.85, cy + s * 0.1); x.lineTo(cx - s * 0.85, cy - s * 0.6); x.closePath(); x.stroke(); x.beginPath(); x.moveTo(cx - s * 0.38, cy); x.lineTo(cx - s * 0.08, cy + s * 0.3); x.lineTo(cx + s * 0.42, cy - s * 0.28); x.stroke(); x.restore(); }
+function mayaOrb(x, cx, cy, r, t, label) {
+  glow(x, cx, cy, r * 2.8, T.violet, 0.35);
+  for (let i = 0; i < 3; i++) { const u = (t * 0.6 + i / 3) % 1; x.strokeStyle = H.rgba(T.cyan, 0.5 * (1 - u)); x.lineWidth = 3; x.beginPath(); x.arc(cx, cy, r * (1 + 0.7 * u), 0, TAU); x.stroke(); }
+  const g = x.createRadialGradient(cx - r * 0.3, cy - r * 0.35, r * 0.1, cx, cy, r); g.addColorStop(0, '#9ff6ff'); g.addColorStop(0.5, '#4a7cff'); g.addColorStop(1, '#5a2fd0');
+  x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.fill();
+  x.strokeStyle = 'rgba(255,255,255,0.35)'; x.lineWidth = 2; x.beginPath(); x.arc(cx, cy, r - 3, Math.PI * 1.05, Math.PI * 1.55); x.stroke();
+  const n = 11;
+  for (let i = 0; i < n; i++) { const k = 1 - Math.abs(i - (n - 1) / 2) / (n / 2) * 0.6, hg = r * (0.16 + 0.5 * Math.abs(Math.sin(t * 4 + i * 0.8)) * k); x.fillStyle = 'rgba(255,255,255,0.93)'; rr(x, cx - r * 0.62 + i * (r * 1.24 / (n - 1)) - r * 0.045, cy - hg / 2, r * 0.09, hg, r * 0.045); x.fill(); }
+  if (label) ttext(x, label, cx, cy + r + 34, 26, T.ink, { w: 700 });
+}
+const hd = (x, s, y, px, col, o) => ttext(x, s, 640, y, px, col || T.ink, Object.assign({ w: 800 }, o));
+
+const PANELS = [
+  // 1 HOOK
+  (x, t) => {
+    tbg(x, t); wordmark(x);
+    hd(x, 'Every missed call', 92, 56); hd(x, 'is a missed customer.', 158, 56, T.cyan, { glow: T.cyan });
+    for (let i = 0; i < 3; i++) { x.save(); x.strokeStyle = H.rgba(T.red, 0.55 - 0.15 * i); x.lineWidth = 4; x.lineCap = 'round'; const R = 220 + i * 26; x.beginPath(); x.arc(420, 450, R, -2.45, -2.0); x.stroke(); x.beginPath(); x.arc(420, 450, R, -1.14, -0.69); x.stroke(); x.restore(); }
+    tcard(x, 315, 280, 210, 370, { col: T.red, col2: T.pink });
+    tnode(x, 420, 400, 52, T.red, t, { icon: iPhone, ring: true });
+    tchip(x, 420, 492, 'Missed call', 20, { col: T.red });
+    ttext(x, 'Unknown caller', 420, 545, 18, T.mute, { mono: true, w: 500 });
+    ttext(x, '02:14', 840, 400, 140, T.ink, { mono: true, w: 600, glow: T.cyan });
+    ttext(x, 'AM', 1090, 440, 40, T.amber, { mono: true, w: 600, align: 'left' });
+    tchip(x, 840, 500, 'after hours', 22, { col: T.amber });
+    ttext(x, 'Nobody picks up.', 840, 580, 36, T.mute, { w: 600 });
+  },
+  // 2 MEET MAYA
+  (x, t) => {
+    tbg(x, t); wordmark(x);
+    hd(x, 'Meet Maya', 110, 72, T.ink, { glow: T.violet });
+    tchip(x, 640, 178, 'answers every call, 24/7', 22, { col: T.green });
+    tnode(x, 190, 440, 60, T.cyan, t, { icon: iPhone, label: 'Incoming call', lpx: 22 });
+    tlink(x, 255, 440, 495, 440, T.cyan, t, { head: true });
+    mayaOrb(x, 640, 440, 125, t, null);
+    tchip(x, 640, 625, 'Maya · AI receptionist', 22, { col: T.violet });
+    tcard(x, 810, 300, 400, 150, { col: T.violet, col2: T.cyan });
+    ttext(x, 'MAYA', 842, 332, 16, T.violet, { mono: true, align: 'left' });
+    ttext(x, 'Hi, you’ve reached iLogix.', 842, 378, 26, T.ink, { align: 'left', w: 600 });
+    ttext(x, 'How can I help?', 842, 418, 26, T.ink, { align: 'left', w: 600 });
+  },
+  // 3 WHAT MAYA CAPTURES
+  (x, t) => {
+    tbg(x, t); wordmark(x);
+    hd(x, 'Maya collects the details', 100, 52);
+    tnode(x, 130, 400, 62, T.cyan, t, { icon: iPhone, label: 'Caller' });
+    tlink(x, 195, 400, 308, 400, T.cyan, t, { head: true });
+    mayaOrb(x, 390, 400, 76, t, 'Maya');
+    const F3 = ['Name', 'Phone number', 'Reason for calling'];
+    F3.forEach((s, i) => {
+      const y = 250 + i * 110; tlink(x, 470, 400, 590, y + 46, T.violet, t, { ph: i * 0.2, dots: 1 });
+      tcard(x, 590, y, 310, 92, { col: T.green, col2: T.cyan, r: 18 });
+      x.save(); x.fillStyle = H.rgba(T.green, 0.2); x.beginPath(); x.arc(632, y + 46, 22, 0, TAU); x.fill(); x.restore(); iCheck(x, 632, y + 46, 14, T.green);
+      ttext(x, s, 670, y + 46, 24, T.ink, { align: 'left', w: 600 });
+      tlink(x, 900, y + 46, 1052, 400, T.green, t, { ph: i * 0.3, dots: 1 });
+    });
+    tnode(x, 1130, 400, 78, T.green, t, { icon: iPerson, label: 'Your team', ring: true });
+    tchip(x, 640, 640, 'then hands off to your team', 24, { col: T.green });
+  },
+  // 4 BEYOND CALLS
+  (x, t) => {
+    tbg(x, t); wordmark(x);
+    ttext(x, 'Agentic AI', 70, 230, 76, T.ink, { align: 'left', w: 800 });
+    ttext(x, 'doesn’t just answer.', 70, 322, 52, T.mute, { align: 'left', w: 600 });
+    ttext(x, 'It acts.', 70, 448, 104, T.cyan, { align: 'left', w: 800, glow: T.cyan });
+    const A = [930, 380], S = [[1080, 204, iMail, T.violet], [1165, 380, iCal, T.amber], [1080, 556, iCheck, T.green]];
+    S.forEach(([sx, sy, ic, col], i) => { const a = Math.atan2(sy - A[1], sx - A[0]); tlink(x, A[0] + Math.cos(a) * 112, A[1] + Math.sin(a) * 112, sx - Math.cos(a) * 52, sy - Math.sin(a) * 52, col, t, { head: true, ph: i * 0.25, dots: 1 }); tnode(x, sx, sy, 44, col, t, { icon: ic, ph: i }); });
+    tnode(x, A[0], A[1], 100, T.cyan, t, { icon: iBolt, ring: true });
+  },
+  // 5 PLAN ACT VERIFY
+  (x, t) => {
+    tbg(x, t); wordmark(x);
+    ttext(x, 'Plan.', 395, 82, 58, T.cyan, { w: 800 }); ttext(x, 'Act.', 640, 82, 58, T.violet, { w: 800 }); ttext(x, 'Verify.', 885, 82, 58, T.green, { w: 800 });
+    const N = [[240, T.cyan, iPlan, 'Plan', 'break the goal into steps'], [640, T.violet, iBolt, 'Act', 'use your tools'], [1040, T.green, iCheck, 'Verify', 'check before it counts']];
+    N.forEach(([nx, col, ic, lab, sub], i) => { tnode(x, nx, 340, 84, col, t, { icon: ic, label: lab, ly: 36, lpx: 30, ring: true, ph: i }); ttext(x, sub, nx, 488, 18, T.mute, { mono: true, w: 500 }); });
+    tlink(x, 332, 340, 548, 340, T.cyan, t, { head: true }); tlink(x, 732, 340, 948, 340, T.violet, t, { head: true });
+    x.save(); x.strokeStyle = H.rgba(T.green, 0.5); x.lineWidth = 3; x.lineCap = 'round'; x.setLineDash([10, 10]); x.beginPath(); x.moveTo(1040, 246); x.bezierCurveTo(1040, 150, 240, 150, 240, 246); x.stroke(); x.restore();
+    x.fillStyle = H.rgba(T.cyan, 0.95); x.beginPath(); x.moveTo(240, 252); x.lineTo(230, 232); x.lineTo(250, 232); x.closePath(); x.fill();
+    tchip(x, 640, 174, 'repeat until done', 18, { col: T.green, solid: true });
+    ttext(x, 'TYPICAL JOBS', 640, 575, 16, T.mute, { mono: true });
+    ['qualify leads', 'draft replies', 'triage support'].forEach((s, i) => tchip(x, 380 + i * 260, 625, s, 22, { col: [T.cyan, T.violet, T.green][i] }));
+  },
+  // 6 CONNECTED TO YOUR TOOLS
+  (x, t) => {
+    tbg(x, t); wordmark(x);
+    hd(x, 'Wired into your tools', 82, 54);
+    ['n8n', 'Make', 'GoHighLevel', 'Vapi'].forEach((s, i) => tchip(x, [440, 560, 740, 905][i], 150, s, 20, { col: T.mute }));
+    const S6 = [[220, 250, iPerson, 'CRM', T.cyan], [220, 520, iMail, 'Email', T.violet], [1060, 250, iChat, 'WhatsApp', T.green], [1060, 520, iCal, 'Calendar', T.amber], [640, 590, iDoc, 'Documents', T.pink]];
+    S6.forEach(([sx, sy, ic, lab, col], i) => { const a = Math.atan2(sy - 370, sx - 640); tlink(x, 640 + Math.cos(a) * 96, 370 + Math.sin(a) * 96, sx - Math.cos(a) * 62, sy - Math.sin(a) * 62, col, t, { ph: i * 0.2, dots: 1 }); tnode(x, sx, sy, 56, col, t, { icon: ic, label: lab, ly: 40, lpx: 22, ph: i }); });
+    tnode(x, 640, 370, 90, T.cyan, t, { icon: iBolt, label: null, ring: true });
+  },
+  // 7 GUARDRAILS
+  (x, t) => {
+    tbg(x, t); wordmark(x);
+    hd(x, 'Guardrails keep it on track', 100, 52);
+    tcard(x, 70, 300, 300, 140, { col: T.violet, col2: T.cyan });
+    ttext(x, 'AGENT ACTION', 100, 336, 16, T.violet, { mono: true, align: 'left' }); ttext(x, 'Draft reply', 100, 392, 34, T.ink, { align: 'left', w: 700 });
+    tlink(x, 372, 370, 520, 370, T.violet, t, { head: true });
+    tnode(x, 640, 370, 110, T.green, t, { icon: iShield, label: 'Guardrail check', ly: 40, ring: true });
+    tlink(x, 762, 370, 908, 370, T.green, t, { head: true });
+    tcard(x, 910, 300, 300, 140, { col: T.green, col2: T.cyan });
+    ttext(x, 'YOUR TEAM', 940, 336, 16, T.green, { mono: true, align: 'left' }); ttext(x, 'Stays in control', 940, 392, 28, T.ink, { align: 'left', w: 700 });
+    ['allowed actions only', 'approved data only', 'hand-off to a human'].forEach((s, i) => tchip(x, 300 + i * 340, 610, s, 20, { col: T.green }));
+  },
+  // 8 PROCESS
+  (x, t) => {
+    tbg(x, t); wordmark(x);
+    hd(x, 'From idea to live in weeks', 100, 54);
+    const S8 = [['DISCOVER', 'Fixed-scope', 'quote', T.cyan, iDoc], ['BUILD', 'Weekly', 'working demos', T.violet, iBolt], ['SCALE', 'Launch, training,', 'improvements', T.green, iCheck]];
+    S8.forEach(([a, b, c, col, ic], i) => { const X = 70 + i * 390; tcard(x, X, 190, 360, 300, { col, col2: T.cyan }); ic(x, X + 70, 270, 26, col); ttext(x, a, X + 30, 345, 20, col, { mono: true, align: 'left' }); ttext(x, b, X + 30, 400, 32, T.ink, { align: 'left', w: 700 }); ttext(x, c, X + 30, 446, 32, T.ink, { align: 'left', w: 700 }); if (i < 2) tlink(x, X + 364, 340, X + 386, 340, col, t, { head: true, dots: 0 }); });
+    tchip(x, 410, 585, 'Fixed price, quoted upfront', 22, { col: T.amber }); tchip(x, 890, 585, 'Delivered in weeks', 22, { col: T.green });
+  },
+  // 9 CTA
+  (x, t) => {
+    tbg(x, t); wordmark(x, true);
+    tchip(x, 640, 192, 'Engineering-led since 2015', 20, { col: T.mute });
+    tcard(x, 310, 260, 660, 130, { col: T.cyan, col2: T.violet, r: 65 });
+    mayaOrb(x, 400, 325, 42, t, null);
+    ttext(x, 'Talk to Maya', 700, 325, 48, T.ink, { w: 800, glow: T.cyan });
+    tchip(x, 640, 450, 'Book a free discovery call', 26, { col: T.violet, solid: true });
+    ttext(x, 'ilogixdigital.com', 640, 540, 36, T.cyan, { mono: true, w: 600, glow: T.cyan });
+    ttext(x, 'Software, AI and growth systems for ambitious businesses.', 640, 615, 24, T.mute, { w: 500 });
+  },
+];
+const PANEL_T = [1.8, 5.0, 9.0, 12.6, 17.0, 21.0, 24.8, 28.5, 33.0];
+// sound.js: a small synthesized sound kit for the style explainers. Plain Web Audio, no audio files.
+// Voiceover mode: SOUND.kit(ctx, { voiceover: true }) drops beds and music, plays anything marked minor
+// (play(..., { minor: true }), tone/noise { minor: true }, or scheduled inside k.withMinor(() => ...)) at about 60%
+// volume instead of full, and sits all effects a little lower, so the narration stays on top while the piece still
+// sounds alive. In the full mix, minor sounds play at full volume. Scores can read k.vo to branch further.
+// A style adds   explainerSound(k) { k.bed('room', 0, D); k.play('pop', 1.25); ... }   and the same
+// call schedules into a live AudioContext (the player) or an OfflineAudioContext (the video render).
+// Times are seconds on the explainer's own clock. Randomness is seeded, so every render is identical.
+(function () {
+  'use strict';
+  const SOUND = (window.SOUND = {});
+  const TINY = 1e-4;
+
+  // seeded random in [0,1), keyed by any string
+  function rand(key) {
+    let h = 2166136261;
+    for (let i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 16777619); }
+    let a = h >>> 0 || 1;
+    return () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+
+  // note names to Hz: 'A4' = 440, 'C#5', 'Eb3'
+  const STEP = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  function hz(n) {
+    if (typeof n === 'number') return n;
+    const m = /^([A-G])([#b]?)(-?\d)$/.exec(n);
+    const semis = STEP[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0) + (Number(m[3]) - 4) * 12 - 9;
+    return 440 * Math.pow(2, semis / 12);
+  }
+  SOUND.hz = hz;
+
+  SOUND.kit = function (ctx, opts) {
+    const o = opts || {};
+    const VO = !!o.voiceover;
+    const MINOR = 0.6; // voiceover-mode volume for minor sounds
+    let inMinor = false;
+    const gainOf = (p, d) => (p.gain == null ? d : p.gain) * (VO && (p.minor || inMinor) ? MINOR : 1);
+    const T0 = (o.start || 0) - 0; // explainer time that maps to ctx time `base`
+    const base = ctx.currentTime + (o.delay || 0);
+    // Start times snap to the sample grid (+ a quarter sample): in Chrome a source started a hair off the grid can
+    // spike to about twice its set level.
+    const SR = ctx.sampleRate;
+    const at = (t) => (Math.round((base + (t - T0)) * SR) + 0.25) / SR;
+
+    // ---- buses: sfx, amb, music -> compressor -> master; one shared reverb send
+    const master = ctx.createGain(); master.gain.value = o.master == null ? 0.9 : o.master;
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.knee.value = 8; comp.ratio.value = 3; comp.attack.value = 0.004; comp.release.value = 0.18;
+    comp.connect(master); master.connect(o.dest || ctx.destination);
+    const bus = {};
+    for (const [name, g] of Object.entries({ sfx: VO ? 0.7 : 0.85, amb: 0.5, music: 0.45 })) { bus[name] = ctx.createGain(); bus[name].gain.value = g; bus[name].connect(comp); }
+
+    // generated room reverb: decaying stereo noise, darker toward the tail
+    const verb = ctx.createConvolver();
+    {
+      const secs = 1.6, n = Math.floor(secs * ctx.sampleRate), ir = ctx.createBuffer(2, n, ctx.sampleRate);
+      for (let c = 0; c < 2; c++) {
+        const r = rand('verb' + c), d = ir.getChannelData(c); let lp = 0;
+        for (let i = 0; i < n; i++) { const u = i / n; lp += (0.6 - 0.45 * u) * ((r() * 2 - 1) - lp); d[i] = lp * Math.pow(1 - u, 3); }
+      }
+      verb.buffer = ir;
+    }
+    const verbIn = ctx.createGain(); verbIn.gain.value = 0.9; verbIn.connect(verb); verb.connect(comp);
+
+    // seeded noise buffers: white, pink-ish and brown
+    const noiseBuf = {};
+    {
+      const n = Math.floor(2.5 * ctx.sampleRate);
+      for (const kind of ['white', 'pink', 'brown']) {
+        const b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0), r = rand('noise-' + kind);
+        let p0 = 0, p1 = 0, p2 = 0, br = 0;
+        for (let i = 0; i < n; i++) {
+          const w = r() * 2 - 1;
+          if (kind === 'white') d[i] = w;
+          else if (kind === 'pink') { p0 = 0.997 * p0 + 0.029 * w; p1 = 0.985 * p1 + 0.032 * w; p2 = 0.95 * p2 + 0.048 * w; d[i] = (p0 + p1 + p2 + w * 0.05) * 2.2; }
+          else { br = (br + 0.02 * w) / 1.02; d[i] = br * 3.2; }
+        }
+        noiseBuf[kind] = b;
+      }
+    }
+
+    // ---- automation helpers
+    // a value or [[dt, value], ...] from the voice start; ramps are exponential (frequencies)
+    function sweep(param, v, t) {
+      if (!Array.isArray(v)) { param.setValueAtTime(v, t); return; }
+      param.setValueAtTime(v[0][1], t + v[0][0]);
+      for (let i = 1; i < v.length; i++) param.exponentialRampToValueAtTime(Math.max(v[i][1], 1), t + v[i][0]);
+    }
+    // amplitude: linear attack to `gain`, optional hold, exponential release to silence by `dur`
+    function shape(param, t, gain, dur, a, hold) {
+      a = Math.min(a == null ? 0.004 : a, dur * 0.9);
+      hold = Math.min(hold || 0, dur - a);
+      param.setValueAtTime(0, t);
+      param.linearRampToValueAtTime(gain, t + a);
+      if (hold > 0) param.setValueAtTime(gain, t + a + hold);
+      param.exponentialRampToValueAtTime(TINY, t + dur);
+      param.setValueAtTime(0, t + dur + 0.001);
+    }
+    function out(node, p) {
+      const pan = ctx.createStereoPanner(); pan.pan.value = Math.max(-1, Math.min(1, p.pan || 0));
+      node.connect(pan); pan.connect(bus[p.bus || 'sfx']);
+      if (p.verb) { const s = ctx.createGain(); s.gain.value = p.verb; pan.connect(s); s.connect(verbIn); }
+    }
+    function filterNode(p, t) {
+      if (!p.filter) return null;
+      const f = ctx.createBiquadFilter(); f.type = p.filter; f.Q.value = p.q == null ? 1 : p.q;
+      sweep(f.frequency, p.f == null ? 1000 : p.f, t);
+      return f;
+    }
+
+    // ---- primitives
+    // tone(t, { f, type, dur, gain, a, hold, pan, verb, bus, filter, f2 (filter freq), q, detune })
+    function tone(time, p) {
+      const t = at(time), dur = p.dur || 0.2;
+      if (t + dur < ctx.currentTime || (time < T0 - 0.001 && dur < 1.5)) return;
+      const osc = ctx.createOscillator(); osc.type = p.type || 'sine';
+      sweep(osc.frequency, Array.isArray(p.f) ? p.f.map(([d, v]) => [d, hz(v)]) : hz(p.f || 440), t);
+      if (p.detune) osc.detune.value = p.detune;
+      const g = ctx.createGain(); shape(g.gain, t, gainOf(p, 0.3), dur, p.a, p.hold);
+      let node = osc;
+      if (p.filter) { const f = ctx.createBiquadFilter(); f.type = p.filter; f.Q.value = p.q == null ? 0.8 : p.q; sweep(f.frequency, p.f2 || 2000, t); osc.connect(f); node = f; }
+      node.connect(g); out(g, p);
+      osc.start(t); osc.stop(t + dur + 0.02);
+    }
+    // noise(t, { dur, color, filter, f, q, gain, a, hold, pan, verb, bus, rate })
+    function noise(time, p) {
+      const t = at(time), dur = p.dur || 0.2;
+      if (t + dur < ctx.currentTime || (time < T0 - 0.001 && dur < 1.5)) return;
+      const src = ctx.createBufferSource(); src.buffer = noiseBuf[p.color || 'white']; src.loop = true;
+      if (p.rate) src.playbackRate.value = p.rate;
+      const g = ctx.createGain(); shape(g.gain, t, gainOf(p, 0.3), dur, p.a, p.hold);
+      const f = filterNode(p, t);
+      if (f) { src.connect(f); f.connect(g); } else src.connect(g);
+      out(g, p);
+      const off = rand('off' + time + (p.f || ''))() * 2;
+      src.start(t, off); src.stop(t + dur + 0.02);
+    }
+
+    // ---- named sounds. play(name, t, opts): opts.gain scales the whole sound, opts.pan places it.
+    const S = {
+      // UI / motion graphics
+      pop: (t, o) => { tone(t, { f: [[0, o.f || 620], [0.07, (o.f || 620) * 0.45]], dur: 0.1, gain: 0.32 * o.g, pan: o.pan }); noise(t, { dur: 0.012, filter: 'highpass', f: 3000, gain: 0.12 * o.g, pan: o.pan }); },
+      tick: (t, o) => noise(t, { dur: 0.018, filter: 'bandpass', f: o.f || 4200, q: 2.5, gain: 0.3 * o.g, pan: o.pan }),
+      click: (t, o) => { tone(t, { f: o.f || 1900, type: 'square', dur: 0.02, gain: 0.08 * o.g, filter: 'lowpass', f2: 3000, pan: o.pan }); noise(t, { dur: 0.01, filter: 'highpass', f: 2500, gain: 0.15 * o.g, pan: o.pan }); },
+      tock: (t, o) => { tone(t, { f: o.f || 820, dur: 0.07, gain: 0.25 * o.g, pan: o.pan }); noise(t, { dur: 0.05, filter: 'bandpass', f: o.f || 820, q: 9, gain: 0.35 * o.g, pan: o.pan }); },
+      blip: (t, o) => tone(t, { f: o.f || 'E6', type: o.type || 'square', dur: o.dur || 0.07, gain: 0.07 * o.g, a: 0.002, hold: (o.dur || 0.07) * 0.6, pan: o.pan }),
+      whoosh: (t, o) => { const d = o.dur || 0.45; noise(t, { dur: d, color: 'pink', filter: 'bandpass', f: [[0, 350], [d * 0.55, o.top || 2600], [d, 700]], q: 0.9, gain: 0.32 * o.g, a: d * 0.5, pan: o.pan, verb: 0.15 }); },
+      swish: (t, o) => { const d = o.dur || 0.18; noise(t, { dur: d, filter: 'highpass', f: [[0, 1800], [d, 5200]], q: 0.7, gain: 0.22 * o.g, a: d * 0.35, pan: o.pan }); },
+      riser: (t, o) => { const d = o.dur || 0.8; noise(t, { dur: d, color: 'pink', filter: 'bandpass', f: [[0, 300], [d, 4000]], q: 1.2, gain: 0.25 * o.g, a: d * 0.95, pan: o.pan, verb: 0.2 }); tone(t, { f: [[0, 180], [d, 720]], type: 'triangle', dur: d, gain: 0.06 * o.g, a: d * 0.9 }); },
+      thud: (t, o) => { tone(t, { f: [[0, o.f || 130], [0.16, 42]], dur: 0.26, gain: 0.55 * o.g, pan: o.pan }); noise(t, { dur: 0.09, color: 'brown', filter: 'lowpass', f: 500, gain: 0.35 * o.g, pan: o.pan }); },
+      impact: (t, o) => { S.thud(t, o); noise(t, { dur: 0.7, color: 'pink', filter: 'lowpass', f: [[0, 2400], [0.6, 300]], gain: 0.3 * o.g, verb: 0.35, pan: o.pan }); },
+      stamp: (t, o) => { S.thud(t, { ...o, f: 160 }); noise(t, { dur: 0.05, filter: 'bandpass', f: 1300, q: 1.2, gain: 0.4 * o.g, pan: o.pan }); noise(t + 0.004, { dur: 0.012, filter: 'highpass', f: 3500, gain: 0.25 * o.g, pan: o.pan }); },
+      ding: (t, o) => { const f = hz(o.f || 'E6'); tone(t, { f, dur: 1.3, gain: 0.2 * o.g, verb: 0.3, pan: o.pan }); tone(t, { f: f * 2.76, dur: 0.5, gain: 0.05 * o.g, verb: 0.3, pan: o.pan }); },
+      success: (t, o) => { S.ding(t, { ...o, f: o.f || 'C6' }); S.ding(t + 0.09, { ...o, f: hz(o.f || 'C6') * 1.5, g: o.g * 0.9 }); },
+      error: (t, o) => { tone(t, { f: o.f || 'A3', type: 'square', dur: 0.13, gain: 0.09 * o.g, hold: 0.08, filter: 'lowpass', f2: 1400, pan: o.pan }); tone(t + 0.15, { f: hz(o.f || 'A3') * 0.8, type: 'square', dur: 0.22, gain: 0.09 * o.g, hold: 0.14, filter: 'lowpass', f2: 1200, pan: o.pan }); },
+      buzz: (t, o) => { const d = o.dur || 0.3; tone(t, { f: o.f || 110, type: 'sawtooth', dur: d, gain: 0.12 * o.g, hold: d * 0.7, filter: 'lowpass', f2: 900, pan: o.pan }); tone(t, { f: (o.f || 110) * 1.01, type: 'sawtooth', dur: d, gain: 0.1 * o.g, hold: d * 0.7, filter: 'lowpass', f2: 900, pan: o.pan }); },
+      sparkle: (t, o) => { const r = rand('sparkle' + t), notes = ['C6', 'D6', 'E6', 'G6', 'A6', 'C7']; for (let i = 0; i < (o.n || 6); i++) { const ti = t + i * 0.04 + r() * 0.01, f = hz(notes[Math.floor(r() * notes.length)]), pan = r() * 1.2 - 0.6; tone(ti, { f, dur: 0.6, gain: 0.04 * o.g, a: 0.002, verb: 0.35, pan }); tone(ti, { f: f * 2.76, dur: 0.2, gain: 0.012 * o.g, a: 0.002, pan }); } },
+      glitch: (t, o) => { const r = rand('glitch' + t); for (let i = 0; i < 7; i++) tone(t + i * 0.022, { f: 200 + r() * 1800, type: 'square', dur: 0.02, gain: 0.07 * o.g, a: 0.001, hold: 0.015, pan: r() * 1.4 - 0.7 }); noise(t, { dur: 0.16, filter: 'bandpass', f: 2500, q: 0.6, gain: 0.12 * o.g }); },
+      shutter: (t, o) => { S.click(t, o); noise(t + 0.06, { dur: 0.04, filter: 'bandpass', f: 2200, q: 1, gain: 0.2 * o.g, pan: o.pan }); },
+      count: (t, o) => S.tick(t, { ...o, f: o.f || 5200, g: o.g * 0.7 }),
+
+      // hand-made media
+      // stroke: a pen/marker/chalk/pencil stroke over `dur` seconds. material sets the surface sound.
+      stroke: (t, o) => {
+        const d = o.dur || 0.4, m = o.material || 'marker', r = rand('stroke' + m + t);
+        const M = {
+          marker: { f: 2900, q: 2.2, g: 0.16, grain: 0.05 },
+          chalk: { f: 1700, q: 0.6, g: 0.22, grain: 0.028 },
+          pencil: { f: 4600, q: 0.8, g: 0.16, grain: 0.04, filter: 'highpass' },
+          pen: { f: 4200, q: 1.6, g: 0.08, grain: 0.06 },
+          brush: { f: 900, q: 0.5, g: 0.1, grain: 0.09, color: 'pink' },
+          sharpie: { f: 2400, q: 1.4, g: 0.2, grain: 0.045 },
+        }[m];
+        for (let x = 0; x < d; x += M.grain * (0.7 + r() * 0.6)) {
+          const gd = M.grain * (0.8 + r() * 0.9);
+          noise(t + x, { dur: gd, color: M.color, filter: M.filter || 'bandpass', f: M.f * (0.8 + r() * 0.4), q: M.q, gain: M.g * o.g * (0.6 + r() * 0.5), a: gd * 0.3, pan: (o.pan || 0) + (r() - 0.5) * 0.2 });
+        }
+      },
+      // paper: picking up / slapping down / turning a sheet
+      paper: (t, o) => { const d = o.dur || 0.35, r = rand('paper' + t); for (let x = 0; x < d; x += 0.025 + r() * 0.03) noise(t + x, { dur: 0.05, filter: 'bandpass', f: 1200 + r() * 2600, q: 0.9, gain: 0.12 * o.g * (1 - x / d * 0.5), pan: o.pan }); },
+      slap: (t, o) => { noise(t, { dur: 0.07, filter: 'highpass', f: 900, gain: 0.45 * o.g, a: 0.001, pan: o.pan }); tone(t, { f: [[0, 180], [0.06, 70]], dur: 0.1, gain: 0.25 * o.g, pan: o.pan }); },
+      tape: (t, o) => { noise(t, { dur: o.dur || 0.5, filter: 'bandpass', f: [[0, 900], [o.dur || 0.5, 2200]], q: 1.8, gain: 0.18 * o.g, a: 0.02, pan: o.pan }); },
+      press: (t, o) => { S.thud(t, { ...o, f: 95, g: o.g * 0.9 }); noise(t + 0.01, { dur: 0.25, color: 'brown', filter: 'lowpass', f: 700, gain: 0.25 * o.g, pan: o.pan }); },
+      roller: (t, o) => { const d = o.dur || 0.6; noise(t, { dur: d, color: 'brown', filter: 'bandpass', f: 380, q: 1.5, gain: 0.3 * o.g, a: 0.05, hold: d * 0.6, pan: o.pan }); for (let x = 0; x < d; x += 0.07) S.tock(t + x, { f: 300, g: o.g * 0.15, pan: o.pan }); },
+      erase: (t, o) => { const d = o.dur || 0.6, r = rand('erase' + t); for (let x = 0; x < d; x += 0.06 + r() * 0.04) noise(t + x, { dur: 0.08, color: 'pink', filter: 'bandpass', f: 700 + r() * 500, q: 0.8, gain: 0.22 * o.g, a: 0.03, pan: (r() - 0.5) * 0.5 }); },
+
+      // machines and screens
+      key: (t, o) => { const r = rand('key' + t); noise(t, { dur: 0.025, filter: 'bandpass', f: 2600 + r() * 1200, q: 2, gain: 0.25 * o.g, a: 0.001, pan: o.pan }); tone(t, { f: 160 + r() * 40, dur: 0.04, gain: 0.12 * o.g, pan: o.pan }); },
+      typing: (t, o) => { const r = rand('typing' + t), n = o.n || 8, rate = o.rate || 0.09; for (let i = 0; i < n; i++) S.key(t + i * rate * (0.75 + r() * 0.5), { g: o.g * (0.7 + r() * 0.4), pan: o.pan }); },
+      typebar: (t, o) => { S.key(t, o); noise(t + 0.008, { dur: 0.03, filter: 'bandpass', f: 1100, q: 4, gain: 0.35 * o.g, pan: o.pan }); },
+      bell: (t, o) => S.ding(t, { ...o, f: o.f || 'A6' }),
+      boot: (t, o) => { tone(t, { f: [[0, 80], [0.35, 1600]], type: 'sine', dur: 0.5, gain: 0.08 * o.g, a: 0.3 }); S.blip(t + 0.45, { ...o, f: 'C6', dur: 0.12 }); },
+      crtOn: (t, o) => { noise(t, { dur: 0.25, filter: 'highpass', f: 2000, gain: 0.2 * o.g, a: 0.001 }); tone(t, { f: 15700, dur: 1.5, gain: 0.02 * o.g, a: 0.1, hold: 1 }); S.thud(t, { ...o, f: 90, g: o.g * 0.5 }); },
+      neon: (t, o) => { const d = o.dur || 0.25, r = rand('neon' + t); for (let x = 0; x < d; x += 0.035 + r() * 0.04) tone(t + x, { f: 120, type: 'sawtooth', dur: 0.03, gain: 0.3 * o.g * (0.5 + r() * 0.5), filter: 'bandpass', f2: 1200, q: 1.2, pan: o.pan }); },
+      // chip (8-bit console) sounds: raw square/triangle, no filtering
+      coin: (t, o) => { tone(t, { f: 'B5', type: 'square', dur: 0.07, gain: 0.07 * o.g, a: 0.001, hold: 0.06 }); tone(t + 0.07, { f: 'E6', type: 'square', dur: 0.3, gain: 0.07 * o.g, a: 0.001, hold: 0.1 }); },
+      jump: (t, o) => tone(t, { f: [[0, 260], [0.16, 820]], type: 'square', dur: 0.18, gain: 0.07 * o.g, a: 0.001, hold: 0.12 }),
+      hurt: (t, o) => { tone(t, { f: [[0, 600], [0.25, 90]], type: 'square', dur: 0.28, gain: 0.08 * o.g, a: 0.001, hold: 0.2 }); noise(t, { dur: 0.2, filter: 'lowpass', f: 1800, gain: 0.15 * o.g, rate: 0.25 }); },
+      powerup: (t, o) => ['C5', 'E5', 'G5', 'C6', 'E6', 'G6', 'C7'].forEach((n, i) => tone(t + i * 0.045, { f: n, type: 'square', dur: 0.06, gain: 0.06 * o.g, a: 0.001, hold: 0.05 })),
+      select: (t, o) => { S.blip(t, { ...o, f: 'A5', dur: 0.04 }); S.blip(t + 0.05, { ...o, f: 'E6', dur: 0.05 }); },
+      text: (t, o) => { const n = o.n || 10, rate = o.rate || 0.05; for (let i = 0; i < n; i++) tone(t + i * rate, { f: i % 2 ? 'C6' : 'G5', type: 'square', dur: 0.025, gain: 0.04 * o.g, a: 0.001, hold: 0.015 }); },
+    };
+
+    function play(name, t, opts) {
+      const fn = S[name];
+      if (!fn) throw new Error('unknown sound: ' + name);
+      const o2 = Object.assign({}, opts); o2.g = o2.gain == null ? 1 : o2.gain;
+      if (opts && opts.minor) withMinor(() => fn(t, o2)); else fn(t, o2);
+    }
+
+    // everything scheduled inside fn counts as minor (quieter in voiceover mode)
+    function withMinor(fn) { const was = inMinor; inMinor = true; try { fn(); } finally { inMinor = was; } }
+
+    // ---- beds: continuous sound under a stretch of time. bed(name, t0, t1, opts)
+    function bed(name, t0, t1, p) {
+      if (VO) return;
+      p = p || {}; const g = p.gain == null ? 1 : p.gain, d = t1 - t0, fade = Math.min(0.4, d / 4);
+      const long = (q) => Object.assign({ dur: d, a: fade, hold: d - fade * 2, bus: 'amb' }, q);
+      if (name === 'room') noise(t0, long({ color: 'brown', filter: 'lowpass', f: 320, gain: 0.12 * g }));
+      else if (name === 'hiss') noise(t0, long({ color: 'pink', filter: 'highpass', f: 5000, gain: 0.02 * g }));
+      else if (name === 'hum') { tone(t0, long({ f: 60, gain: 0.05 * g })); tone(t0, long({ f: 120, gain: 0.025 * g })); tone(t0, long({ f: 180, type: 'triangle', gain: 0.012 * g })); }
+      else if (name === 'rain') { noise(t0, long({ color: 'pink', filter: 'bandpass', f: 2500, q: 0.4, gain: 0.08 * g })); const r = rand('rain'); for (let x = 0; x < d; x += 0.04 + r() * 0.08) noise(t0 + x, { dur: 0.01, filter: 'highpass', f: 4000, gain: 0.04 * g * r(), bus: 'amb', pan: r() * 1.6 - 0.8 }); }
+      else if (name === 'projector') { noise(t0, long({ color: 'pink', filter: 'highpass', f: 3000, gain: 0.03 * g })); for (let x = 0; x < d; x += 1 / 24) S.tock(t0 + x, { f: 700, g: 0.04 * g, pan: 0.3 }); }
+      else if (name === 'vinyl') { noise(t0, long({ color: 'pink', filter: 'bandpass', f: 1500, q: 0.5, gain: 0.025 * g })); const r = rand('vinyl'); for (let x = 0; x < d; x += 0.08 + r() * 0.4) noise(t0 + x, { dur: 0.006, filter: 'highpass', f: 2500, gain: 0.08 * g * r(), bus: 'amb' }); }
+      else throw new Error('unknown bed: ' + name);
+    }
+
+    // ---- music: optional light beds that sit under the effects. music(name, t0, t1, { bpm, chords, gain })
+    // chords: list of note arrays, one per bar, cycled. e.g. [['C4','E4','G4','B4'], ['A3','C4','E4','G4']]
+    function music(name, t0, t1, p) {
+      if (VO) return;
+      p = p || {}; const g = p.gain == null ? 1 : p.gain, bpm = p.bpm || 100, beat = 60 / bpm, bar = beat * 4;
+      const chords = p.chords || [['C4', 'E4', 'G4', 'B4'], ['A3', 'C4', 'E4', 'G4'], ['F3', 'A3', 'C4', 'E4'], ['G3', 'B3', 'D4', 'F4']];
+      let i = 0;
+      for (let t = t0; t < t1 - 0.05; t += bar, i++) {
+        const ch = chords[i % chords.length], len = Math.min(bar, t1 - t);
+        if (name === 'pad' || name === 'pulse') ch.forEach((n, k) => { tone(t, { f: n, type: 'triangle', dur: len + 0.3, gain: 0.035 * g, a: 0.25, hold: len - 0.3, bus: 'music', filter: 'lowpass', f2: 1400, pan: (k - 1.5) * 0.25, verb: 0.25 }); tone(t, { f: hz(n) * 1.004, type: 'sine', dur: len + 0.3, gain: 0.03 * g, a: 0.3, hold: len - 0.3, bus: 'music' }); });
+        if (name === 'pulse') for (let b = 0; b < 4 && t + b * beat < t1 - 0.05; b++) {
+          const tb = t + b * beat;
+          tone(tb, { f: [[0, 110], [0.1, 50]], dur: 0.18, gain: (b % 2 ? 0.16 : 0.26) * g, bus: 'music' });
+          noise(tb + beat / 2, { dur: 0.04, filter: 'highpass', f: 7000, gain: 0.05 * g, bus: 'music' });
+          tone(tb + beat / 2, { f: hz(ch[0]) / 2, type: 'triangle', dur: beat * 0.45, gain: 0.08 * g, bus: 'music' });
+        }
+        if (name === 'chip') for (let s = 0; s < 8 && t + s * beat / 2 < t1 - 0.05; s++) {
+          const ts = t + s * beat / 2;
+          tone(ts, { f: hz(ch[0]) / 2, type: 'triangle', dur: beat * 0.45, gain: 0.12 * g, a: 0.001, hold: beat * 0.35, bus: 'music' });
+          tone(ts, { f: ch[[0, 1, 2, 3, 2, 1, 2, 3][s]], type: 'square', dur: beat * 0.4, gain: 0.03 * g, a: 0.001, hold: beat * 0.25, bus: 'music' });
+        }
+      }
+    }
+
+    return { play, bed, music, tone, noise, withMinor, hz, vo: VO, sounds: Object.keys(S) };
+  };
+
+  // Live playback for a player: SOUND.live(scoreFn, fromT, { voiceover, master }) starts the score from explainer time
+  // fromT right now and returns stop(). Call stop() on pause or seek, and SOUND.live again on play.
+  SOUND.live = function (fn, fromT, opts) {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    fn(SOUND.kit(ctx, Object.assign({}, opts, { start: fromT || 0, delay: 0.03 })));
+    return () => { try { ctx.close(); } catch (e) {} };
+  };
+
+  // Render a style's explainerSound into an OfflineAudioContext; returns interleaved float stereo.
+  SOUND.renderOffline = async function (fn, duration, sampleRate, kitOpts) {
+    const sr = sampleRate || 48000, len = Math.ceil(duration * sr);
+    const ctx = new OfflineAudioContext(2, len, sr);
+    fn(SOUND.kit(ctx, kitOpts || {}));
+    const buf = await ctx.startRendering();
+    const L = buf.getChannelData(0), R = buf.getChannelData(1), inter = new Float32Array(len * 2);
+    let peak = 0;
+    for (let i = 0; i < len; i++) { inter[2 * i] = L[i]; inter[2 * i + 1] = R[i]; peak = Math.max(peak, Math.abs(L[i]), Math.abs(R[i])); }
+    return { inter, peak, frames: len, sr };
+  };
+})();
+// ===== iLogix explainer: one timeline drives both picture and sound =====
+const DURATION = 35;
+const TL = {
+  hl1: [0.2, 0.45], phone: 0.3, node1: 0.5, clock: 0.9, chipMissed: 1.2, unk: 1.4, chipAfter: 1.7, nobody: 2.1, ring: [0.5, 1.9], answer: 3.2, move1: [3.3, 4.1],
+  meet: 3.6, orb: 3.7, link1: [3.9, 4.5], incoming: 4.1, chipAns: 4.2, bubble: 4.9, chipMaya: 5.5,
+  move2: [6.9, 7.7], hl3: 7.4, fields: [7.9, 8.5, 9.1], team: 9.8, chipHand: 10.6, handoff: [10.2, 10.7],
+  shock: [11.3, 12.1], white: [11.6, 12.0, 12.5],
+  ag1: 12.3, ag2: 12.7, ag3: 13.2, agent: 12.4, sats: [13.0, 13.2, 13.4], split: [14.3, 15.1],
+  pav: [15.0, 15.5, 16.0], pavLab: [15.1, 15.6, 16.1], pavSub: [15.3, 15.7, 16.1], pl1: [15.4, 15.8], pl2: [15.9, 16.3], loop: [16.5, 17.2], loopChip: 17.0, jobsLab: 17.5, jobs: [17.8, 18.1, 18.4],
+  hubMove: [19.3, 20.1], wired: 19.9, spokes: [20.3, 20.6, 20.9, 21.2, 21.5], toolChips: [21.9, 22.1, 22.3, 22.5],
+  collapse: [23.9, 24.7], push: [23.8, 24.9], hl7: 24.6, action: 24.9, lk7a: [25.3, 25.8], pass: 25.9, lk7b: [26.0, 26.4], teamCard: 26.2, guardChips: [26.5, 26.75, 27.0],
+  morph8: [27.3, 28.4], hl8: 27.9, cardsTxt: 28.3, arrows8: [28.6, 28.8], chip8a: 29.2, chip8b: 29.8,
+  conv: [31.2, 31.9], logo: 31.7, chipEng: 32.0, btn: 31.9, btnTxt: 32.2, chipBook: 32.7, url: [33.0, 33.8], tag: 34.0,
+};
+const pv = (t, a, d = 0.3, s = 1.4) => back(seg(t, a, a + d), s);
+const mixc = (a, b, u) => H.mix(a, b, cl(u));
+const pop = (x, cx, cy, u, fn, a) => { if (u <= 0.01 || a === 0) return; x.save(); if (a != null) x.globalAlpha *= a; x.translate(cx, cy); x.scale(u, u); x.translate(-cx, -cy); fn(); x.restore(); };
+const ptext = (x, s, cx, cy, px, col, u, a, o) => pop(x, cx, cy, u, () => ttext(x, s, cx, cy, px, col, o || {}), a);
+const pchip = (x, s, cx, cy, px, u, a, o) => pop(x, cx, cy, u, () => tchip(x, cx, cy, s, px, o || {}), a);
+function plink(x, ax, ay, bx, by, col, t, p, o) {
+  if (p <= 0.01) return; o = o || {};
+  tlink(x, ax, ay, lerp(ax, bx, p), lerp(ay, by, p), col, t, Object.assign({}, o, { head: !!o.head && p > 0.95 }));
+}
+function twhite(x, a) {
+  if (a <= 0) return;
+  const cw = x.canvas.width, ch = x.canvas.height, g = x.createRadialGradient(cw / 2, ch / 2, 0, cw / 2, ch / 2, Math.hypot(cw, ch) / 2);
+  g.addColorStop(0, H.rgba('#e6fcff', a)); g.addColorStop(0.5, H.rgba(T.cyan, a * 0.95)); g.addColorStop(1, H.rgba(T.violet, a * 0.9));
+  x.fillStyle = g; x.fillRect(0, 0, cw, ch);
+}
+const bezPts = (P, p, n = 60) => { const a = []; for (let i = 0; i <= n; i++) a.push(bez(P, (p * i) / n)); return a; };
+
+function explainerL(ctx, W, Hh, t) {
+  const x = ctx;
+  x.save();
+  const z = 1 + 0.12 * Math.sin(Math.PI * seg(t, TL.push[0], TL.push[1]));
+  x.translate(640, 360); x.scale(z, z); x.translate(-640, -360);
+  tbg(x, t);
+
+  // wordmark: small header, then the big lockup at the end
+  x.save(); x.globalAlpha = seg(t, 0.1, 0.5) * (1 - seg(t, 31.2, 31.6)); wordmark(x, false); x.restore();
+  pop(x, 640, 120, pv(t, TL.logo, 0.5, 1.2), () => wordmark(x, true), 1);
+
+  // ---- shared moving objects (beats 1-3) ----
+  const m1 = eio(seg(t, TL.move1[0], TL.move1[1])), m2 = eio(seg(t, TL.move2[0], TL.move2[1]));
+  let px = lerp(420, 190, m1), py = lerp(400, 440, m1), pr = lerp(52, 60, m1);
+  px = lerp(px, 130, m2); py = lerp(py, 400, m2); pr = lerp(pr, 62, m2);
+  const pcol = mixc(T.red, T.cyan, m1);
+  const ox = lerp(640, 390, m2), oy = lerp(440, 400, m2), orr = lerp(125, 76, m2);
+
+  if (t < 12.05) {
+    // BEAT 1
+    const a1 = 1 - seg(t, 2.9, 3.4);
+    ptext(x, 'Every missed call', 640, 92, 56, T.ink, pv(t, TL.hl1[0], 0.4, 1.3), a1, { w: 800 });
+    ptext(x, 'is a missed customer.', 640, 158, 56, T.cyan, pv(t, TL.hl1[1], 0.4, 1.3), a1, { w: 800, glow: T.cyan });
+    const ringing = (t > 0.5 && t < 1.5) || (t > 1.9 && t < 2.9) ? 1 : 0.2;
+    for (let i = 0; i < 3; i++) {
+      x.save(); x.globalAlpha = a1 * ringing * seg(t, 0.4, 0.6) * (0.5 + 0.5 * Math.sin(t * 12 - i * 1.3)); x.strokeStyle = H.rgba(T.red, 0.6 - 0.15 * i); x.lineWidth = 4; x.lineCap = 'round';
+      const R = 220 + i * 26; x.beginPath(); x.arc(420, 450, R, -2.45, -2.0); x.stroke(); x.beginPath(); x.arc(420, 450, R, -1.14, -0.69); x.stroke(); x.restore();
+    }
+    pop(x, 420, 465, pv(t, TL.phone, 0.4), () => tcard(x, 315, 280, 210, 370, { col: T.red, col2: T.pink }), 1 - seg(t, 3.2, 3.6));
+    pchip(x, 'Missed call', 420, 492, 20, pv(t, TL.chipMissed), 1 - seg(t, 3.2, 3.5), { col: T.red });
+    pop(x, 420, 545, 1, () => ttext(x, 'Unknown caller', 420, 545, 18, T.mute, { mono: true, w: 500 }), seg(t, TL.unk, TL.unk + 0.3) * (1 - seg(t, 3.2, 3.5)));
+    const ca = 1 - seg(t, 2.9, 3.3);
+    pop(x, 840, 400, pv(t, TL.clock, 0.4), () => { ttext(x, '02:14', 840, 400, 140, T.ink, { mono: true, w: 600, glow: T.cyan }); ttext(x, 'AM', 1090, 440, 40, T.amber, { mono: true, w: 600, align: 'left' }); }, ca);
+    pchip(x, 'after hours', 840, 500, 22, pv(t, TL.chipAfter), ca, { col: T.amber });
+    ptext(x, 'Nobody picks up.', 840, 580, 36, T.mute, pv(t, TL.nobody), ca, { w: 600 });
+    for (let i = 0; i < 2; i++) { const u = seg(t, TL.answer + i * 0.18, TL.answer + 0.9 + i * 0.18); if (u > 0 && u < 1) { x.save(); x.strokeStyle = H.rgba(T.green, 0.8 * (1 - u)); x.lineWidth = 6 * (1 - u) + 1; x.beginPath(); x.arc(420, 400, lerp(52, 420, eo(u)), 0, TAU); x.stroke(); x.restore(); } }
+
+    // phone node (moves through beats 1-3)
+    pop(x, px, py, pv(t, TL.node1, 0.35, 1.5), () => tnode(x, px, py, pr, pcol, t, { icon: iPhone, ring: t < 3.3 }), 1);
+    x.save(); x.globalAlpha = seg(t, TL.incoming, TL.incoming + 0.3) * (1 - seg(t, 6.6, 6.9)); ttext(x, 'Incoming call', 190, 440 + 60 + 32, 22, T.ink, { w: 700 }); x.restore();
+    x.save(); x.globalAlpha = seg(t, 7.5, 7.8); ttext(x, 'Caller', 130, 400 + 62 + 32, 26, T.ink, { w: 700 }); x.restore();
+
+    // BEAT 2
+    const a2 = 1 - seg(t, 6.6, 7.0);
+    ptext(x, 'Meet Maya', 640, 110, 72, T.ink, pv(t, TL.meet, 0.4, 1.3), a2, { w: 800, glow: T.violet });
+    pchip(x, 'answers every call, 24/7', 640, 178, 22, pv(t, TL.chipAns), a2, { col: T.green });
+    plink(x, px + pr + 6, py, ox - orr - 6, oy, T.cyan, t, seg(t, TL.link1[0], TL.link1[1]), { head: true });
+    pop(x, ox, oy, pv(t, TL.orb, 0.45, 1.3), () => mayaOrb(x, ox, oy, orr, t, null), 1);
+    x.save(); x.globalAlpha = seg(t, 7.7, 8.0); ttext(x, 'Maya', ox, oy + orr + 34, 26, T.ink, { w: 700 }); x.restore();
+    pchip(x, 'Maya · AI receptionist', 640, 625, 22, pv(t, TL.chipMaya), a2, { col: T.violet });
+    pop(x, 1010, 375, pv(t, TL.bubble, 0.4, 1.4), () => {
+      tcard(x, 810, 300, 400, 150, { col: T.violet, col2: T.cyan });
+      ttext(x, 'MAYA', 842, 332, 16, T.violet, { mono: true, align: 'left' }); ttext(x, 'Hi, you’ve reached iLogix.', 842, 378, 26, T.ink, { align: 'left', w: 600 }); ttext(x, 'How can I help?', 842, 418, 26, T.ink, { align: 'left', w: 600 });
+    }, a2);
+
+    // BEAT 3
+    ptext(x, 'Maya collects the details', 640, 100, 52, T.ink, pv(t, TL.hl3, 0.4, 1.3), 1, { w: 800 });
+    ['Name', 'Phone number', 'Reason for calling'].forEach((s, i) => {
+      const y = 250 + i * 110, st = TL.fields[i];
+      plink(x, 470, 400, 590, y + 46, T.violet, t, seg(t, st - 0.1, st + 0.3), { dots: 1, ph: i * 0.2 });
+      pop(x, 745, y + 46, pv(t, st, 0.35, 1.4), () => {
+        tcard(x, 590, y, 310, 92, { col: T.green, col2: T.cyan, r: 18 });
+        ttext(x, s, 670, y + 46, 24, T.ink, { align: 'left', w: 600 });
+      }, 1);
+      pop(x, 632, y + 46, pv(t, st + 0.3, 0.3, 2.0), () => { x.fillStyle = H.rgba(T.green, 0.2); x.beginPath(); x.arc(632, y + 46, 22, 0, TAU); x.fill(); iCheck(x, 632, y + 46, 14, T.green); }, 1);
+      plink(x, 900, y + 46, 1052, 400, T.green, t, seg(t, 9.6 + i * 0.12, 10.1 + i * 0.12), { dots: 1, ph: i * 0.3 });
+    });
+    pop(x, 1130, 400, pv(t, TL.team, 0.45, 1.4), () => tnode(x, 1130, 400, 78, T.green, t, { icon: iPerson, ring: true }), 1);
+    x.save(); x.globalAlpha = seg(t, 10.1, 10.4); ttext(x, 'Your team', 1130, 400 + 78 + 32, 26, T.ink, { w: 700 }); x.restore();
+    const hu = seg(t, TL.handoff[0], TL.handoff[1]); if (hu > 0 && hu < 1) glow(x, 1130, 400, 160 + 220 * hu, T.green, 0.55 * (1 - hu));
+    pchip(x, 'then hands off to your team', 640, 640, 24, pv(t, TL.chipHand), 1, { col: T.green });
+  }
+
+  // ---- BEAT 4: agentic AI acts ----
+  const S4 = [[1080, 204, iMail, T.violet], [1165, 380, iCal, T.amber], [1080, 556, iCheck, T.green]];
+  if (t >= 12.05 && t < 15.7) {
+    const a4 = 1 - seg(t, 14.2, 14.6);
+    ptext(x, 'Agentic AI', 70, 230, 76, T.ink, pv(t, TL.ag1, 0.4, 1.3), a4, { align: 'left', w: 800 });
+    ptext(x, 'doesn’t just answer.', 70, 322, 52, T.mute, pv(t, TL.ag2, 0.4, 1.3), a4, { align: 'left', w: 600 });
+    ptext(x, 'It acts.', 70, 448, 104, T.cyan, pv(t, TL.ag3, 0.5, 1.8), a4, { align: 'left', w: 800, glow: T.cyan });
+    S4.forEach(([sx, sy, ic, col], i) => {
+      const fu = eo(seg(t, TL.sats[i], TL.sats[i] + 0.5)), cx = lerp(930, sx, fu), cy = lerp(380, sy, fu), a = Math.atan2(sy - 380, sx - 930);
+      if (fu > 0.9) tlink(x, 930 + Math.cos(a) * 112, 380 + Math.sin(a) * 112, sx - Math.cos(a) * 52, sy - Math.sin(a) * 52, col, t, { head: true, dots: 1, ph: i * 0.25 });
+      pop(x, cx, cy, fu > 0 ? 1 : 0, () => tnode(x, cx, cy, 44, col, t, { icon: ic, ph: i }), a4);
+    });
+    pop(x, 930, 380, pv(t, TL.agent, 0.45, 1.4), () => tnode(x, 930, 380, 100, T.cyan, t, { icon: iBolt, ring: true }), 1 - seg(t, 14.3, 14.6));
+  }
+
+  // ---- BEAT 5: plan, act, verify (Verify node becomes the hub in beat 6) ----
+  const sp = eio(seg(t, TL.split[0], TL.split[1])), hm = eio(seg(t, TL.hubMove[0], TL.hubMove[1]));
+  const NS = [[240, T.cyan, iPlan, 'Plan', 'break the goal into steps'], [640, T.violet, iBolt, 'Act', 'use your tools'], [1040, T.green, iCheck, 'Verify', 'check before it counts']];
+  if (t >= TL.split[0] && t < 27.8) {
+    const a5 = 1 - seg(t, 19.1, 19.5);
+    NS.forEach(([nx, col, ic, lab, sub], i) => {
+      let cx = lerp(930, nx, sp), cy = lerp(380, 340, sp), r = lerp(60, 84, sp), ca = col, icon = ic, al = seg(t, TL.split[0], TL.split[0] + 0.25);
+      if (i === 2) {
+        cx = lerp(cx, 640, hm); cy = lerp(cy, 370, hm); r = lerp(r, 90, hm); ca = mixc(T.green, T.cyan, hm);
+        icon = (xx, a, b, s, c) => { xx.save(); xx.globalAlpha *= 1 - hm; iCheck(xx, a, b, s, c); xx.restore(); xx.save(); xx.globalAlpha *= hm; iBolt(xx, a, b, s, c); xx.restore(); };
+        if (t >= 20.1 && t < TL.collapse[0]) { cx = 640; cy = 370; r = 90; ca = T.cyan; icon = iBolt; }
+        if (t >= TL.collapse[0] && t < 27.8) { const cu = eio(seg(t, TL.collapse[0], TL.collapse[1])); r = lerp(90, 110, cu); ca = mixc(T.cyan, T.green, cu); icon = (xx, a, b, s, c) => { xx.save(); xx.globalAlpha *= 1 - cu; iBolt(xx, a, b, s, c); xx.restore(); xx.save(); xx.globalAlpha *= cu; iShield(xx, a, b, s * 1.5, c); xx.restore(); }; }
+      } else al *= a5 * (1 - seg(t, 19.1, 19.6));
+      if (i === 2 && t >= 27.3) al = 1 - seg(t, 27.3, 27.7);
+      pop(x, cx, cy, 1, () => tnode(x, cx, cy, r, ca, t, { icon, ring: true, ph: i }), al);
+      if (t < 19.6) {
+        x.save(); x.globalAlpha = seg(t, TL.pavLab[i], TL.pavLab[i] + 0.3) * a5; ttext(x, lab, nx, 340 + 84 + 36, 30, T.ink, { w: 700 }); x.restore();
+        x.save(); x.globalAlpha = seg(t, TL.pavSub[i], TL.pavSub[i] + 0.3) * a5; ttext(x, sub, nx, 488, 18, T.mute, { mono: true, w: 500 }); x.restore();
+        ptext(x, lab + '.', [395, 640, 885][i], 82, 58, [T.cyan, T.violet, T.green][i], pv(t, TL.pav[i], 0.4, 1.4), a5, { w: 800 });
+      }
+    });
+    if (t < 19.6) {
+      x.save(); x.globalAlpha = a5;
+      plink(x, 332, 340, 548, 340, T.cyan, t, seg(t, TL.pl1[0], TL.pl1[1]), { head: true });
+      plink(x, 732, 340, 948, 340, T.violet, t, seg(t, TL.pl2[0], TL.pl2[1]), { head: true });
+      const lp = seg(t, TL.loop[0], TL.loop[1]);
+      if (lp > 0) {
+        const pts = bezPts([[1040, 246], [1040, 150], [240, 150], [240, 246]], lp);
+        x.strokeStyle = H.rgba(T.green, 0.5); x.lineWidth = 3; x.lineCap = 'round'; x.setLineDash([10, 10]); x.beginPath(); pts.forEach((p, k) => (k ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]))); x.stroke(); x.setLineDash([]);
+        if (lp > 0.97) { x.fillStyle = H.rgba(T.cyan, 0.95); x.beginPath(); x.moveTo(240, 252); x.lineTo(230, 232); x.lineTo(250, 232); x.closePath(); x.fill(); }
+      }
+      x.restore();
+      pchip(x, 'repeat until done', 640, 174, 18, pv(t, TL.loopChip), a5, { col: T.green, solid: true });
+      x.save(); x.globalAlpha = seg(t, TL.jobsLab, TL.jobsLab + 0.3) * a5; ttext(x, 'TYPICAL JOBS', 640, 575, 16, T.mute, { mono: true }); x.restore();
+      ['qualify leads', 'draft replies', 'triage support'].forEach((s, i) => pchip(x, s, 380 + i * 260, 625, 22, pv(t, TL.jobs[i]), a5, { col: [T.cyan, T.violet, T.green][i] }));
+    }
+  }
+
+  // ---- BEAT 6: wired into your tools ----
+  const S6 = [[220, 250, iPerson, 'CRM', T.cyan], [220, 520, iMail, 'Email', T.violet], [1060, 250, iChat, 'WhatsApp', T.green], [1060, 520, iCal, 'Calendar', T.amber], [640, 590, iDoc, 'Documents', T.pink]];
+  const cu6 = eio(seg(t, TL.collapse[0], TL.collapse[1]));
+  if (t >= 19.7 && t < 24.9) {
+    const a6 = 1 - seg(t, 23.7, 24.1);
+    ptext(x, 'Wired into your tools', 640, 82, 54, T.ink, pv(t, TL.wired, 0.4, 1.3), a6, { w: 800 });
+    ['n8n', 'Make', 'GoHighLevel', 'Vapi'].forEach((s, i) => pchip(x, s, [440, 560, 740, 905][i], 150, 20, pv(t, TL.toolChips[i]), a6, { col: T.mute }));
+    S6.forEach(([sx, sy, ic, lab, col], i) => {
+      const st = TL.spokes[i], cx = lerp(sx, 640, cu6), cy = lerp(sy, 370, cu6), al = 1 - seg(t, 24.2, 24.7), a = Math.atan2(sy - 370, sx - 640);
+      const lk = seg(t, st, st + 0.3) * (1 - cu6);
+      if (lk > 0) tlink(x, 640 + Math.cos(a) * 96, 370 + Math.sin(a) * 96, lerp(640 + Math.cos(a) * 96, cx - Math.cos(a) * 62, lk), lerp(370 + Math.sin(a) * 96, cy - Math.sin(a) * 62, lk), col, t, { dots: 1, ph: i * 0.2 });
+      pop(x, cx, cy, pv(t, st + 0.2, 0.35, 1.5), () => tnode(x, cx, cy, 56, col, t, { icon: ic, label: lab, ly: 40, lpx: 22, ph: i }), al * (1 - cu6 * 0.2));
+    });
+  }
+
+  // ---- BEAT 7: guardrails ----
+  if (t >= TL.collapse[1] - 0.2 && t < 27.7) {
+    const a7 = 1 - seg(t, 27.2, 27.6);
+    ptext(x, 'Guardrails keep it on track', 640, 100, 52, T.ink, pv(t, TL.hl7, 0.4, 1.3), a7, { w: 800 });
+    pop(x, 220, 370, pv(t, TL.action, 0.4, 1.4), () => { tcard(x, 70, 300, 300, 140, { col: T.violet, col2: T.cyan }); ttext(x, 'AGENT ACTION', 100, 336, 16, T.violet, { mono: true, align: 'left' }); ttext(x, 'Draft reply', 100, 392, 34, T.ink, { align: 'left', w: 700 }); }, a7);
+    x.save(); x.globalAlpha = a7;
+    plink(x, 372, 370, 520, 370, T.violet, t, seg(t, TL.lk7a[0], TL.lk7a[1]), { head: true });
+    plink(x, 762, 370, 908, 370, T.green, t, seg(t, TL.lk7b[0], TL.lk7b[1]), { head: true });
+    const pu = seg(t, TL.pass, TL.pass + 0.8); if (pu > 0 && pu < 1) glow(x, 640, 370, 150 + 260 * pu, T.green, 0.5 * (1 - pu));
+    x.restore();
+    x.save(); x.globalAlpha = seg(t, 25.0, 25.3) * a7; ttext(x, 'Guardrail check', 640, 370 + 110 + 40, 26, T.ink, { w: 700 }); x.restore();
+    pop(x, 1060, 370, pv(t, TL.teamCard, 0.4, 1.4), () => { tcard(x, 910, 300, 300, 140, { col: T.green, col2: T.cyan }); ttext(x, 'YOUR TEAM', 940, 336, 16, T.green, { mono: true, align: 'left' }); ttext(x, 'Stays in control', 940, 392, 28, T.ink, { align: 'left', w: 700 }); }, a7);
+    ['allowed actions only', 'approved data only', 'hand-off to a human'].forEach((s, i) => pchip(x, s, 300 + i * 340, 610, 20, pv(t, TL.guardChips[i]), a7, { col: T.green }));
+  }
+
+  // ---- BEAT 8: process (cards grow out of the shield) ----
+  const S8 = [['DISCOVER', 'Fixed-scope', 'quote', T.cyan, iDoc], ['BUILD', 'Weekly', 'working demos', T.violet, iBolt], ['SCALE', 'Launch, training,', 'improvements', T.green, iCheck]];
+  if (t >= TL.morph8[0] && t < 32.0) {
+    const mu = eio(seg(t, TL.morph8[0], TL.morph8[1])), cv = eio(seg(t, TL.conv[0], TL.conv[1])), a8 = 1 - seg(t, 31.0, 31.4);
+    ptext(x, 'From idea to live in weeks', 640, 100, 54, T.ink, pv(t, TL.hl8, 0.4, 1.3), a8, { w: 800 });
+    S8.forEach(([a, b, c, col, ic], i) => {
+      const X = 70 + i * 390, fx = X + 180, fy = 340;
+      let cx = lerp(640, fx, mu), cy = lerp(370, fy, mu), s = lerp(0.2, 1, mu);
+      cx = lerp(cx, 640, cv); cy = lerp(cy, 325, cv); s = lerp(s, 0.3, cv);
+      const al = seg(t, TL.morph8[0], TL.morph8[0] + 0.2) * (1 - seg(t, 31.5, 31.9));
+      x.save(); x.globalAlpha *= al; x.translate(cx, cy); x.scale(s, s); x.translate(-fx, -fy);
+      tcard(x, X, 190, 360, 300, { col, col2: T.cyan });
+      x.globalAlpha *= seg(t, TL.cardsTxt + i * 0.1, TL.cardsTxt + 0.3 + i * 0.1) * (1 - cv);
+      ic(x, X + 70, 270, 26, col); ttext(x, a, X + 30, 345, 20, col, { mono: true, align: 'left' }); ttext(x, b, X + 30, 400, 32, T.ink, { align: 'left', w: 700 }); ttext(x, c, X + 30, 446, 32, T.ink, { align: 'left', w: 700 });
+      x.restore();
+      if (i < 2) plink(x, X + 364, 340, X + 386, 340, col, t, seg(t, TL.arrows8[0] + i * 0.2, TL.arrows8[1] + i * 0.2) * (1 - cv), { head: true, dots: 0 });
+    });
+    pchip(x, 'Fixed price, quoted upfront', 410, 585, 22, pv(t, TL.chip8a, 0.35, 2.2), a8, { col: T.amber });
+    pchip(x, 'Delivered in weeks', 890, 585, 22, pv(t, TL.chip8b, 0.35, 1.8), a8, { col: T.green });
+  }
+
+  // ---- BEAT 9: call to action ----
+  if (t >= 31.2) {
+    pchip(x, 'Engineering-led since 2015', 640, 192, 20, pv(t, TL.chipEng), 1, { col: T.mute });
+    pop(x, 640, 325, pv(t, TL.btn, 0.45, 1.3), () => { tcard(x, 310, 260, 660, 130, { col: T.cyan, col2: T.violet, r: 65 }); mayaOrb(x, 400, 325, 42, t, null); }, 1);
+    ptext(x, 'Talk to Maya', 700, 325, 48, T.ink, pv(t, TL.btnTxt, 0.4, 1.3), 1, { w: 800, glow: T.cyan });
+    pchip(x, 'Book a free discovery call', 640, 450, 26, pv(t, TL.chipBook, 0.4, 1.4), 1, { col: T.violet, solid: true });
+    const url = 'ilogixdigital.com', n = Math.floor(url.length * seg(t, TL.url[0], TL.url[1]));
+    if (n > 0) { x.save(); x.font = mf(600, 36); const full = x.measureText(url).width; x.restore(); ttext(x, url.slice(0, n) + (t < TL.url[1] + 0.3 && Math.floor(t * 6) % 2 ? '|' : ''), 640 - full / 2, 540, 36, T.cyan, { mono: true, w: 600, glow: T.cyan, align: 'left' }); }
+    x.save(); x.globalAlpha = seg(t, TL.tag, TL.tag + 0.5); ttext(x, 'Software, AI and growth systems for ambitious businesses.', 640, 615, 24, T.mute, { w: 500 }); x.restore();
+  }
+  x.restore();
+
+  // beat 3 -> 4 scene change: shock ring from the team node, then the glow whiteout
+  const su = seg(t, TL.shock[0], TL.shock[1]);
+  if (su > 0 && su < 1) { x.save(); x.strokeStyle = H.rgba(T.cyan, 0.9 * (1 - su)); x.lineWidth = lerp(12, 3, su); x.shadowColor = T.cyan; x.shadowBlur = 24; x.beginPath(); x.arc(1130, 400, lerp(78, 1500, eo(su)), 0, TAU); x.stroke(); x.restore(); }
+  twhite(x, seg(t, TL.white[0], TL.white[1]) * (1 - seg(t, TL.white[1], TL.white[2])));
+  tfinish(x, t);
+}
+
+// ===== Sound: glassy plucks, soft boops, airy whooshes, a warm pad. Built from the same TL times. =====
+function scoreSound(k) {
+  const D = DURATION, hz = k.hz;
+  const pluck = (t, n, g = 1, p = 0, minor = false) => { const f = hz(n); k.tone(t, { f, dur: 0.9, gain: 0.2 * g, a: 0.003, pan: p, verb: 0.28, minor }); k.tone(t, { f: f * 4, dur: 0.09, gain: 0.04 * g, a: 0.001, pan: p, minor }); k.tone(t, { f: f * 2, type: 'triangle', dur: 0.32, gain: 0.045 * g, a: 0.003, pan: p, minor }); };
+  const boop = (t, f0, g = 1, p = 0, minor = true) => { k.tone(t, { f: [[0, f0], [0.07, f0 * 1.45], [0.16, f0 * 1.3]], dur: 0.2, gain: 0.17 * g, a: 0.008, pan: p, verb: 0.15, minor }); k.tone(t, { f: [[0, f0 * 0.5], [0.08, f0 * 0.72]], type: 'triangle', dur: 0.14, gain: 0.06 * g, a: 0.006, pan: p, minor }); };
+  const air = (t, dur, top, g = 1, p = 0, peak = 0.55, minor = false) => k.noise(t, { dur, color: 'pink', filter: 'bandpass', f: [[0, 260], [dur * peak, top], [dur, 340]], q: 0.55, gain: 0.26 * g, a: dur * peak, pan: p, verb: 0.3, minor });
+  const chord = (t, notes, g = 1, dur = 2.2) => notes.forEach((n, i) => { k.tone(t + i * 0.012, { f: n, type: 'triangle', dur, gain: 0.07 * g, a: 0.02, verb: 0.35, filter: 'lowpass', f2: 1800, pan: (i / (notes.length - 1) - 0.5) * 0.6 }); k.tone(t + i * 0.012, { f: hz(n) * 1.003, dur, gain: 0.06 * g, a: 0.03, verb: 0.35 }); });
+  const shimmer = (t, notes, g = 1, p = 0) => k.withMinor(() => notes.forEach((n, i) => k.tone(t + i * 0.055, { f: n, dur: 0.7, gain: 0.07 * g, a: 0.004, verb: 0.4, pan: p + (i % 2 ? 0.25 : -0.25) })));
+  const ticks = (t0, t1, rate, f0, f1, g = 0.4, p = 0) => { for (let tt = t0; tt < t1; tt += rate) k.play('tock', tt, { f: lerp(f0, f1, (tt - t0) / (t1 - t0)), gain: g, pan: p, minor: true }); };
+  const ring = (t0) => [0, 0.55].forEach((d) => { k.tone(t0 + d, { f: 440, dur: 0.42, gain: 0.1, a: 0.01, hold: 0.3, pan: -0.3, verb: 0.15 }); k.tone(t0 + d, { f: 480, dur: 0.42, gain: 0.1, a: 0.01, hold: 0.3, pan: -0.3, verb: 0.15 }); });
+  const down = (t, p = 0) => { k.tone(t, { f: 'E3', type: 'triangle', dur: 0.26, gain: 0.2, hold: 0.1, filter: 'lowpass', f2: 900, pan: p }); k.tone(t + 0.2, { f: 'C3', type: 'triangle', dur: 0.5, gain: 0.2, hold: 0.18, filter: 'lowpass', f2: 800, pan: p }); };
+
+  k.music('pad', 0, D, { bpm: 70, gain: 0.45, chords: [['A3', 'C4', 'E4', 'G4'], ['F3', 'A3', 'C4', 'E4'], ['D3', 'F3', 'A3', 'C4'], ['E3', 'G3', 'B3', 'D4']] });
+  k.bed('room', 0, 3.4, { gain: 0.8 });
+
+  // 1 missed call
+  TL.hl1.forEach((tt, i) => pluck(tt + 0.05, ['A3', 'E4'][i], 0.8, i ? 0.2 : -0.2));
+  boop(TL.node1 + 0.1, 330, 0.9, -0.2, false); ring(TL.ring[0]); ring(TL.ring[1]);
+  pluck(TL.clock + 0.1, 'A3', 0.8, 0.4, true); boop(TL.chipMissed + 0.1, 400, 0.6, -0.2); k.play('tick', TL.chipAfter + 0.1, { gain: 0.5, pan: 0.4, minor: true }); pluck(TL.nobody + 0.1, 'E4', 0.7, 0.4, true);
+  k.tone(2.65, { f: [[0, 330], [0.45, 150]], type: 'triangle', dur: 0.55, gain: 0.16, filter: 'lowpass', f2: 900 });
+  k.play('click', TL.answer, { gain: 1.2 }); air(TL.answer, 0.9, 1800, 0.7, 0, 0.4); shimmer(TL.answer + 0.1, ['E5', 'A5', 'C6'], 0.9, -0.2);
+  // 2 meet Maya
+  pluck(TL.meet + 0.1, 'C4', 0.9, 0); k.play('riser', TL.orb - 0.2, { dur: 0.6, gain: 0.7 }); boop(TL.orb + 0.2, 520, 0.9, 0, false);
+  ticks(TL.link1[0], TL.link1[1], 0.15, 520, 800, 0.35, -0.2); pluck(TL.chipAns + 0.1, 'G4', 0.7, 0.3, true);
+  k.play('pop', TL.bubble + 0.1, { gain: 1.0, pan: 0.5 }); for (let tt = 5.1; tt < 6.8; tt += 0.35) k.play('blip', tt, { f: 'E5', dur: 0.04, gain: 0.5, pan: 0.2, minor: true });
+  pluck(TL.chipMaya + 0.1, 'E4', 0.7, 0, true);
+  // 3 collects
+  air(TL.move2[0], 0.8, 1500, 0.8, -0.3, 0.5, true); pluck(TL.hl3 + 0.1, 'A3', 0.8, 0);
+  ['C6', 'E6', 'G6'].forEach((n, i) => k.play('ding', TL.fields[i] + 0.3, { f: n, gain: 0.7, pan: 0.1 * i }));
+  TL.fields.forEach((tt, i) => boop(tt + 0.05, 480 + i * 60, 0.5, 0.2, true));
+  ticks(9.6, 10.5, 0.12, 600, 900, 0.3, 0.3); boop(TL.team + 0.1, 440, 0.9, 0.5, false); k.play('success', TL.handoff[0] + 0.1, { gain: 0.9, pan: 0.5 }); pluck(TL.chipHand + 0.1, 'C4', 0.7, 0, true);
+  // 4 beyond answering
+  k.play('riser', 11.0, { dur: 1.0, gain: 0.9 }); k.tone(11.0, { f: [[0, 110], [1.0, 330]], type: 'triangle', dur: 1.05, gain: 0.07, a: 0.8 }); k.play('impact', 12.0, { gain: 0.6 }); chord(12.05, ['A2', 'E3', 'A3'], 0.6, 1.4);
+  pluck(TL.ag1 + 0.1, 'A3', 0.8, -0.3); pluck(TL.ag2 + 0.1, 'C4', 0.7, -0.3, true); boop(TL.agent + 0.2, 380, 0.8, 0.4, false);
+  TL.sats.forEach((tt, i) => k.play('blip', tt + 0.35, { f: ['E6', 'G6', 'C7'][i], dur: 0.12, gain: 0.8, pan: 0.5, minor: true }));
+  chord(TL.ag3, ['A2', 'E3', 'A3', 'C4', 'E4'], 1.1, 1.6); shimmer(TL.ag3 + 0.05, ['E5', 'A5', 'C6', 'E6'], 0.8, -0.3);
+  air(TL.split[0], 0.8, 1700, 0.8, 0, 0.5);
+  // 5 plan act verify
+  ['C4', 'E4', 'G4'].forEach((n, i) => pluck(TL.pav[i] + 0.05, n, 0.9, (i - 1) * 0.35));
+  ticks(TL.pl1[0], TL.pl1[1], 0.12, 500, 700, 0.3, -0.2); ticks(TL.pl2[0], TL.pl2[1], 0.12, 600, 800, 0.3, 0.2);
+  air(TL.loop[0], 0.8, 1700, 0.7, 0, 0.5, true); pluck(TL.loopChip + 0.05, 'G4', 0.7, 0, true);
+  TL.jobs.forEach((tt, i) => boop(tt + 0.1, [440, 520, 600][i], 0.6, (i - 1) * 0.3, true));
+  // 6 tools
+  air(TL.hubMove[0], 0.9, 1500, 0.8, 0, 0.5); pluck(TL.wired + 0.1, 'D4', 0.8, 0);
+  TL.spokes.forEach((tt, i) => k.play('blip', tt + 0.25, { f: ['E5', 'G5', 'A5', 'C6', 'E6'][i], dur: 0.12, gain: 0.7, pan: (i - 2) * 0.3, minor: true }));
+  TL.toolChips.forEach((tt, i) => k.play('tick', tt + 0.1, { gain: 0.5, pan: (i - 1.5) * 0.3, minor: true }));
+  // 7 guardrails
+  air(TL.push[0], 1.1, 1400, 1.1, 0, 0.5); k.play('thud', 24.7, { gain: 0.6, f: 110 }); pluck(TL.hl7 + 0.1, 'G3', 0.8, 0); boop(TL.action + 0.15, 400, 0.8, -0.4, true);
+  ticks(TL.lk7a[0], TL.lk7a[1], 0.12, 500, 750, 0.3, -0.2); k.play('success', TL.pass, { gain: 0.9 }); k.play('thud', TL.pass, { gain: 0.4, f: 150 });
+  ticks(TL.lk7b[0], TL.lk7b[1], 0.12, 600, 850, 0.3, 0.3); boop(TL.teamCard + 0.15, 460, 0.8, 0.4, true);
+  TL.guardChips.forEach((tt, i) => k.play('tick', tt + 0.1, { gain: 0.5, pan: (i - 1) * 0.3, minor: true }));
+  // 8 process
+  air(TL.morph8[0], 0.9, 1500, 0.9, 0, 0.5); [27.7, 27.9, 28.1].forEach((tt, i) => boop(tt, [420, 500, 600][i], 0.8, (i - 1) * 0.4, true)); pluck(TL.hl8 + 0.1, 'E4', 0.8, 0);
+  k.play('stamp', TL.chip8a + 0.1, { gain: 0.8, pan: -0.3 }); k.play('ding', TL.chip8b + 0.1, { f: 'E6', gain: 0.8, pan: 0.3 });
+  // 9 call to action
+  k.play('riser', TL.conv[0], { dur: 0.7, gain: 0.7 }); pluck(TL.logo + 0.05, 'A4', 0.8, 0); k.play('sparkle', TL.logo + 0.1, { gain: 0.7, n: 6 });
+  chord(TL.btn, ['A2', 'E3', 'A3', 'C4', 'E4', 'B4'], 1.2, 2.6); pluck(TL.btnTxt + 0.1, 'E4', 0.8, 0, true); boop(TL.chipBook + 0.1, 520, 0.8, 0, true);
+  k.play('typing', TL.url[0], { n: 17, rate: 0.047, gain: 0.8, minor: true }); shimmer(TL.url[1], ['E5', 'A5', 'C6', 'E6'], 0.7, 0);
+}
+window.DURATION = DURATION;
+window.scoreSound = scoreSound;
+// ===== 9:16 layout (720x1280). Same timeline TL and the same sound score as the 16:9 cut; only positions change. =====
+function explainerP(ctx, W, Hh, t) {
+  const x = ctx;
+  x.save();
+  const z = 1 + 0.12 * Math.sin(Math.PI * seg(t, TL.push[0], TL.push[1]));
+  x.translate(360, 640); x.scale(z, z); x.translate(-360, -640);
+  tbg(x, t);
+  x.save(); x.globalAlpha = seg(t, 0.1, 0.5) * (1 - seg(t, 31.2, 31.6)); x.translate(0, 44); wordmark(x, false); x.restore();
+  pop(x, 360, 210, pv(t, TL.logo, 0.5, 1.2), () => { x.save(); x.translate(-280, 90); wordmark(x, true); x.restore(); }, 1);
+
+  const m1 = eio(seg(t, TL.move1[0], TL.move1[1])), m2 = eio(seg(t, TL.move2[0], TL.move2[1]));
+  let py = lerp(440, 360, m1), pr = 50; py = lerp(py, 340, m2); pr = lerp(pr, 46, m2);
+  const px = 360, pcol = mixc(T.red, T.cyan, m1);
+  const ox = 360, oy = lerp(650, 490, m2), orr = lerp(115, 60, m2);
+  const TEAM = [360, 900, 48];
+
+  if (t < 12.05) {
+    // BEAT 1
+    const a1 = 1 - seg(t, 2.9, 3.4);
+    ptext(x, 'Every missed call', 360, 205, 50, T.ink, pv(t, TL.hl1[0], 0.4, 1.3), a1, { w: 800 });
+    ptext(x, 'is a missed customer.', 360, 268, 50, T.cyan, pv(t, TL.hl1[1], 0.4, 1.3), a1, { w: 800, glow: T.cyan });
+    const ringing = (t > 0.5 && t < 1.5) || (t > 1.9 && t < 2.9) ? 1 : 0.2;
+    for (let i = 0; i < 3; i++) {
+      x.save(); x.globalAlpha = a1 * ringing * seg(t, 0.4, 0.6) * (0.5 + 0.5 * Math.sin(t * 12 - i * 1.3)); x.strokeStyle = H.rgba(T.red, 0.6 - 0.15 * i); x.lineWidth = 4; x.lineCap = 'round';
+      const R = 205 + i * 26; x.beginPath(); x.arc(360, 490, R, -2.35, -1.95); x.stroke(); x.beginPath(); x.arc(360, 490, R, -1.19, -0.79); x.stroke(); x.restore();
+    }
+    pop(x, 360, 495, pv(t, TL.phone, 0.4), () => tcard(x, 255, 330, 210, 330, { col: T.red, col2: T.pink }), 1 - seg(t, 3.2, 3.6));
+    pchip(x, 'Missed call', 360, 530, 20, pv(t, TL.chipMissed), 1 - seg(t, 3.2, 3.5), { col: T.red });
+    pop(x, 360, 585, 1, () => ttext(x, 'Unknown caller', 360, 585, 18, T.mute, { mono: true, w: 500 }), seg(t, TL.unk, TL.unk + 0.3) * (1 - seg(t, 3.2, 3.5)));
+    const ca = 1 - seg(t, 2.9, 3.3);
+    pop(x, 300, 780, pv(t, TL.clock, 0.4), () => { ttext(x, '02:14', 300, 780, 120, T.ink, { mono: true, w: 600, glow: T.cyan }); ttext(x, 'AM', 492, 812, 36, T.amber, { mono: true, w: 600, align: 'left' }); }, ca);
+    pchip(x, 'after hours', 360, 870, 22, pv(t, TL.chipAfter), ca, { col: T.amber });
+    ptext(x, 'Nobody picks up.', 360, 945, 36, T.mute, pv(t, TL.nobody), ca, { w: 600 });
+    for (let i = 0; i < 2; i++) { const u = seg(t, TL.answer + i * 0.18, TL.answer + 0.9 + i * 0.18); if (u > 0 && u < 1) { x.save(); x.strokeStyle = H.rgba(T.green, 0.8 * (1 - u)); x.lineWidth = 6 * (1 - u) + 1; x.beginPath(); x.arc(360, 440, lerp(50, 420, eo(u)), 0, TAU); x.stroke(); x.restore(); } }
+
+    pop(x, px, py, pv(t, TL.node1, 0.35, 1.5), () => tnode(x, px, py, pr, pcol, t, { icon: iPhone, ring: t < 3.3 }), 1);
+    x.save(); x.globalAlpha = seg(t, TL.incoming, TL.incoming + 0.3) * (1 - seg(t, 6.6, 6.9)); ttext(x, 'Incoming call', 360 + 50 + 24, 360, 22, T.ink, { w: 700, align: 'left' }); x.restore();
+    x.save(); x.globalAlpha = seg(t, 7.5, 7.8); ttext(x, 'Caller', 360 + 46 + 24, 340, 26, T.ink, { w: 700, align: 'left' }); x.restore();
+
+    // BEAT 2
+    const a2 = 1 - seg(t, 6.6, 7.0);
+    ptext(x, 'Meet Maya', 360, 195, 66, T.ink, pv(t, TL.meet, 0.4, 1.3), a2, { w: 800, glow: T.violet });
+    pchip(x, 'answers every call, 24/7', 360, 262, 22, pv(t, TL.chipAns), a2, { col: T.green });
+    plink(x, px, py + pr + 6, ox, oy - orr - 6, T.cyan, t, seg(t, TL.link1[0], TL.link1[1]), { head: true });
+    pop(x, ox, oy, pv(t, TL.orb, 0.45, 1.3), () => mayaOrb(x, ox, oy, orr, t, null), 1);
+    x.save(); x.globalAlpha = seg(t, 7.7, 8.0); ttext(x, 'Maya', ox + orr + 24, oy, 26, T.ink, { w: 700, align: 'left' }); x.restore();
+    pchip(x, 'Maya · AI receptionist', 360, 800, 22, pv(t, TL.chipMaya), a2, { col: T.violet });
+    pop(x, 360, 905, pv(t, TL.bubble, 0.4, 1.4), () => {
+      tcard(x, 100, 845, 520, 120, { col: T.violet, col2: T.cyan });
+      ttext(x, 'MAYA', 135, 875, 16, T.violet, { mono: true, align: 'left' }); ttext(x, 'Hi, you’ve reached iLogix.', 135, 912, 26, T.ink, { align: 'left', w: 600 }); ttext(x, 'How can I help?', 135, 946, 26, T.ink, { align: 'left', w: 600 });
+    }, a2);
+
+    // BEAT 3
+    ptext(x, 'Maya collects', 360, 195, 54, T.ink, pv(t, TL.hl3, 0.4, 1.3), 1, { w: 800 });
+    ptext(x, 'the details', 360, 255, 54, T.ink, pv(t, TL.hl3 + 0.1, 0.4, 1.3), 1, { w: 800 });
+    ['Name', 'Phone number', 'Reason for calling'].forEach((s, i) => {
+      const Y = 590 + i * 75, st = TL.fields[i];
+      if (i === 0) plink(x, 360, 556, 360, 590, T.violet, t, seg(t, st - 0.1, st + 0.3), { dots: 1 });
+      pop(x, 360, Y + 31, pv(t, st, 0.35, 1.4), () => { tcard(x, 140, Y, 440, 62, { col: T.green, col2: T.cyan, r: 16 }); ttext(x, s, 215, Y + 31, 24, T.ink, { align: 'left', w: 600 }); }, 1);
+      pop(x, 177, Y + 31, pv(t, st + 0.3, 0.3, 2.0), () => { x.fillStyle = H.rgba(T.green, 0.2); x.beginPath(); x.arc(177, Y + 31, 19, 0, TAU); x.fill(); iCheck(x, 177, Y + 31, 12, T.green); }, 1);
+    });
+    plink(x, 360, 806, 360, TEAM[1] - TEAM[2] - 6, T.green, t, seg(t, 9.6, 10.1), { dots: 1 });
+    pop(x, TEAM[0], TEAM[1], pv(t, TL.team, 0.45, 1.4), () => tnode(x, TEAM[0], TEAM[1], TEAM[2], T.green, t, { icon: iPerson, ring: true }), 1);
+    x.save(); x.globalAlpha = seg(t, 10.1, 10.4); ttext(x, 'Your team', TEAM[0] + TEAM[2] + 22, TEAM[1], 26, T.ink, { w: 700, align: 'left' }); x.restore();
+    const hu = seg(t, TL.handoff[0], TL.handoff[1]); if (hu > 0 && hu < 1) glow(x, TEAM[0], TEAM[1], 130 + 200 * hu, T.green, 0.55 * (1 - hu));
+    pchip(x, 'then hands off to your team', 360, 990, 22, pv(t, TL.chipHand), 1, { col: T.green });
+  }
+
+  // BEAT 4
+  const S4 = [[110, 720, iMail, T.violet], [610, 720, iCal, T.amber], [360, 925, iCheck, T.green]];
+  if (t >= 12.05 && t < 15.7) {
+    const a4 = 1 - seg(t, 14.2, 14.6);
+    ptext(x, 'Agentic AI', 360, 230, 70, T.ink, pv(t, TL.ag1, 0.4, 1.3), a4, { w: 800 });
+    ptext(x, 'doesn’t just answer.', 360, 308, 44, T.mute, pv(t, TL.ag2, 0.4, 1.3), a4, { w: 600 });
+    ptext(x, 'It acts.', 360, 415, 96, T.cyan, pv(t, TL.ag3, 0.5, 1.8), a4, { w: 800, glow: T.cyan });
+    S4.forEach(([sx, sy, ic, col], i) => {
+      const fu = eo(seg(t, TL.sats[i], TL.sats[i] + 0.5)), cx = lerp(360, sx, fu), cy = lerp(720, sy, fu), a = Math.atan2(sy - 720, sx - 360);
+      if (fu > 0.9) tlink(x, 360 + Math.cos(a) * 106, 720 + Math.sin(a) * 106, sx - Math.cos(a) * 52, sy - Math.sin(a) * 52, col, t, { head: true, dots: 1, ph: i * 0.25 });
+      pop(x, cx, cy, fu > 0 ? 1 : 0, () => tnode(x, cx, cy, 44, col, t, { icon: ic, ph: i }), a4);
+    });
+    pop(x, 360, 720, pv(t, TL.agent, 0.45, 1.4), () => tnode(x, 360, 720, 96, T.cyan, t, { icon: iBolt, ring: true }), 1 - seg(t, 14.3, 14.6));
+  }
+
+  // BEAT 5 (Verify becomes the hub in beat 6)
+  const sp = eio(seg(t, TL.split[0], TL.split[1])), hm = eio(seg(t, TL.hubMove[0], TL.hubMove[1]));
+  const NS = [[360, T.cyan, iPlan, 'Plan', 'break the goal into steps'], [560, T.violet, iBolt, 'Act', 'use your tools'], [760, T.green, iCheck, 'Verify', 'check before it counts']];
+  if (t >= TL.split[0] && t < 27.8) {
+    const a5 = 1 - seg(t, 19.1, 19.5);
+    NS.forEach(([ny, col, ic, lab, sub], i) => {
+      let cx = lerp(360, 300, sp), cy = lerp(720, ny, sp), r = lerp(56, 68, sp), ca = col, icon = ic, al = seg(t, TL.split[0], TL.split[0] + 0.25);
+      if (i === 2) {
+        cx = lerp(cx, 360, hm); cy = lerp(cy, 640, hm); r = lerp(r, 86, hm); ca = mixc(T.green, T.cyan, hm);
+        icon = (xx, a, b, s, c) => { xx.save(); xx.globalAlpha *= 1 - hm; iCheck(xx, a, b, s, c); xx.restore(); xx.save(); xx.globalAlpha *= hm; iBolt(xx, a, b, s, c); xx.restore(); };
+        if (t >= 20.1 && t < TL.collapse[0]) { cx = 360; cy = 640; r = 86; ca = T.cyan; icon = iBolt; }
+        if (t >= TL.collapse[0] && t < 27.8) { const cu = eio(seg(t, TL.collapse[0], TL.collapse[1])); cx = 360; cy = lerp(640, 560, cu); r = lerp(86, 90, cu); ca = mixc(T.cyan, T.green, cu); icon = (xx, a, b, s, c) => { xx.save(); xx.globalAlpha *= 1 - cu; iBolt(xx, a, b, s, c); xx.restore(); xx.save(); xx.globalAlpha *= cu; iShield(xx, a, b, s * 1.5, c); xx.restore(); }; }
+      } else al *= a5 * (1 - seg(t, 19.1, 19.6));
+      if (i === 2 && t >= 27.3) al = 1 - seg(t, 27.3, 27.7);
+      pop(x, cx, cy, 1, () => tnode(x, cx, cy, r, ca, t, { icon, ring: true, ph: i }), al);
+      if (t < 19.6) {
+        x.save(); x.globalAlpha = seg(t, TL.pavLab[i], TL.pavLab[i] + 0.3) * a5; ttext(x, lab, 392, ny - 16, 34, T.ink, { w: 700, align: 'left' }); x.restore();
+        x.save(); x.globalAlpha = seg(t, TL.pavSub[i], TL.pavSub[i] + 0.3) * a5; ttext(x, sub, 392, ny + 26, 16, T.mute, { mono: true, w: 500, align: 'left' }); x.restore();
+        ptext(x, lab + '.', [130, 340, 570][i], 200, 50, [T.cyan, T.violet, T.green][i], pv(t, TL.pav[i], 0.4, 1.4), a5, { w: 800 });
+      }
+    });
+    if (t < 19.6) {
+      x.save(); x.globalAlpha = a5;
+      plink(x, 300, 360 + 68 + 6, 300, 560 - 68 - 6, T.cyan, t, seg(t, TL.pl1[0], TL.pl1[1]), { head: true });
+      plink(x, 300, 560 + 68 + 6, 300, 760 - 68 - 6, T.violet, t, seg(t, TL.pl2[0], TL.pl2[1]), { head: true });
+      const lp = seg(t, TL.loop[0], TL.loop[1]);
+      if (lp > 0) {
+        const pts = bezPts([[232, 760], [50, 760], [50, 360], [232, 360]], lp);
+        x.strokeStyle = H.rgba(T.green, 0.5); x.lineWidth = 3; x.lineCap = 'round'; x.setLineDash([10, 10]); x.beginPath(); pts.forEach((p, k) => (k ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]))); x.stroke(); x.setLineDash([]);
+        if (lp > 0.97) { x.fillStyle = H.rgba(T.cyan, 0.95); x.beginPath(); x.moveTo(228, 360); x.lineTo(208, 350); x.lineTo(208, 370); x.closePath(); x.fill(); }
+      }
+      x.restore();
+      pchip(x, 'repeat until done', 150, 560, 18, pv(t, TL.loopChip), a5, { col: T.green, solid: true });
+      x.save(); x.globalAlpha = seg(t, TL.jobsLab, TL.jobsLab + 0.3) * a5; ttext(x, 'TYPICAL JOBS', 360, 905, 16, T.mute, { mono: true }); x.restore();
+      ['qualify leads', 'draft replies', 'triage support'].forEach((s, i) => pchip(x, s, [120, 350, 590][i], 960, 20, pv(t, TL.jobs[i]), a5, { col: [T.cyan, T.violet, T.green][i] }));
+    }
+  }
+
+  // BEAT 6
+  const S6 = [[130, 470, iPerson, 'CRM', T.cyan], [130, 810, iMail, 'Email', T.violet], [590, 470, iChat, 'WhatsApp', T.green], [590, 810, iCal, 'Calendar', T.amber], [360, 900, iDoc, 'Documents', T.pink]];
+  const cu6 = eio(seg(t, TL.collapse[0], TL.collapse[1]));
+  if (t >= 19.7 && t < 24.9) {
+    const a6 = 1 - seg(t, 23.7, 24.1);
+    ptext(x, 'Wired into your tools', 360, 200, 48, T.ink, pv(t, TL.wired, 0.4, 1.3), a6, { w: 800 });
+    ['n8n', 'Make', 'GoHighLevel', 'Vapi'].forEach((s, i) => pchip(x, s, [187, 271, 398, 525][i], 275, 18, pv(t, TL.toolChips[i]), a6, { col: T.mute }));
+    const hy = lerp(640, 560, cu6);
+    S6.forEach(([sx, sy, ic, lab, col], i) => {
+      const st = TL.spokes[i], cx = lerp(sx, 360, cu6), cy = lerp(sy, hy, cu6), al = 1 - seg(t, 24.2, 24.7), a = Math.atan2(sy - 640, sx - 360);
+      const lk = seg(t, st, st + 0.3) * (1 - cu6);
+      if (lk > 0) tlink(x, 360 + Math.cos(a) * 92, 640 + Math.sin(a) * 92, lerp(360 + Math.cos(a) * 92, cx - Math.cos(a) * 58, lk), lerp(640 + Math.sin(a) * 92, cy - Math.sin(a) * 58, lk), col, t, { dots: 1, ph: i * 0.2 });
+      pop(x, cx, cy, pv(t, st + 0.2, 0.35, 1.5), () => tnode(x, cx, cy, 50, col, t, { icon: ic, label: lab, ly: 38, lpx: 22, ph: i }), al * (1 - cu6 * 0.2));
+    });
+  }
+
+  // BEAT 7
+  if (t >= TL.collapse[1] - 0.2 && t < 27.7) {
+    const a7 = 1 - seg(t, 27.2, 27.6);
+    ptext(x, 'Guardrails keep', 360, 195, 52, T.ink, pv(t, TL.hl7, 0.4, 1.3), a7, { w: 800 });
+    ptext(x, 'it on track', 360, 255, 52, T.ink, pv(t, TL.hl7 + 0.1, 0.4, 1.3), a7, { w: 800 });
+    pop(x, 360, 380, pv(t, TL.action, 0.4, 1.4), () => { tcard(x, 110, 330, 500, 100, { col: T.violet, col2: T.cyan }); ttext(x, 'AGENT ACTION', 140, 356, 16, T.violet, { mono: true, align: 'left' }); ttext(x, 'Draft reply', 140, 400, 32, T.ink, { align: 'left', w: 700 }); }, a7);
+    x.save(); x.globalAlpha = a7;
+    plink(x, 360, 434, 360, 466, T.violet, t, seg(t, TL.lk7a[0], TL.lk7a[1]), { head: true });
+    plink(x, 360, 652, 360, 726, T.green, t, seg(t, TL.lk7b[0], TL.lk7b[1]), { head: true });
+    const pu = seg(t, TL.pass, TL.pass + 0.8); if (pu > 0 && pu < 1) glow(x, 360, 560, 130 + 230 * pu, T.green, 0.5 * (1 - pu));
+    x.restore();
+    pchip(x, 'Guardrail check', 360, 690, 20, pv(t, 25.0, 0.3), a7, { col: T.green, solid: true });
+    pop(x, 360, 780, pv(t, TL.teamCard, 0.4, 1.4), () => { tcard(x, 110, 730, 500, 100, { col: T.green, col2: T.cyan }); ttext(x, 'YOUR TEAM', 140, 756, 16, T.green, { mono: true, align: 'left' }); ttext(x, 'Stays in control', 140, 800, 32, T.ink, { align: 'left', w: 700 }); }, a7);
+    ['allowed actions only', 'approved data only', 'hand-off to a human'].forEach((s, i) => pchip(x, s, 360, 890 + i * 60, 20, pv(t, TL.guardChips[i]), a7, { col: T.green }));
+  }
+
+  // BEAT 8
+  const S8 = [['DISCOVER', 'Fixed-scope', 'quote', T.cyan, iDoc], ['BUILD', 'Weekly', 'working demos', T.violet, iBolt], ['SCALE', 'Launch, training,', 'improvements', T.green, iCheck]];
+  if (t >= TL.morph8[0] && t < 32.0) {
+    const mu = eio(seg(t, TL.morph8[0], TL.morph8[1])), cv = eio(seg(t, TL.conv[0], TL.conv[1])), a8 = 1 - seg(t, 31.0, 31.4);
+    ptext(x, 'From idea to live', 360, 195, 52, T.ink, pv(t, TL.hl8, 0.4, 1.3), a8, { w: 800 });
+    ptext(x, 'in weeks', 360, 255, 52, T.ink, pv(t, TL.hl8 + 0.1, 0.4, 1.3), a8, { w: 800 });
+    S8.forEach(([a, b, c, col, ic], i) => {
+      const Y = 320 + i * 180, fx = 360, fy = Y + 75;
+      let cx = lerp(360, fx, mu), cy = lerp(560, fy, mu), s = lerp(0.2, 1, mu);
+      cx = lerp(cx, 360, cv); cy = lerp(cy, 485, cv); s = lerp(s, 0.3, cv);
+      const al = seg(t, TL.morph8[0], TL.morph8[0] + 0.2) * (1 - seg(t, 31.5, 31.9));
+      x.save(); x.globalAlpha *= al; x.translate(cx, cy); x.scale(s, s); x.translate(-fx, -fy);
+      tcard(x, 60, Y, 600, 150, { col, col2: T.cyan });
+      x.globalAlpha *= seg(t, TL.cardsTxt + i * 0.1, TL.cardsTxt + 0.3 + i * 0.1) * (1 - cv);
+      ic(x, 590, Y + 75, 26, col); ttext(x, a, 95, Y + 36, 20, col, { mono: true, align: 'left' }); ttext(x, b, 95, Y + 82, 30, T.ink, { align: 'left', w: 700 }); ttext(x, c, 95, Y + 120, 30, T.ink, { align: 'left', w: 700 });
+      x.restore();
+      if (i < 2) plink(x, 360, Y + 152, 360, Y + 178, col, t, seg(t, TL.arrows8[0] + i * 0.2, TL.arrows8[1] + i * 0.2) * (1 - cv), { head: true, dots: 0 });
+    });
+    pchip(x, 'Fixed price, quoted upfront', 360, 880, 20, pv(t, TL.chip8a, 0.35, 2.2), a8, { col: T.amber });
+    pchip(x, 'Delivered in weeks', 360, 940, 20, pv(t, TL.chip8b, 0.35, 1.8), a8, { col: T.green });
+  }
+
+  // BEAT 9
+  if (t >= 31.2) {
+    pchip(x, 'Engineering-led since 2015', 360, 290, 20, pv(t, TL.chipEng), 1, { col: T.mute });
+    pop(x, 360, 485, pv(t, TL.btn, 0.45, 1.3), () => { tcard(x, 60, 420, 600, 130, { col: T.cyan, col2: T.violet, r: 65 }); mayaOrb(x, 140, 485, 42, t, null); }, 1);
+    ptext(x, 'Talk to Maya', 410, 485, 44, T.ink, pv(t, TL.btnTxt, 0.4, 1.3), 1, { w: 800, glow: T.cyan });
+    pchip(x, 'Book a free discovery call', 360, 610, 24, pv(t, TL.chipBook, 0.4, 1.4), 1, { col: T.violet, solid: true });
+    const url = 'ilogixdigital.com', n = Math.floor(url.length * seg(t, TL.url[0], TL.url[1]));
+    if (n > 0) { x.save(); x.font = mf(600, 32); const full = x.measureText(url).width; x.restore(); ttext(x, url.slice(0, n) + (t < TL.url[1] + 0.3 && Math.floor(t * 6) % 2 ? '|' : ''), 360 - full / 2, 695, 32, T.cyan, { mono: true, w: 600, glow: T.cyan, align: 'left' }); }
+    x.save(); x.globalAlpha = seg(t, TL.tag, TL.tag + 0.5); ttext(x, 'Software, AI and growth systems', 360, 775, 22, T.mute, { w: 500 }); ttext(x, 'for ambitious businesses.', 360, 810, 22, T.mute, { w: 500 }); x.restore();
+  }
+  x.restore();
+
+  const su = seg(t, TL.shock[0], TL.shock[1]);
+  if (su > 0 && su < 1) { x.save(); x.strokeStyle = H.rgba(T.cyan, 0.9 * (1 - su)); x.lineWidth = lerp(12, 3, su); x.shadowColor = T.cyan; x.shadowBlur = 24; x.beginPath(); x.arc(TEAM[0], TEAM[1], lerp(TEAM[2], 1600, eo(su)), 0, TAU); x.stroke(); x.restore(); }
+  twhite(x, seg(t, TL.white[0], TL.white[1]) * (1 - seg(t, TL.white[1], TL.white[2])));
+  tfinish(x, t);
+}
+// ===== Player =====
+(function () {
+  const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  const $ = (id) => document.getElementById(id);
+  const scrub = $('scrub'), timeEl = $('time'), playBtn = $('play'), big = $('big');
+  scrub.max = String(DURATION);
+  let cur = 0, playing = false, last = 0, stopSound = null, soundOn = true, loop = true, vo = false, poster = true;
+  function draw(t) {
+    cur = t;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.clearRect(0, 0, cv.width, cv.height);
+    (window.ASPECT === '9x16' ? explainerP : explainerL)(ctx, cv.width, cv.height, t);
+    scrub.value = String(t); timeEl.textContent = t.toFixed(1) + ' / ' + DURATION.toFixed(1) + ' s';
+  }
+  window.ASPECT = '16x9';
+  window.setAspect = (a) => { window.ASPECT = a; cv.width = a === '9x16' ? 720 : 1280; cv.height = a === '9x16' ? 1280 : 720; draw(cur); };
+  window.seek = (t) => draw(Math.max(0, Math.min(DURATION, t)));
+  function stopSnd() { if (stopSound) { stopSound(); stopSound = null; } }
+  function startSnd() { stopSnd(); if (soundOn && playing) { try { stopSound = SOUND.live(scoreSound, cur, { voiceover: vo }); } catch (e) { stopSound = null; } } }
+  function setPlaying(p) {
+    playing = p; playBtn.textContent = p ? 'Pause' : 'Play'; playBtn.setAttribute('aria-label', p ? 'Pause' : 'Play'); big.hidden = p || !poster;
+    if (p) { if (poster) { poster = false; draw(0); } last = performance.now(); startSnd(); requestAnimationFrame(frame); } else stopSnd();
+  }
+  function frame(ts) {
+    if (!playing) return;
+    let t = cur + (ts - last) / 1000; last = ts;
+    if (t >= DURATION) {
+      if (loop) { t = 0; draw(0); startSnd(); } else { draw(DURATION); setPlaying(false); return; }
+    }
+    draw(t); requestAnimationFrame(frame);
+  }
+  playBtn.onclick = big.onclick = () => { if (!playing && cur >= DURATION) draw(0); setPlaying(!playing); };
+  scrub.oninput = () => { poster = false; big.hidden = true; draw(parseFloat(scrub.value)); if (playing) { last = performance.now(); startSnd(); } else stopSnd(); };
+  $('snd').onclick = (e) => { soundOn = !soundOn; e.target.setAttribute('aria-pressed', soundOn); e.target.textContent = soundOn ? 'Sound on' : 'Sound off'; if (soundOn) startSnd(); else stopSnd(); };
+  $('vo').onclick = (e) => { vo = !vo; e.target.setAttribute('aria-pressed', vo); if (playing) startSnd(); };
+  $('ar').onclick = (e) => { const v = window.ASPECT !== '9x16'; setAspect(v ? '9x16' : '16x9'); e.target.setAttribute('aria-pressed', v); e.target.textContent = v ? '16:9 wide' : '9:16 vertical'; };
+  $('loop').onclick = (e) => { loop = !loop; e.target.setAttribute('aria-pressed', loop); };
+  document.addEventListener('keydown', (e) => { if (e.code === 'Space' && e.target.tagName !== 'BUTTON') { e.preventDefault(); playBtn.click(); } });
+  (async function init() {
+    try { await Promise.all(['800 66px "Sora"', '700 26px "Sora"', '600 20px "IBM Plex Mono"'].map((f) => document.fonts.load(f, 'AaZz09?'))); await document.fonts.ready; } catch (e) { /* draw with fallback */ }
+    draw(1.2); scrub.value = '0'; timeEl.textContent = '0.0 / ' + DURATION.toFixed(1) + ' s'; cur = 0;
+  })();
+})();
+
+</script>
