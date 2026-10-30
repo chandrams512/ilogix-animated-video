@@ -3,6 +3,7 @@
   "out": "ilogix_voice_agents.html",
   "scripts": [
     "engine/harness.js",
+    "engine/styles.js",
     "styles/flat-vector/style.js",
     "styles/tech-glow/style.js",
     "styles/_sound/sound.js",

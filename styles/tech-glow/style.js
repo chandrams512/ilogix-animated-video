@@ -203,3 +203,9 @@ const PANELS = [
   },
 ];
 const PANEL_T = [1.8, 5.0, 9.0, 12.6, 17.0, 21.0, 24.8, 28.5, 33.0];
+
+registerStyle('tech-glow', {
+  label: 'Tech Glow',
+  pal: T, bg: tbg, finish: tfinish, text: ttext, chip: tchip, card: tcard, node: tnode, link: tlink, wordmark, orb: mayaOrb,
+  icon: { phone: iPhone, mail: iMail, chat: iChat, cal: iCal, person: iPerson, doc: iDoc, check: iCheck, bolt: iBolt, plan: iPlan, shield: iShield },
+});

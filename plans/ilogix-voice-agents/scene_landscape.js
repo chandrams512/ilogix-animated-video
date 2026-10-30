@@ -15,16 +15,16 @@ const TL = {
 const pv = (t, a, d = 0.3, s = 1.4) => back(seg(t, a, a + d), s);
 const mixc = (a, b, u) => H.mix(a, b, cl(u));
 const pop = (x, cx, cy, u, fn, a) => { if (u <= 0.01 || a === 0) return; x.save(); if (a != null) x.globalAlpha *= a; x.translate(cx, cy); x.scale(u, u); x.translate(-cx, -cy); fn(); x.restore(); };
-const ptext = (x, s, cx, cy, px, col, u, a, o) => pop(x, cx, cy, u, () => ttext(x, s, cx, cy, px, col, o || {}), a);
-const pchip = (x, s, cx, cy, px, u, a, o) => pop(x, cx, cy, u, () => tchip(x, cx, cy, s, px, o || {}), a);
+const ptext = (x, s, cx, cy, px, col, u, a, o) => pop(x, cx, cy, u, () => S.text(x, s, cx, cy, px, col, o || {}), a);
+const pchip = (x, s, cx, cy, px, u, a, o) => pop(x, cx, cy, u, () => S.chip(x, cx, cy, s, px, o || {}), a);
 function plink(x, ax, ay, bx, by, col, t, p, o) {
   if (p <= 0.01) return; o = o || {};
-  tlink(x, ax, ay, lerp(ax, bx, p), lerp(ay, by, p), col, t, Object.assign({}, o, { head: !!o.head && p > 0.95 }));
+  S.link(x, ax, ay, lerp(ax, bx, p), lerp(ay, by, p), col, t, Object.assign({}, o, { head: !!o.head && p > 0.95 }));
 }
 function twhite(x, a) {
   if (a <= 0) return;
   const cw = x.canvas.width, ch = x.canvas.height, g = x.createRadialGradient(cw / 2, ch / 2, 0, cw / 2, ch / 2, Math.hypot(cw, ch) / 2);
-  g.addColorStop(0, H.rgba('#e6fcff', a)); g.addColorStop(0.5, H.rgba(T.cyan, a * 0.95)); g.addColorStop(1, H.rgba(T.violet, a * 0.9));
+  g.addColorStop(0, H.rgba('#e6fcff', a)); g.addColorStop(0.5, H.rgba(S.pal.cyan, a * 0.95)); g.addColorStop(1, H.rgba(S.pal.violet, a * 0.9));
   x.fillStyle = g; x.fillRect(0, 0, cw, ch);
 }
 const bezPts = (P, p, n = 60) => { const a = []; for (let i = 0; i <= n; i++) a.push(bez(P, (p * i) / n)); return a; };
@@ -34,195 +34,195 @@ function explainerL(ctx, W, Hh, t) {
   x.save();
   const z = 1 + 0.12 * Math.sin(Math.PI * seg(t, TL.push[0], TL.push[1]));
   x.translate(640, 360); x.scale(z, z); x.translate(-640, -360);
-  tbg(x, t);
+  S.bg(x, t);
 
-  // wordmark: small header, then the big lockup at the end
-  x.save(); x.globalAlpha = seg(t, 0.1, 0.5) * (1 - seg(t, 31.2, 31.6)); wordmark(x, false); x.restore();
-  pop(x, 640, 120, pv(t, TL.logo, 0.5, 1.2), () => wordmark(x, true), 1);
+  // S.wordmark: small header, then the big lockup at the end
+  x.save(); x.globalAlpha = seg(t, 0.1, 0.5) * (1 - seg(t, 31.2, 31.6)); S.wordmark(x, false); x.restore();
+  pop(x, 640, 120, pv(t, TL.logo, 0.5, 1.2), () => S.wordmark(x, true), 1);
 
   // ---- shared moving objects (beats 1-3) ----
   const m1 = eio(seg(t, TL.move1[0], TL.move1[1])), m2 = eio(seg(t, TL.move2[0], TL.move2[1]));
   let px = lerp(420, 190, m1), py = lerp(400, 440, m1), pr = lerp(52, 60, m1);
   px = lerp(px, 130, m2); py = lerp(py, 400, m2); pr = lerp(pr, 62, m2);
-  const pcol = mixc(T.red, T.cyan, m1);
+  const pcol = mixc(S.pal.red, S.pal.cyan, m1);
   const ox = lerp(640, 390, m2), oy = lerp(440, 400, m2), orr = lerp(125, 76, m2);
 
   if (t < 12.05) {
     // BEAT 1
     const a1 = 1 - seg(t, 2.9, 3.4);
-    ptext(x, 'Every missed call', 640, 92, 56, T.ink, pv(t, TL.hl1[0], 0.4, 1.3), a1, { w: 800 });
-    ptext(x, 'is a missed customer.', 640, 158, 56, T.cyan, pv(t, TL.hl1[1], 0.4, 1.3), a1, { w: 800, glow: T.cyan });
+    ptext(x, 'Every missed call', 640, 92, 56, S.pal.ink, pv(t, TL.hl1[0], 0.4, 1.3), a1, { w: 800 });
+    ptext(x, 'is a missed customer.', 640, 158, 56, S.pal.cyan, pv(t, TL.hl1[1], 0.4, 1.3), a1, { w: 800, glow: S.pal.cyan });
     const ringing = (t > 0.5 && t < 1.5) || (t > 1.9 && t < 2.9) ? 1 : 0.2;
     for (let i = 0; i < 3; i++) {
-      x.save(); x.globalAlpha = a1 * ringing * seg(t, 0.4, 0.6) * (0.5 + 0.5 * Math.sin(t * 12 - i * 1.3)); x.strokeStyle = H.rgba(T.red, 0.6 - 0.15 * i); x.lineWidth = 4; x.lineCap = 'round';
+      x.save(); x.globalAlpha = a1 * ringing * seg(t, 0.4, 0.6) * (0.5 + 0.5 * Math.sin(t * 12 - i * 1.3)); x.strokeStyle = H.rgba(S.pal.red, 0.6 - 0.15 * i); x.lineWidth = 4; x.lineCap = 'round';
       const R = 220 + i * 26; x.beginPath(); x.arc(420, 450, R, -2.45, -2.0); x.stroke(); x.beginPath(); x.arc(420, 450, R, -1.14, -0.69); x.stroke(); x.restore();
     }
-    pop(x, 420, 465, pv(t, TL.phone, 0.4), () => tcard(x, 315, 280, 210, 370, { col: T.red, col2: T.pink }), 1 - seg(t, 3.2, 3.6));
-    pchip(x, 'Missed call', 420, 492, 20, pv(t, TL.chipMissed), 1 - seg(t, 3.2, 3.5), { col: T.red });
-    pop(x, 420, 545, 1, () => ttext(x, 'Unknown caller', 420, 545, 18, T.mute, { mono: true, w: 500 }), seg(t, TL.unk, TL.unk + 0.3) * (1 - seg(t, 3.2, 3.5)));
+    pop(x, 420, 465, pv(t, TL.phone, 0.4), () => S.card(x, 315, 280, 210, 370, { col: S.pal.red, col2: S.pal.pink }), 1 - seg(t, 3.2, 3.6));
+    pchip(x, 'Missed call', 420, 492, 20, pv(t, TL.chipMissed), 1 - seg(t, 3.2, 3.5), { col: S.pal.red });
+    pop(x, 420, 545, 1, () => S.text(x, 'Unknown caller', 420, 545, 18, S.pal.mute, { mono: true, w: 500 }), seg(t, TL.unk, TL.unk + 0.3) * (1 - seg(t, 3.2, 3.5)));
     const ca = 1 - seg(t, 2.9, 3.3);
-    pop(x, 840, 400, pv(t, TL.clock, 0.4), () => { ttext(x, '02:14', 840, 400, 140, T.ink, { mono: true, w: 600, glow: T.cyan }); ttext(x, 'AM', 1090, 440, 40, T.amber, { mono: true, w: 600, align: 'left' }); }, ca);
-    pchip(x, 'after hours', 840, 500, 22, pv(t, TL.chipAfter), ca, { col: T.amber });
-    ptext(x, 'Nobody picks up.', 840, 580, 36, T.mute, pv(t, TL.nobody), ca, { w: 600 });
-    for (let i = 0; i < 2; i++) { const u = seg(t, TL.answer + i * 0.18, TL.answer + 0.9 + i * 0.18); if (u > 0 && u < 1) { x.save(); x.strokeStyle = H.rgba(T.green, 0.8 * (1 - u)); x.lineWidth = 6 * (1 - u) + 1; x.beginPath(); x.arc(420, 400, lerp(52, 420, eo(u)), 0, TAU); x.stroke(); x.restore(); } }
+    pop(x, 840, 400, pv(t, TL.clock, 0.4), () => { S.text(x, '02:14', 840, 400, 140, S.pal.ink, { mono: true, w: 600, glow: S.pal.cyan }); S.text(x, 'AM', 1090, 440, 40, S.pal.amber, { mono: true, w: 600, align: 'left' }); }, ca);
+    pchip(x, 'after hours', 840, 500, 22, pv(t, TL.chipAfter), ca, { col: S.pal.amber });
+    ptext(x, 'Nobody picks up.', 840, 580, 36, S.pal.mute, pv(t, TL.nobody), ca, { w: 600 });
+    for (let i = 0; i < 2; i++) { const u = seg(t, TL.answer + i * 0.18, TL.answer + 0.9 + i * 0.18); if (u > 0 && u < 1) { x.save(); x.strokeStyle = H.rgba(S.pal.green, 0.8 * (1 - u)); x.lineWidth = 6 * (1 - u) + 1; x.beginPath(); x.arc(420, 400, lerp(52, 420, eo(u)), 0, TAU); x.stroke(); x.restore(); } }
 
     // phone node (moves through beats 1-3)
-    pop(x, px, py, pv(t, TL.node1, 0.35, 1.5), () => tnode(x, px, py, pr, pcol, t, { icon: iPhone, ring: t < 3.3 }), 1);
-    x.save(); x.globalAlpha = seg(t, TL.incoming, TL.incoming + 0.3) * (1 - seg(t, 6.6, 6.9)); ttext(x, 'Incoming call', 190, 440 + 60 + 32, 22, T.ink, { w: 700 }); x.restore();
-    x.save(); x.globalAlpha = seg(t, 7.5, 7.8); ttext(x, 'Caller', 130, 400 + 62 + 32, 26, T.ink, { w: 700 }); x.restore();
+    pop(x, px, py, pv(t, TL.node1, 0.35, 1.5), () => S.node(x, px, py, pr, pcol, t, { icon: S.icon.phone, ring: t < 3.3 }), 1);
+    x.save(); x.globalAlpha = seg(t, TL.incoming, TL.incoming + 0.3) * (1 - seg(t, 6.6, 6.9)); S.text(x, 'Incoming call', 190, 440 + 60 + 32, 22, S.pal.ink, { w: 700 }); x.restore();
+    x.save(); x.globalAlpha = seg(t, 7.5, 7.8); S.text(x, 'Caller', 130, 400 + 62 + 32, 26, S.pal.ink, { w: 700 }); x.restore();
 
     // BEAT 2
     const a2 = 1 - seg(t, 6.6, 7.0);
-    ptext(x, 'Meet Maya', 640, 110, 72, T.ink, pv(t, TL.meet, 0.4, 1.3), a2, { w: 800, glow: T.violet });
-    pchip(x, 'answers every call, 24/7', 640, 178, 22, pv(t, TL.chipAns), a2, { col: T.green });
-    plink(x, px + pr + 6, py, ox - orr - 6, oy, T.cyan, t, seg(t, TL.link1[0], TL.link1[1]), { head: true });
-    pop(x, ox, oy, pv(t, TL.orb, 0.45, 1.3), () => mayaOrb(x, ox, oy, orr, t, null), 1);
-    x.save(); x.globalAlpha = seg(t, 7.7, 8.0); ttext(x, 'Maya', ox, oy + orr + 34, 26, T.ink, { w: 700 }); x.restore();
-    pchip(x, 'Maya · AI receptionist', 640, 625, 22, pv(t, TL.chipMaya), a2, { col: T.violet });
+    ptext(x, 'Meet Maya', 640, 110, 72, S.pal.ink, pv(t, TL.meet, 0.4, 1.3), a2, { w: 800, glow: S.pal.violet });
+    pchip(x, 'answers every call, 24/7', 640, 178, 22, pv(t, TL.chipAns), a2, { col: S.pal.green });
+    plink(x, px + pr + 6, py, ox - orr - 6, oy, S.pal.cyan, t, seg(t, TL.link1[0], TL.link1[1]), { head: true });
+    pop(x, ox, oy, pv(t, TL.orb, 0.45, 1.3), () => S.orb(x, ox, oy, orr, t, null), 1);
+    x.save(); x.globalAlpha = seg(t, 7.7, 8.0); S.text(x, 'Maya', ox, oy + orr + 34, 26, S.pal.ink, { w: 700 }); x.restore();
+    pchip(x, 'Maya · AI receptionist', 640, 625, 22, pv(t, TL.chipMaya), a2, { col: S.pal.violet });
     pop(x, 1010, 375, pv(t, TL.bubble, 0.4, 1.4), () => {
-      tcard(x, 810, 300, 400, 150, { col: T.violet, col2: T.cyan });
-      ttext(x, 'MAYA', 842, 332, 16, T.violet, { mono: true, align: 'left' }); ttext(x, 'Hi, you’ve reached iLogix.', 842, 378, 26, T.ink, { align: 'left', w: 600 }); ttext(x, 'How can I help?', 842, 418, 26, T.ink, { align: 'left', w: 600 });
+      S.card(x, 810, 300, 400, 150, { col: S.pal.violet, col2: S.pal.cyan });
+      S.text(x, 'MAYA', 842, 332, 16, S.pal.violet, { mono: true, align: 'left' }); S.text(x, 'Hi, you’ve reached iLogix.', 842, 378, 26, S.pal.ink, { align: 'left', w: 600 }); S.text(x, 'How can I help?', 842, 418, 26, S.pal.ink, { align: 'left', w: 600 });
     }, a2);
 
     // BEAT 3
-    ptext(x, 'Maya collects the details', 640, 100, 52, T.ink, pv(t, TL.hl3, 0.4, 1.3), 1, { w: 800 });
+    ptext(x, 'Maya collects the details', 640, 100, 52, S.pal.ink, pv(t, TL.hl3, 0.4, 1.3), 1, { w: 800 });
     ['Name', 'Phone number', 'Reason for calling'].forEach((s, i) => {
       const y = 250 + i * 110, st = TL.fields[i];
-      plink(x, 470, 400, 590, y + 46, T.violet, t, seg(t, st - 0.1, st + 0.3), { dots: 1, ph: i * 0.2 });
+      plink(x, 470, 400, 590, y + 46, S.pal.violet, t, seg(t, st - 0.1, st + 0.3), { dots: 1, ph: i * 0.2 });
       pop(x, 745, y + 46, pv(t, st, 0.35, 1.4), () => {
-        tcard(x, 590, y, 310, 92, { col: T.green, col2: T.cyan, r: 18 });
-        ttext(x, s, 670, y + 46, 24, T.ink, { align: 'left', w: 600 });
+        S.card(x, 590, y, 310, 92, { col: S.pal.green, col2: S.pal.cyan, r: 18 });
+        S.text(x, s, 670, y + 46, 24, S.pal.ink, { align: 'left', w: 600 });
       }, 1);
-      pop(x, 632, y + 46, pv(t, st + 0.3, 0.3, 2.0), () => { x.fillStyle = H.rgba(T.green, 0.2); x.beginPath(); x.arc(632, y + 46, 22, 0, TAU); x.fill(); iCheck(x, 632, y + 46, 14, T.green); }, 1);
-      plink(x, 900, y + 46, 1052, 400, T.green, t, seg(t, 9.6 + i * 0.12, 10.1 + i * 0.12), { dots: 1, ph: i * 0.3 });
+      pop(x, 632, y + 46, pv(t, st + 0.3, 0.3, 2.0), () => { x.fillStyle = H.rgba(S.pal.green, 0.2); x.beginPath(); x.arc(632, y + 46, 22, 0, TAU); x.fill(); S.icon.check(x, 632, y + 46, 14, S.pal.green); }, 1);
+      plink(x, 900, y + 46, 1052, 400, S.pal.green, t, seg(t, 9.6 + i * 0.12, 10.1 + i * 0.12), { dots: 1, ph: i * 0.3 });
     });
-    pop(x, 1130, 400, pv(t, TL.team, 0.45, 1.4), () => tnode(x, 1130, 400, 78, T.green, t, { icon: iPerson, ring: true }), 1);
-    x.save(); x.globalAlpha = seg(t, 10.1, 10.4); ttext(x, 'Your team', 1130, 400 + 78 + 32, 26, T.ink, { w: 700 }); x.restore();
-    const hu = seg(t, TL.handoff[0], TL.handoff[1]); if (hu > 0 && hu < 1) glow(x, 1130, 400, 160 + 220 * hu, T.green, 0.55 * (1 - hu));
-    pchip(x, 'then hands off to your team', 640, 640, 24, pv(t, TL.chipHand), 1, { col: T.green });
+    pop(x, 1130, 400, pv(t, TL.team, 0.45, 1.4), () => S.node(x, 1130, 400, 78, S.pal.green, t, { icon: S.icon.person, ring: true }), 1);
+    x.save(); x.globalAlpha = seg(t, 10.1, 10.4); S.text(x, 'Your team', 1130, 400 + 78 + 32, 26, S.pal.ink, { w: 700 }); x.restore();
+    const hu = seg(t, TL.handoff[0], TL.handoff[1]); if (hu > 0 && hu < 1) glow(x, 1130, 400, 160 + 220 * hu, S.pal.green, 0.55 * (1 - hu));
+    pchip(x, 'then hands off to your team', 640, 640, 24, pv(t, TL.chipHand), 1, { col: S.pal.green });
   }
 
   // ---- BEAT 4: agentic AI acts ----
-  const S4 = [[1080, 204, iMail, T.violet], [1165, 380, iCal, T.amber], [1080, 556, iCheck, T.green]];
+  const S4 = [[1080, 204, S.icon.mail, S.pal.violet], [1165, 380, S.icon.cal, S.pal.amber], [1080, 556, S.icon.check, S.pal.green]];
   if (t >= 12.05 && t < 15.7) {
     const a4 = 1 - seg(t, 14.2, 14.6);
-    ptext(x, 'Agentic AI', 70, 230, 76, T.ink, pv(t, TL.ag1, 0.4, 1.3), a4, { align: 'left', w: 800 });
-    ptext(x, 'doesn’t just answer.', 70, 322, 52, T.mute, pv(t, TL.ag2, 0.4, 1.3), a4, { align: 'left', w: 600 });
-    ptext(x, 'It acts.', 70, 448, 104, T.cyan, pv(t, TL.ag3, 0.5, 1.8), a4, { align: 'left', w: 800, glow: T.cyan });
+    ptext(x, 'Agentic AI', 70, 230, 76, S.pal.ink, pv(t, TL.ag1, 0.4, 1.3), a4, { align: 'left', w: 800 });
+    ptext(x, 'doesn’t just answer.', 70, 322, 52, S.pal.mute, pv(t, TL.ag2, 0.4, 1.3), a4, { align: 'left', w: 600 });
+    ptext(x, 'It acts.', 70, 448, 104, S.pal.cyan, pv(t, TL.ag3, 0.5, 1.8), a4, { align: 'left', w: 800, glow: S.pal.cyan });
     S4.forEach(([sx, sy, ic, col], i) => {
       const fu = eo(seg(t, TL.sats[i], TL.sats[i] + 0.5)), cx = lerp(930, sx, fu), cy = lerp(380, sy, fu), a = Math.atan2(sy - 380, sx - 930);
-      if (fu > 0.9) tlink(x, 930 + Math.cos(a) * 112, 380 + Math.sin(a) * 112, sx - Math.cos(a) * 52, sy - Math.sin(a) * 52, col, t, { head: true, dots: 1, ph: i * 0.25 });
-      pop(x, cx, cy, fu > 0 ? 1 : 0, () => tnode(x, cx, cy, 44, col, t, { icon: ic, ph: i }), a4);
+      if (fu > 0.9) S.link(x, 930 + Math.cos(a) * 112, 380 + Math.sin(a) * 112, sx - Math.cos(a) * 52, sy - Math.sin(a) * 52, col, t, { head: true, dots: 1, ph: i * 0.25 });
+      pop(x, cx, cy, fu > 0 ? 1 : 0, () => S.node(x, cx, cy, 44, col, t, { icon: ic, ph: i }), a4);
     });
-    pop(x, 930, 380, pv(t, TL.agent, 0.45, 1.4), () => tnode(x, 930, 380, 100, T.cyan, t, { icon: iBolt, ring: true }), 1 - seg(t, 14.3, 14.6));
+    pop(x, 930, 380, pv(t, TL.agent, 0.45, 1.4), () => S.node(x, 930, 380, 100, S.pal.cyan, t, { icon: S.icon.bolt, ring: true }), 1 - seg(t, 14.3, 14.6));
   }
 
   // ---- BEAT 5: plan, act, verify (Verify node becomes the hub in beat 6) ----
   const sp = eio(seg(t, TL.split[0], TL.split[1])), hm = eio(seg(t, TL.hubMove[0], TL.hubMove[1]));
-  const NS = [[240, T.cyan, iPlan, 'Plan', 'break the goal into steps'], [640, T.violet, iBolt, 'Act', 'use your tools'], [1040, T.green, iCheck, 'Verify', 'check before it counts']];
+  const NS = [[240, S.pal.cyan, S.icon.plan, 'Plan', 'break the goal into steps'], [640, S.pal.violet, S.icon.bolt, 'Act', 'use your tools'], [1040, S.pal.green, S.icon.check, 'Verify', 'check before it counts']];
   if (t >= TL.split[0] && t < 27.8) {
     const a5 = 1 - seg(t, 19.1, 19.5);
     NS.forEach(([nx, col, ic, lab, sub], i) => {
       let cx = lerp(930, nx, sp), cy = lerp(380, 340, sp), r = lerp(60, 84, sp), ca = col, icon = ic, al = seg(t, TL.split[0], TL.split[0] + 0.25);
       if (i === 2) {
-        cx = lerp(cx, 640, hm); cy = lerp(cy, 370, hm); r = lerp(r, 90, hm); ca = mixc(T.green, T.cyan, hm);
-        icon = (xx, a, b, s, c) => { xx.save(); xx.globalAlpha *= 1 - hm; iCheck(xx, a, b, s, c); xx.restore(); xx.save(); xx.globalAlpha *= hm; iBolt(xx, a, b, s, c); xx.restore(); };
-        if (t >= 20.1 && t < TL.collapse[0]) { cx = 640; cy = 370; r = 90; ca = T.cyan; icon = iBolt; }
-        if (t >= TL.collapse[0] && t < 27.8) { const cu = eio(seg(t, TL.collapse[0], TL.collapse[1])); r = lerp(90, 110, cu); ca = mixc(T.cyan, T.green, cu); icon = (xx, a, b, s, c) => { xx.save(); xx.globalAlpha *= 1 - cu; iBolt(xx, a, b, s, c); xx.restore(); xx.save(); xx.globalAlpha *= cu; iShield(xx, a, b, s * 1.5, c); xx.restore(); }; }
+        cx = lerp(cx, 640, hm); cy = lerp(cy, 370, hm); r = lerp(r, 90, hm); ca = mixc(S.pal.green, S.pal.cyan, hm);
+        icon = (xx, a, b, s, c) => { xx.save(); xx.globalAlpha *= 1 - hm; S.icon.check(xx, a, b, s, c); xx.restore(); xx.save(); xx.globalAlpha *= hm; S.icon.bolt(xx, a, b, s, c); xx.restore(); };
+        if (t >= 20.1 && t < TL.collapse[0]) { cx = 640; cy = 370; r = 90; ca = S.pal.cyan; icon = S.icon.bolt; }
+        if (t >= TL.collapse[0] && t < 27.8) { const cu = eio(seg(t, TL.collapse[0], TL.collapse[1])); r = lerp(90, 110, cu); ca = mixc(S.pal.cyan, S.pal.green, cu); icon = (xx, a, b, s, c) => { xx.save(); xx.globalAlpha *= 1 - cu; S.icon.bolt(xx, a, b, s, c); xx.restore(); xx.save(); xx.globalAlpha *= cu; S.icon.shield(xx, a, b, s * 1.5, c); xx.restore(); }; }
       } else al *= a5 * (1 - seg(t, 19.1, 19.6));
       if (i === 2 && t >= 27.3) al = 1 - seg(t, 27.3, 27.7);
-      pop(x, cx, cy, 1, () => tnode(x, cx, cy, r, ca, t, { icon, ring: true, ph: i }), al);
+      pop(x, cx, cy, 1, () => S.node(x, cx, cy, r, ca, t, { icon, ring: true, ph: i }), al);
       if (t < 19.6) {
-        x.save(); x.globalAlpha = seg(t, TL.pavLab[i], TL.pavLab[i] + 0.3) * a5; ttext(x, lab, nx, 340 + 84 + 36, 30, T.ink, { w: 700 }); x.restore();
-        x.save(); x.globalAlpha = seg(t, TL.pavSub[i], TL.pavSub[i] + 0.3) * a5; ttext(x, sub, nx, 488, 18, T.mute, { mono: true, w: 500 }); x.restore();
-        ptext(x, lab + '.', [395, 640, 885][i], 82, 58, [T.cyan, T.violet, T.green][i], pv(t, TL.pav[i], 0.4, 1.4), a5, { w: 800 });
+        x.save(); x.globalAlpha = seg(t, TL.pavLab[i], TL.pavLab[i] + 0.3) * a5; S.text(x, lab, nx, 340 + 84 + 36, 30, S.pal.ink, { w: 700 }); x.restore();
+        x.save(); x.globalAlpha = seg(t, TL.pavSub[i], TL.pavSub[i] + 0.3) * a5; S.text(x, sub, nx, 488, 18, S.pal.mute, { mono: true, w: 500 }); x.restore();
+        ptext(x, lab + '.', [395, 640, 885][i], 82, 58, [S.pal.cyan, S.pal.violet, S.pal.green][i], pv(t, TL.pav[i], 0.4, 1.4), a5, { w: 800 });
       }
     });
     if (t < 19.6) {
       x.save(); x.globalAlpha = a5;
-      plink(x, 332, 340, 548, 340, T.cyan, t, seg(t, TL.pl1[0], TL.pl1[1]), { head: true });
-      plink(x, 732, 340, 948, 340, T.violet, t, seg(t, TL.pl2[0], TL.pl2[1]), { head: true });
+      plink(x, 332, 340, 548, 340, S.pal.cyan, t, seg(t, TL.pl1[0], TL.pl1[1]), { head: true });
+      plink(x, 732, 340, 948, 340, S.pal.violet, t, seg(t, TL.pl2[0], TL.pl2[1]), { head: true });
       const lp = seg(t, TL.loop[0], TL.loop[1]);
       if (lp > 0) {
         const pts = bezPts([[1040, 246], [1040, 150], [240, 150], [240, 246]], lp);
-        x.strokeStyle = H.rgba(T.green, 0.5); x.lineWidth = 3; x.lineCap = 'round'; x.setLineDash([10, 10]); x.beginPath(); pts.forEach((p, k) => (k ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]))); x.stroke(); x.setLineDash([]);
-        if (lp > 0.97) { x.fillStyle = H.rgba(T.cyan, 0.95); x.beginPath(); x.moveTo(240, 252); x.lineTo(230, 232); x.lineTo(250, 232); x.closePath(); x.fill(); }
+        x.strokeStyle = H.rgba(S.pal.green, 0.5); x.lineWidth = 3; x.lineCap = 'round'; x.setLineDash([10, 10]); x.beginPath(); pts.forEach((p, k) => (k ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]))); x.stroke(); x.setLineDash([]);
+        if (lp > 0.97) { x.fillStyle = H.rgba(S.pal.cyan, 0.95); x.beginPath(); x.moveTo(240, 252); x.lineTo(230, 232); x.lineTo(250, 232); x.closePath(); x.fill(); }
       }
       x.restore();
-      pchip(x, 'repeat until done', 640, 174, 18, pv(t, TL.loopChip), a5, { col: T.green, solid: true });
-      x.save(); x.globalAlpha = seg(t, TL.jobsLab, TL.jobsLab + 0.3) * a5; ttext(x, 'TYPICAL JOBS', 640, 575, 16, T.mute, { mono: true }); x.restore();
-      ['qualify leads', 'draft replies', 'triage support'].forEach((s, i) => pchip(x, s, 380 + i * 260, 625, 22, pv(t, TL.jobs[i]), a5, { col: [T.cyan, T.violet, T.green][i] }));
+      pchip(x, 'repeat until done', 640, 174, 18, pv(t, TL.loopChip), a5, { col: S.pal.green, solid: true });
+      x.save(); x.globalAlpha = seg(t, TL.jobsLab, TL.jobsLab + 0.3) * a5; S.text(x, 'TYPICAL JOBS', 640, 575, 16, S.pal.mute, { mono: true }); x.restore();
+      ['qualify leads', 'draft replies', 'triage support'].forEach((s, i) => pchip(x, s, 380 + i * 260, 625, 22, pv(t, TL.jobs[i]), a5, { col: [S.pal.cyan, S.pal.violet, S.pal.green][i] }));
     }
   }
 
   // ---- BEAT 6: wired into your tools ----
-  const S6 = [[220, 250, iPerson, 'CRM', T.cyan], [220, 520, iMail, 'Email', T.violet], [1060, 250, iChat, 'WhatsApp', T.green], [1060, 520, iCal, 'Calendar', T.amber], [640, 590, iDoc, 'Documents', T.pink]];
+  const S6 = [[220, 250, S.icon.person, 'CRM', S.pal.cyan], [220, 520, S.icon.mail, 'Email', S.pal.violet], [1060, 250, S.icon.chat, 'WhatsApp', S.pal.green], [1060, 520, S.icon.cal, 'Calendar', S.pal.amber], [640, 590, S.icon.doc, 'Documents', S.pal.pink]];
   const cu6 = eio(seg(t, TL.collapse[0], TL.collapse[1]));
   if (t >= 19.7 && t < 24.9) {
     const a6 = 1 - seg(t, 23.7, 24.1);
-    ptext(x, 'Wired into your tools', 640, 82, 54, T.ink, pv(t, TL.wired, 0.4, 1.3), a6, { w: 800 });
-    ['n8n', 'Make', 'GoHighLevel', 'Vapi'].forEach((s, i) => pchip(x, s, [440, 560, 740, 905][i], 150, 20, pv(t, TL.toolChips[i]), a6, { col: T.mute }));
+    ptext(x, 'Wired into your tools', 640, 82, 54, S.pal.ink, pv(t, TL.wired, 0.4, 1.3), a6, { w: 800 });
+    ['n8n', 'Make', 'GoHighLevel', 'Vapi'].forEach((s, i) => pchip(x, s, [440, 560, 740, 905][i], 150, 20, pv(t, TL.toolChips[i]), a6, { col: S.pal.mute }));
     S6.forEach(([sx, sy, ic, lab, col], i) => {
       const st = TL.spokes[i], cx = lerp(sx, 640, cu6), cy = lerp(sy, 370, cu6), al = 1 - seg(t, 24.2, 24.7), a = Math.atan2(sy - 370, sx - 640);
       const lk = seg(t, st, st + 0.3) * (1 - cu6);
-      if (lk > 0) tlink(x, 640 + Math.cos(a) * 96, 370 + Math.sin(a) * 96, lerp(640 + Math.cos(a) * 96, cx - Math.cos(a) * 62, lk), lerp(370 + Math.sin(a) * 96, cy - Math.sin(a) * 62, lk), col, t, { dots: 1, ph: i * 0.2 });
-      pop(x, cx, cy, pv(t, st + 0.2, 0.35, 1.5), () => tnode(x, cx, cy, 56, col, t, { icon: ic, label: lab, ly: 40, lpx: 22, ph: i }), al * (1 - cu6 * 0.2));
+      if (lk > 0) S.link(x, 640 + Math.cos(a) * 96, 370 + Math.sin(a) * 96, lerp(640 + Math.cos(a) * 96, cx - Math.cos(a) * 62, lk), lerp(370 + Math.sin(a) * 96, cy - Math.sin(a) * 62, lk), col, t, { dots: 1, ph: i * 0.2 });
+      pop(x, cx, cy, pv(t, st + 0.2, 0.35, 1.5), () => S.node(x, cx, cy, 56, col, t, { icon: ic, label: lab, ly: 40, lpx: 22, ph: i }), al * (1 - cu6 * 0.2));
     });
   }
 
   // ---- BEAT 7: guardrails ----
   if (t >= TL.collapse[1] - 0.2 && t < 27.7) {
     const a7 = 1 - seg(t, 27.2, 27.6);
-    ptext(x, 'Guardrails keep it on track', 640, 100, 52, T.ink, pv(t, TL.hl7, 0.4, 1.3), a7, { w: 800 });
-    pop(x, 220, 370, pv(t, TL.action, 0.4, 1.4), () => { tcard(x, 70, 300, 300, 140, { col: T.violet, col2: T.cyan }); ttext(x, 'AGENT ACTION', 100, 336, 16, T.violet, { mono: true, align: 'left' }); ttext(x, 'Draft reply', 100, 392, 34, T.ink, { align: 'left', w: 700 }); }, a7);
+    ptext(x, 'Guardrails keep it on track', 640, 100, 52, S.pal.ink, pv(t, TL.hl7, 0.4, 1.3), a7, { w: 800 });
+    pop(x, 220, 370, pv(t, TL.action, 0.4, 1.4), () => { S.card(x, 70, 300, 300, 140, { col: S.pal.violet, col2: S.pal.cyan }); S.text(x, 'AGENT ACTION', 100, 336, 16, S.pal.violet, { mono: true, align: 'left' }); S.text(x, 'Draft reply', 100, 392, 34, S.pal.ink, { align: 'left', w: 700 }); }, a7);
     x.save(); x.globalAlpha = a7;
-    plink(x, 372, 370, 520, 370, T.violet, t, seg(t, TL.lk7a[0], TL.lk7a[1]), { head: true });
-    plink(x, 762, 370, 908, 370, T.green, t, seg(t, TL.lk7b[0], TL.lk7b[1]), { head: true });
-    const pu = seg(t, TL.pass, TL.pass + 0.8); if (pu > 0 && pu < 1) glow(x, 640, 370, 150 + 260 * pu, T.green, 0.5 * (1 - pu));
+    plink(x, 372, 370, 520, 370, S.pal.violet, t, seg(t, TL.lk7a[0], TL.lk7a[1]), { head: true });
+    plink(x, 762, 370, 908, 370, S.pal.green, t, seg(t, TL.lk7b[0], TL.lk7b[1]), { head: true });
+    const pu = seg(t, TL.pass, TL.pass + 0.8); if (pu > 0 && pu < 1) glow(x, 640, 370, 150 + 260 * pu, S.pal.green, 0.5 * (1 - pu));
     x.restore();
-    x.save(); x.globalAlpha = seg(t, 25.0, 25.3) * a7; ttext(x, 'Guardrail check', 640, 370 + 110 + 40, 26, T.ink, { w: 700 }); x.restore();
-    pop(x, 1060, 370, pv(t, TL.teamCard, 0.4, 1.4), () => { tcard(x, 910, 300, 300, 140, { col: T.green, col2: T.cyan }); ttext(x, 'YOUR TEAM', 940, 336, 16, T.green, { mono: true, align: 'left' }); ttext(x, 'Stays in control', 940, 392, 28, T.ink, { align: 'left', w: 700 }); }, a7);
-    ['allowed actions only', 'approved data only', 'hand-off to a human'].forEach((s, i) => pchip(x, s, 300 + i * 340, 610, 20, pv(t, TL.guardChips[i]), a7, { col: T.green }));
+    x.save(); x.globalAlpha = seg(t, 25.0, 25.3) * a7; S.text(x, 'Guardrail check', 640, 370 + 110 + 40, 26, S.pal.ink, { w: 700 }); x.restore();
+    pop(x, 1060, 370, pv(t, TL.teamCard, 0.4, 1.4), () => { S.card(x, 910, 300, 300, 140, { col: S.pal.green, col2: S.pal.cyan }); S.text(x, 'YOUR TEAM', 940, 336, 16, S.pal.green, { mono: true, align: 'left' }); S.text(x, 'Stays in control', 940, 392, 28, S.pal.ink, { align: 'left', w: 700 }); }, a7);
+    ['allowed actions only', 'approved data only', 'hand-off to a human'].forEach((s, i) => pchip(x, s, 300 + i * 340, 610, 20, pv(t, TL.guardChips[i]), a7, { col: S.pal.green }));
   }
 
   // ---- BEAT 8: process (cards grow out of the shield) ----
-  const S8 = [['DISCOVER', 'Fixed-scope', 'quote', T.cyan, iDoc], ['BUILD', 'Weekly', 'working demos', T.violet, iBolt], ['SCALE', 'Launch, training,', 'improvements', T.green, iCheck]];
+  const S8 = [['DISCOVER', 'Fixed-scope', 'quote', S.pal.cyan, S.icon.doc], ['BUILD', 'Weekly', 'working demos', S.pal.violet, S.icon.bolt], ['SCALE', 'Launch, training,', 'improvements', S.pal.green, S.icon.check]];
   if (t >= TL.morph8[0] && t < 32.0) {
     const mu = eio(seg(t, TL.morph8[0], TL.morph8[1])), cv = eio(seg(t, TL.conv[0], TL.conv[1])), a8 = 1 - seg(t, 31.0, 31.4);
-    ptext(x, 'From idea to live in weeks', 640, 100, 54, T.ink, pv(t, TL.hl8, 0.4, 1.3), a8, { w: 800 });
+    ptext(x, 'From idea to live in weeks', 640, 100, 54, S.pal.ink, pv(t, TL.hl8, 0.4, 1.3), a8, { w: 800 });
     S8.forEach(([a, b, c, col, ic], i) => {
       const X = 70 + i * 390, fx = X + 180, fy = 340;
       let cx = lerp(640, fx, mu), cy = lerp(370, fy, mu), s = lerp(0.2, 1, mu);
       cx = lerp(cx, 640, cv); cy = lerp(cy, 325, cv); s = lerp(s, 0.3, cv);
       const al = seg(t, TL.morph8[0], TL.morph8[0] + 0.2) * (1 - seg(t, 31.5, 31.9));
       x.save(); x.globalAlpha *= al; x.translate(cx, cy); x.scale(s, s); x.translate(-fx, -fy);
-      tcard(x, X, 190, 360, 300, { col, col2: T.cyan });
+      S.card(x, X, 190, 360, 300, { col, col2: S.pal.cyan });
       x.globalAlpha *= seg(t, TL.cardsTxt + i * 0.1, TL.cardsTxt + 0.3 + i * 0.1) * (1 - cv);
-      ic(x, X + 70, 270, 26, col); ttext(x, a, X + 30, 345, 20, col, { mono: true, align: 'left' }); ttext(x, b, X + 30, 400, 32, T.ink, { align: 'left', w: 700 }); ttext(x, c, X + 30, 446, 32, T.ink, { align: 'left', w: 700 });
+      ic(x, X + 70, 270, 26, col); S.text(x, a, X + 30, 345, 20, col, { mono: true, align: 'left' }); S.text(x, b, X + 30, 400, 32, S.pal.ink, { align: 'left', w: 700 }); S.text(x, c, X + 30, 446, 32, S.pal.ink, { align: 'left', w: 700 });
       x.restore();
       if (i < 2) plink(x, X + 364, 340, X + 386, 340, col, t, seg(t, TL.arrows8[0] + i * 0.2, TL.arrows8[1] + i * 0.2) * (1 - cv), { head: true, dots: 0 });
     });
-    pchip(x, 'Fixed price, quoted upfront', 410, 585, 22, pv(t, TL.chip8a, 0.35, 2.2), a8, { col: T.amber });
-    pchip(x, 'Delivered in weeks', 890, 585, 22, pv(t, TL.chip8b, 0.35, 1.8), a8, { col: T.green });
+    pchip(x, 'Fixed price, quoted upfront', 410, 585, 22, pv(t, TL.chip8a, 0.35, 2.2), a8, { col: S.pal.amber });
+    pchip(x, 'Delivered in weeks', 890, 585, 22, pv(t, TL.chip8b, 0.35, 1.8), a8, { col: S.pal.green });
   }
 
   // ---- BEAT 9: call to action ----
   if (t >= 31.2) {
-    pchip(x, 'Engineering-led since 2015', 640, 192, 20, pv(t, TL.chipEng), 1, { col: T.mute });
-    pop(x, 640, 325, pv(t, TL.btn, 0.45, 1.3), () => { tcard(x, 310, 260, 660, 130, { col: T.cyan, col2: T.violet, r: 65 }); mayaOrb(x, 400, 325, 42, t, null); }, 1);
-    ptext(x, 'Talk to Maya', 700, 325, 48, T.ink, pv(t, TL.btnTxt, 0.4, 1.3), 1, { w: 800, glow: T.cyan });
-    pchip(x, 'Book a free discovery call', 640, 450, 26, pv(t, TL.chipBook, 0.4, 1.4), 1, { col: T.violet, solid: true });
+    pchip(x, 'Engineering-led since 2015', 640, 192, 20, pv(t, TL.chipEng), 1, { col: S.pal.mute });
+    pop(x, 640, 325, pv(t, TL.btn, 0.45, 1.3), () => { S.card(x, 310, 260, 660, 130, { col: S.pal.cyan, col2: S.pal.violet, r: 65 }); S.orb(x, 400, 325, 42, t, null); }, 1);
+    ptext(x, 'Talk to Maya', 700, 325, 48, S.pal.ink, pv(t, TL.btnTxt, 0.4, 1.3), 1, { w: 800, glow: S.pal.cyan });
+    pchip(x, 'Book a free discovery call', 640, 450, 26, pv(t, TL.chipBook, 0.4, 1.4), 1, { col: S.pal.violet, solid: true });
     const url = 'ilogixdigital.com', n = Math.floor(url.length * seg(t, TL.url[0], TL.url[1]));
-    if (n > 0) { x.save(); x.font = mf(600, 36); const full = x.measureText(url).width; x.restore(); ttext(x, url.slice(0, n) + (t < TL.url[1] + 0.3 && Math.floor(t * 6) % 2 ? '|' : ''), 640 - full / 2, 540, 36, T.cyan, { mono: true, w: 600, glow: T.cyan, align: 'left' }); }
-    x.save(); x.globalAlpha = seg(t, TL.tag, TL.tag + 0.5); ttext(x, 'Software, AI and growth systems for ambitious businesses.', 640, 615, 24, T.mute, { w: 500 }); x.restore();
+    if (n > 0) { x.save(); x.font = mf(600, 36); const full = x.measureText(url).width; x.restore(); S.text(x, url.slice(0, n) + (t < TL.url[1] + 0.3 && Math.floor(t * 6) % 2 ? '|' : ''), 640 - full / 2, 540, 36, S.pal.cyan, { mono: true, w: 600, glow: S.pal.cyan, align: 'left' }); }
+    x.save(); x.globalAlpha = seg(t, TL.tag, TL.tag + 0.5); S.text(x, 'Software, AI and growth systems for ambitious businesses.', 640, 615, 24, S.pal.mute, { w: 500 }); x.restore();
   }
   x.restore();
 
   // beat 3 -> 4 scene change: shock ring from the team node, then the glow whiteout
   const su = seg(t, TL.shock[0], TL.shock[1]);
-  if (su > 0 && su < 1) { x.save(); x.strokeStyle = H.rgba(T.cyan, 0.9 * (1 - su)); x.lineWidth = lerp(12, 3, su); x.shadowColor = T.cyan; x.shadowBlur = 24; x.beginPath(); x.arc(1130, 400, lerp(78, 1500, eo(su)), 0, TAU); x.stroke(); x.restore(); }
+  if (su > 0 && su < 1) { x.save(); x.strokeStyle = H.rgba(S.pal.cyan, 0.9 * (1 - su)); x.lineWidth = lerp(12, 3, su); x.shadowColor = S.pal.cyan; x.shadowBlur = 24; x.beginPath(); x.arc(1130, 400, lerp(78, 1500, eo(su)), 0, TAU); x.stroke(); x.restore(); }
   twhite(x, seg(t, TL.white[0], TL.white[1]) * (1 - seg(t, TL.white[1], TL.white[2])));
-  tfinish(x, t);
+  S.finish(x, t);
 }
 
 // ===== Sound: glassy plucks, soft boops, airy whooshes, a warm pad. Built from the same TL times. =====
