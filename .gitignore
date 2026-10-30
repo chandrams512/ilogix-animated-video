@@ -8,3 +8,5 @@ voiceover/*.wav
 *.key
 node_modules/
 __pycache__/
+
+!web/downloads/*.mp4

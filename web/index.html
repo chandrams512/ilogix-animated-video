@@ -5,87 +5,155 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>iLogix Video Studio</title>
 <style>
-:root{--bg:#050816;--panel:#0d1538;--edge:#1c2a63;--text:#eaf0ff;--muted:#8fa0d0;--accent:#2fe3ff;--ok:#5dffb0}
-@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f4f7ff;--panel:#fff;--edge:#d5dcf2;--text:#0d1538;--muted:#51608f;--accent:#0a7ea4;--ok:#0a7a4d}}
+:root{--bg:#050816;--bg2:#0a1030;--panel:#0d1538;--panel2:#111c4a;--edge:#1f2e6b;--text:#eaf0ff;--muted:#93a3d6;--accent:#2fe3ff;--accent-ink:#031018;--violet:#8b6bff;--ok:#5dffb0}
+@media (prefers-color-scheme: light){:root{--bg:#f3f6ff;--bg2:#e9eeff;--panel:#fff;--panel2:#f3f6ff;--edge:#d3dbf3;--text:#0d1538;--muted:#53628f;--accent:#0a7ea4;--accent-ink:#fff;--violet:#6a4fe0;--ok:#0a7a4d}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-.wrap{max-width:1040px;margin:0 auto;padding:32px 16px 64px}
-h1{font-size:28px;margin:0 0 4px}h2{font-size:18px;margin:36px 0 12px}
-p.sub{color:var(--muted);margin:0 0 24px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
-.card{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:8px}
-.card h3{margin:0;font-size:17px}.card p{margin:0;color:var(--muted);font-size:14px}
-.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--edge);color:var(--muted);width:fit-content}
-.tag.ok{color:var(--ok);border-color:var(--ok)}
-.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-a.btn,button.btn{background:var(--accent);color:#031018;border:0;border-radius:8px;padding:8px 14px;font:600 14px system-ui;text-decoration:none;cursor:pointer}
-a.btn.alt{background:transparent;color:var(--accent);border:1px solid var(--accent)}
-.stage{margin-top:12px;background:#000;border:1px solid var(--edge);border-radius:14px;overflow:hidden}
-.stage iframe{display:block;width:100%;height:min(78vh,640px);border:0}
-.muted{color:var(--muted);font-size:14px}
-li{margin:4px 0}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(1100px 500px at 85% -10%,rgba(139,107,255,.18),transparent 60%),radial-gradient(900px 500px at -5% 10%,rgba(47,227,255,.12),transparent 60%),var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+header{padding:44px 0 8px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px;color:var(--muted);font-size:14px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+h1{font-size:clamp(28px,5vw,44px);line-height:1.1;margin:14px 0 10px;letter-spacing:-.5px}
+.lead{color:var(--muted);max-width:60ch;margin:0}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 0}
+nav a{color:var(--text);text-decoration:none;font-size:14px;padding:6px 14px;border:1px solid var(--edge);border-radius:99px;background:var(--panel)}
+nav a:hover{border-color:var(--accent)}
+section{padding:40px 0 8px}
+h2{font-size:22px;margin:0 0 4px;letter-spacing:-.2px}
+.sub{color:var(--muted);margin:0 0 20px;font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.card{background:var(--panel);border:1px solid var(--edge);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.poster{position:relative;display:block;width:100%;aspect-ratio:16/10;background:#02040f;border:0;padding:0;cursor:pointer;overflow:hidden}
+.poster img{width:100%;height:100%;object-fit:contain;display:block;transition:transform .25s}
+.poster:hover img{transform:scale(1.03)}
+.play{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:flex-end;padding:10px;background:linear-gradient(transparent 60%,rgba(2,4,15,.5))}
+.play span{width:42px;height:42px;border-radius:50%;background:var(--accent);display:grid;place-items:center;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.play svg{width:17px;height:17px;margin-left:2px;fill:var(--accent-ink)}
+.body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:12px;padding:2px 9px;border-radius:99px;border:1px solid var(--edge);color:var(--muted)}
+.tag.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 55%,transparent)}
+.card h3{margin:4px 0 0;font-size:18px;line-height:1.25}
+.card p{margin:0;color:var(--muted);font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:10px}
+.btn{font:600 13px/1 system-ui,sans-serif;padding:9px 13px;border-radius:9px;text-decoration:none;cursor:pointer;border:1px solid var(--edge);background:var(--panel2);color:var(--text);display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--accent)}
+.btn.main{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.styles{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.style img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.style .body{gap:2px}
+.style h3{margin:0;font-size:16px}
+form{background:var(--panel);border:1px solid var(--edge);border-radius:16px;padding:18px;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.f{display:flex;flex-direction:column;gap:6px}.f.wide{grid-column:1/-1}
+label{font-size:13px;color:var(--muted);font-weight:600}
+input,select,textarea{font:inherit;color:var(--text);background:var(--bg2);border:1px solid var(--edge);border-radius:10px;padding:10px 12px;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+textarea{min-height:90px;resize:vertical}
+pre{margin:0;white-space:pre-wrap;word-break:break-word;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;background:var(--bg2);border:1px solid var(--edge);border-radius:10px;padding:12px;color:var(--muted);max-height:260px;overflow:auto}
+.note{color:var(--muted);font-size:13px}
+footer{padding:36px 0 56px;color:var(--muted);font-size:13px}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(2,4,15,.82);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal.open{display:flex}
+.sheet{position:relative;width:min(1000px,100%);height:min(88vh,760px);background:var(--panel);border:1px solid var(--edge);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.sheet.portrait{width:min(460px,100%);height:min(92vh,860px)}
+.sheet header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border-bottom:1px solid var(--edge)}
+.sheet header b{font-size:15px}
+.sheet iframe{flex:1;width:100%;border:0;background:#000}
+.x{font:600 14px system-ui;border:1px solid var(--edge);background:var(--panel2);color:var(--text);border-radius:8px;padding:7px 12px;cursor:pointer}
+@media (max-width:520px){header{padding-top:28px}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>iLogix Video Studio</h1>
-  <p class="sub">Animated explainer videos. Preview here; MP4 rendering runs on a separate machine.</p>
+<header class="wrap">
+  <div class="brand"><span class="dot"></span> iLogix Video Studio</div>
+  <h1>Animated explainers,<br>made once, shown in any style.</h1>
+  <p class="lead">Short animated videos for iLogix, TripNido and the education channel. Preview them here, download the MP4s, or send a brief for a new one.</p>
+  <nav><a href="#videos">Videos</a><a href="#styles">Styles</a><a href="#brief">New video brief</a></nav>
+</header>
 
+<main class="wrap">
+<section id="videos">
   <h2>Videos</h2>
-  <div class="grid">
-    <div class="card">
-      <span class="tag ok">Ready · 35 s · 16:9 + 9:16</span>
-      <h3>Voice agents and agentic AI</h3>
-      <p>iLogix explainer in the Tech Glow style. Player has sound, a voiceover mix and a 9:16 toggle.</p>
-      <div class="row">
-        <button class="btn" data-play="v/ilogix-voice-agents.html">Preview</button>
-        <a class="btn alt" href="s/ilogix-voice-agents.html">Storyboard</a>
-        <a class="btn alt" href="v/ilogix-voice-agents.html">Open full page</a>
-      </div>
-    </div>
-    <div class="card">
-      <span class="tag ok">Ready · 23 s</span>
-      <h3>How Earth got its water</h3>
-      <p>The first video, in the Flat-Vector Science style. Kept as built.</p>
-      <div class="row">
-        <button class="btn" data-play="v/earth-water.html">Preview</button>
-        <a class="btn alt" href="s/earth-water.html">Storyboard</a>
-        <a class="btn alt" href="v/earth-water.html">Open full page</a>
-      </div>
-    </div>
-    <div class="card">
-      <span class="tag ok">Demo · 10 s · 9:16 · Tech Glow (switchable)</span>
-      <h3>TripNido: plan a trip in seconds</h3>
-      <p>Travel reel demo with a sample Goa itinerary.</p>
-      <div class="row"><button class="btn" data-play="v/tripnido-demo.html">Preview</button><a class="btn alt" href="v/tripnido-demo.html">Open full page</a></div>
-    </div>
-    <div class="card">
-      <span class="tag ok">Demo · 10 s · 16:9 · Tech Glow (switchable)</span>
-      <h3>Why is the sky blue?</h3>
-      <p>Educational explainer demo.</p>
-      <div class="row"><button class="btn" data-play="v/edu-sky.html">Preview</button><a class="btn alt" href="v/edu-sky.html">Open full page</a></div>
-    </div>
-  </div>
+  <p class="sub">Click a poster to play. Downloads have no music, so you can add your own track.</p>
+  <div class="grid" id="vgrid"></div>
+</section>
 
-  <div class="stage" id="stage" hidden><iframe id="frame" title="Video preview" allow="autoplay"></iframe></div>
-
+<section id="styles">
   <h2>Styles</h2>
-  <ul class="muted">
-    <li><b>Tech Glow</b> — available (iLogix)</li>
-    <li><b>Flat-Vector Science</b> — available (education)</li>
-    <li><b>Isometric Pastel</b> — planned (TripNido); a style switcher comes with it</li>
-  </ul>
+  <p class="sub">The same scene in each look. Pick a style from the dropdown in any player.</p>
+  <div class="styles">
+    <div class="card style"><img src="img/style-tech-glow.jpg" alt="Tech Glow style" loading="lazy"><div class="body"><h3>Tech Glow</h3><p>Dark, neon glow. Best for iLogix, SaaS and AI topics.</p></div></div>
+    <div class="card style"><img src="img/style-flat-vector.jpg" alt="Flat Vector style" loading="lazy"><div class="body"><h3>Flat Vector</h3><p>Warm paper and bold shapes. Best for education.</p></div></div>
+    <div class="card style"><img src="img/style-isometric.jpg" alt="Isometric Pastel style" loading="lazy"><div class="body"><h3>Isometric Pastel</h3><p>Soft pastel slabs. Best for travel and lifestyle.</p></div></div>
+  </div>
+</section>
 
-  <h2>Not built yet</h2>
-  <p class="muted">Topic form, cheap-model script drafting, ElevenLabs voiceover and one-click render are still to come. They need a server with Chromium and ffmpeg, so they will not run on Vercel itself. Plans and styles live in the GitHub repo.</p>
+<section id="brief">
+  <h2>New video brief</h2>
+  <p class="sub">Fill this in, copy the brief and paste it into your Claude chat for this project. Claude builds the video and sends you the MP4s.</p>
+  <form id="bf" onsubmit="return false">
+    <div class="f"><label for="b-topic">Topic</label><input id="b-topic" placeholder="e.g. Why is the sky blue?"></div>
+    <div class="f"><label for="b-brand">For</label><select id="b-brand"><option>iLogix</option><option>TripNido</option><option>Education channel</option><option>Other</option></select></div>
+    <div class="f"><label for="b-len">Length</label><select id="b-len"><option>10 s</option><option selected>20 s</option><option>35 s</option><option>60 s</option></select></div>
+    <div class="f"><label for="b-asp">Shape</label><select id="b-asp"><option>9:16 vertical</option><option>16:9 wide</option><option>Both</option></select></div>
+    <div class="f"><label for="b-style">Style</label><select id="b-style"><option>Tech Glow</option><option>Flat Vector</option><option>Isometric Pastel</option></select></div>
+    <div class="f"><label for="b-audio">Audio</label><select id="b-audio"><option>Sound effects only (I will add music)</option><option>Sound effects plus music</option><option>Leave room for voiceover</option></select></div>
+    <div class="f wide"><label for="b-pts">Key points or script (one per line)</label><textarea id="b-pts" placeholder="Hook&#10;Main point 1&#10;Main point 2&#10;Call to action"></textarea></div>
+    <div class="f wide"><label for="b-notes">Facts, sources, brand notes (optional)</label><textarea id="b-notes" placeholder="Links, numbers that must be correct, words to avoid"></textarea></div>
+    <div class="f wide"><label>Brief to paste</label><pre id="out"></pre></div>
+    <div class="f wide"><div class="row" style="padding:0"><button class="btn main" id="copy" type="button">Copy brief</button><span class="note" id="cmsg"></span></div></div>
+  </form>
+</section>
+</main>
+
+<footer class="wrap">Built with the ilogix-animated-video engine. Sample content in demos is illustrative.</footer>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Video player">
+  <div class="sheet" id="sheet"><header><b id="mt"></b><button class="x" id="mx">Close</button></header><iframe id="mf" title="Video player" allow="autoplay; fullscreen"></iframe></div>
 </div>
+
 <script>
-document.querySelectorAll('[data-play]').forEach(function(b){
-  b.addEventListener('click',function(){
-    var s=document.getElementById('stage'),f=document.getElementById('frame');
-    f.src=b.getAttribute('data-play');s.hidden=false;s.scrollIntoView({behavior:'smooth',block:'start'});
-  });
+var VIDEOS=[
+ {t:'Voice agents and agentic AI',d:'iLogix explainer: a missed call becomes a booked customer.',img:'img/ilogix.jpg',src:'v/ilogix-voice-agents.html',sb:'s/ilogix-voice-agents.html',tags:['35 s','16:9 + 9:16','Tech Glow'],dl:[['16:9','downloads/ilogix-voice-agents_16x9_no-music.mp4'],['9:16','downloads/ilogix-voice-agents_9x16_no-music.mp4']],p:false},
+ {t:'TripNido: plan a trip in seconds',d:'Travel reel demo with a sample Goa itinerary.',img:'img/tripnido.jpg',src:'v/tripnido-demo.html',tags:['Demo','10 s','9:16','Tech Glow'],dl:[['No music','downloads/tripnido-demo_9x16_no-music.mp4'],['With music','downloads/tripnido-demo_9x16_with-music.mp4']],p:true},
+ {t:'Why is the sky blue?',d:'Educational explainer demo on light scattering.',img:'img/edu.jpg',src:'v/edu-sky.html',tags:['Demo','10 s','16:9','Tech Glow'],dl:[['No music','downloads/edu-sky_16x9_no-music.mp4'],['With music','downloads/edu-sky_16x9_with-music.mp4']],p:false},
+ {t:'How Earth got its water',d:'The first video, in Flat-Vector Science style. Kept as originally built.',img:'img/earth.jpg',src:'v/earth-water.html',sb:'s/earth-water.html',tags:['23 s','16:9','Archive'],dl:[],p:false}
+];
+var g=document.getElementById('vgrid');
+VIDEOS.forEach(function(v,i){
+  var c=document.createElement('article');c.className='card';
+  c.innerHTML='<button class="poster" data-i="'+i+'" aria-label="Play '+v.t+'"><img src="'+v.img+'" alt="" loading="lazy"><span class="play"><span><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></span></span></button>'+
+  '<div class="body"><div class="tags">'+v.tags.map(function(x,j){return '<span class="tag'+(j===0&&!/Demo|Archive/.test(x)?' ok':'')+'">'+x+'</span>'}).join('')+'</div><h3>'+v.t+'</h3><p>'+v.d+'</p>'+
+  '<div class="row"><button class="btn main" data-i="'+i+'">Play</button>'+(v.sb?'<a class="btn" href="'+v.sb+'">Storyboard</a>':'')+
+  v.dl.map(function(d){return '<a class="btn" href="'+d[1]+'" download>Download '+d[0]+'</a>'}).join('')+'</div></div>';
+  g.appendChild(c);
 });
+var M=document.getElementById('modal'),F=document.getElementById('mf'),SH=document.getElementById('sheet');
+function openV(i){var v=VIDEOS[i];document.getElementById('mt').textContent=v.t;SH.className='sheet'+(v.p?' portrait':'');F.src=v.src;M.classList.add('open');document.body.style.overflow='hidden'}
+function closeV(){M.classList.remove('open');F.src='about:blank';document.body.style.overflow=''}
+g.addEventListener('click',function(e){var b=e.target.closest('[data-i]');if(b)openV(+b.getAttribute('data-i'))});
+document.getElementById('mx').onclick=closeV;M.addEventListener('click',function(e){if(e.target===M)closeV()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&M.classList.contains('open'))closeV()});
+// brief builder
+var ids=['topic','brand','len','asp','style','audio','pts','notes'],el={};ids.forEach(function(k){el[k]=document.getElementById('b-'+k)});
+function brief(){
+  var pts=el.pts.value.trim(),notes=el.notes.value.trim();
+  return 'New animated video for the ilogix-animated-video repo.\n\n'+
+  'Topic: '+(el.topic.value.trim()||'(add a topic)')+'\nFor: '+el.brand.value+'\nLength: '+el.len.value+'\nShape: '+el.asp.value+'\nStyle: '+el.style.value+'\nAudio: '+el.audio.value+'\n\n'+
+  'Key points / script:\n'+(pts||'(none given: please propose a hook, 3 points and a call to action)')+'\n\n'+
+  (notes?'Facts, sources, brand notes:\n'+notes+'\n\n':'')+
+  'Please: write a short storyboard first, wait for my OK, then build it as a new plan in the repo, check the frames, render the MP4s and push to GitHub. Use only facts I gave or that you can source, and label any sample content.';
+}
+var out=document.getElementById('out');function upd(){out.textContent=brief()}
+ids.forEach(function(k){el[k].addEventListener('input',upd);el[k].addEventListener('change',upd)});upd();
+document.getElementById('copy').onclick=function(){
+  var m=document.getElementById('cmsg'),txt=brief();
+  function ok(){m.textContent='Copied. Paste it into your Claude chat.'}
+  function fb(){var a=document.createElement('textarea');a.value=txt;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(e){m.textContent='Select the text above and copy it.'}document.body.removeChild(a)}
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok,fb);else fb();
+};
 </script>
 </body>
 </html>
