@@ -1,0 +1,10 @@
+dist/
+out/
+*.mp4
+*.f32
+voiceover/*.mp3
+voiceover/*.wav
+.env
+*.key
+node_modules/
+__pycache__/

@@ -1,0 +1,654 @@
+<title>iLogix Agentic AI Storyboard</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+Devanagari:wght@400;600&family=Nunito:wght@400;700;900&display=block">
+<style>
+/* Layout: one storyboard sheet. Title band, a grid of nine frames (3 / 2 / 1 columns), then assumptions and the approval ask. */
+:root {
+  --bg: #0b0d33;
+  --panel: #151a52;
+  --panel-edge: #2a2f78;
+  --fg: #eef0ff;
+  --muted: #aab3e8;
+  --accent: #ffd23f;
+  --ice: #56e8ff;
+  --ember: #ff8d3f;
+  --font-display: "Sora", "Nunito", system-ui, sans-serif;
+  --font-body: "Nunito", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); }
+body {
+  margin: 0; color: var(--fg); font: 400 16px/1.5 var(--font-body);
+  padding-block: 32px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: radial-gradient(900px 500px at 85% -5%, rgba(123,52,198,.35), transparent 70%), var(--bg);
+}
+.wrap { max-width: 1240px; margin: 0 auto; }
+.eyebrow { font: 700 13px/1 var(--font-body); letter-spacing: .14em; text-transform: uppercase; color: var(--ice); margin: 0 0 12px; }
+h1 { font: 700 clamp(32px, 6vw, 56px)/1.05 var(--font-display); margin: 0 0 12px; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--accent); }
+.lede { max-width: 62ch; color: var(--muted); margin: 0 0 28px; font-size: 17px; }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin: 0 0 40px; padding: 0; list-style: none; }
+@media (max-width: 980px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.card canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: #18134f; }
+.meta { padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.tag { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.tag b { font: 700 20px/1 var(--font-display); color: var(--accent); }
+.tag span { font: 700 14px/1 var(--font-body); color: var(--ice); letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+.tag i { font: 600 15px/1.2 var(--font-display); font-style: normal; color: var(--fg); }
+.row dt { font: 700 11px/1 var(--font-body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+.row dd { margin: 0; font-size: 14.5px; overflow-wrap: anywhere; }
+.row dd[lang="hi"] { font-family: "Noto Sans Devanagari", "Nunito", system-ui, sans-serif; font-size: 15px; line-height: 1.55; }
+.row { margin: 0; }
+.chip { display: inline-block; font: 700 11px/1 var(--font-body); letter-spacing: .08em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px; margin-right: 6px; }
+.chip.cont { background: rgba(86,232,255,.16); color: var(--ice); }
+.chip.cut { background: rgba(255,141,63,.18); color: var(--ember); }
+h2 { font: 600 26px/1.1 var(--font-display); margin: 0 0 12px; }
+.facts { max-width: 80ch; margin: 0 0 32px; padding-left: 20px; color: var(--fg); }
+.facts li { margin: 0 0 8px; }
+.facts small { color: var(--muted); }
+.ask { border: 1px solid var(--panel-edge); border-radius: 14px; padding: 18px 20px; background: rgba(21,26,82,.7); max-width: 80ch; }
+.ask p { margin: 0 0 6px; }
+.ask p:last-child { margin: 0; color: var(--muted); }
+.src { margin-top: 28px; color: var(--muted); font-size: 14px; }
+.src a { color: var(--ice); }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+<div class="wrap">
+  <p class="eyebrow">Tech Glow · storyboard</p>
+  <h1>Agentic AI and <em>voice agents</em>, by iLogix</h1>
+  <p class="lede">Nine still key frames for a 35-second explainer built from your website: Maya the AI receptionist, then agents that plan, act and verify. Each card has timing, on-screen text, how it connects to the previous beat, key sounds, and the voiceover line in English and Hindi. Nothing moves or sounds yet.</p>
+  <ol class="grid" id="grid"></ol>
+  <h2>What comes from your site, and what I assumed</h2>
+  <ul class="facts" id="facts"></ul>
+  <div class="ask">
+    <p><strong>Reply OK to build the full animation</strong>, or tell me what to change: beats, wording, length, brand colors, or the ending.</p>
+    <p>Once approved, I build it exactly as shown, with the player, sound, a voiceover-friendly mix and the MP4 export script.</p>
+  </div>
+  <p class="src">Source: <a href="https://www.ilogixdigital.com/">ilogixdigital.com</a></p>
+</div>
+<script>
+// ===== H helper library (unchanged from the style kit; registry/render parts omitted) =====
+(function () {
+  const H = (window.H = {});
+  H.rng = function (seed = 1) {
+    let a = typeof seed === 'string' ? hashStr(seed) : (seed >>> 0) || 1;
+    const r = function () {
+      a |= 0; a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    r.range = (lo, hi) => lo + r() * (hi - lo);
+    r.int = (lo, hi) => Math.floor(lo + r() * (hi - lo + 1));
+    r.pick = (arr) => arr[Math.floor(r() * arr.length)];
+    r.chance = (p) => r() < p;
+    r.gauss = () => { let u = 0, v = 0; while (!u) u = r(); while (!v) v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+    return r;
+  };
+  function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  H.makeNoise = function (seed = 1) {
+    const r = H.rng(seed), p = new Uint8Array(512), perm = [...Array(256).keys()];
+    for (let i = 255; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
+    for (let i = 0; i < 512; i++) p[i] = perm[i & 255];
+    const fade = (t) => t * t * t * (t * (t * 6 - 15) + 10);
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const g3 = (h, x, y, z) => { h &= 15; const u = h < 8 ? x : y, v = h < 4 ? y : h === 12 || h === 14 ? x : z; return ((h & 1) ? -u : u) + ((h & 2) ? -v : v); };
+    function n3(x, y, z) {
+      const X = Math.floor(x) & 255, Y = Math.floor(y) & 255, Z = Math.floor(z) & 255;
+      x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
+      const u = fade(x), v = fade(y), w = fade(z);
+      const A = p[X] + Y, AA = p[A] + Z, AB = p[A + 1] + Z, B = p[X + 1] + Y, BA = p[B] + Z, BB = p[B + 1] + Z;
+      return lerp(lerp(lerp(g3(p[AA], x, y, z), g3(p[BA], x - 1, y, z), u), lerp(g3(p[AB], x, y - 1, z), g3(p[BB], x - 1, y - 1, z), u), v),
+        lerp(lerp(g3(p[AA + 1], x, y, z - 1), g3(p[BA + 1], x - 1, y, z - 1), u), lerp(g3(p[AB + 1], x, y - 1, z - 1), g3(p[BB + 1], x - 1, y - 1, z - 1), u), v), w);
+    }
+    const n2 = (x, y) => n3(x, y, 0.5);
+    const fbm3 = (x, y, z, oct = 4) => { let s = 0, a = 0.5, f = 1, norm = 0; for (let i = 0; i < oct; i++) { s += a * n3(x * f, y * f, z * f); norm += a; a *= 0.5; f *= 2; } return s / norm; };
+    const fbm2 = (x, y, oct = 4) => fbm3(x, y, 0.5, oct);
+    return { n2, n3, fbm2, fbm3 };
+  };
+  H.lerp = (a, b, t) => a + (b - a) * t;
+  H.clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
+  H.map = (v, a, b, c, d) => c + ((v - a) / (b - a)) * (d - c);
+  H.smooth = (e0, e1, x) => { const t = H.clamp((x - e0) / (e1 - e0)); return t * t * (3 - 2 * t); };
+  H.ease = {
+    inOut: (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
+    out: (t) => 1 - Math.pow(1 - t, 3),
+    in: (t) => t * t * t,
+    back: (t) => { const c = 1.70158; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); },
+  };
+  H.hex = (h) => { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map((c) => c + c).join(''); const n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  H.rgba = (hexOrArr, a = 1) => { const [r, g, b] = Array.isArray(hexOrArr) ? hexOrArr : H.hex(hexOrArr); return `rgba(${r | 0},${g | 0},${b | 0},${a})`; };
+  H.mix = (c1, c2, t) => { const a = Array.isArray(c1) ? c1 : H.hex(c1), b = Array.isArray(c2) ? c2 : H.hex(c2); return [0, 1, 2].map((i) => a[i] + (b[i] - a[i]) * t); };
+  H.layer = (W, H_, ) => { const c = document.createElement('canvas'); c.width = W; c.height = H_; return c; };
+  H.grain = function (ctx, W, Hh, amount = 0.08, seed = 7, mono = true) {
+    const img = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height), d = img.data, r = H.rng(seed), k = amount * 255;
+    for (let i = 0; i < d.length; i += 4) {
+      const n = (r() - 0.5) * k;
+      if (mono) { d[i] += n; d[i + 1] += n; d[i + 2] += n; }
+      else { d[i] += (r() - 0.5) * k; d[i + 1] += (r() - 0.5) * k; d[i + 2] += (r() - 0.5) * k; }
+    }
+    ctx.putImageData(img, 0, 0);
+  };
+  H.paper = function (ctx, W, Hh, base = '#f3ecdc', seed = 3, strength = 0.06) {
+    ctx.save(); ctx.fillStyle = base; ctx.fillRect(0, 0, W, Hh);
+    const nz = H.makeNoise(seed), cell = 4, [br, bg, bb] = H.hex(base);
+    for (let y = 0; y < Hh; y += cell) for (let x = 0; x < W; x += cell) {
+      const v = nz.fbm2(x * 0.01, y * 0.01, 3) * 0.6 + nz.n2(x * 0.15, y * 0.04) * 0.4;
+      const s = 1 + v * strength * 2;
+      ctx.fillStyle = `rgb(${br * s | 0},${bg * s | 0},${bb * s | 0})`; ctx.fillRect(x, y, cell, cell);
+    }
+    ctx.restore();
+  };
+  H.vignette = function (ctx, W, Hh, strength = 0.5, color = '0,0,0') {
+    const g = ctx.createRadialGradient(W / 2, Hh / 2, Math.min(W, Hh) * 0.3, W / 2, Hh / 2, Math.hypot(W, Hh) * 0.6);
+    g.addColorStop(0, `rgba(${color},0)`); g.addColorStop(1, `rgba(${color},${strength})`);
+    ctx.save(); ctx.fillStyle = g; ctx.fillRect(0, 0, W, Hh); ctx.restore();
+  };
+  H.W = 1280; H.H = 720;
+})();
+// ===== Flat-Vector Science: drawing, texture and finishing functions (copied from the reference) =====
+const TAU = Math.PI * 2;
+const cl = H.clamp, lerp = H.lerp;
+const seg = (t, a, b) => cl((t - a) / (b - a));
+const eo = H.ease.out, eio = H.ease.inOut;
+const back = (u, s = 1.5) => { if (u <= 0) return 0; if (u >= 1) return 1; return 1 + (s + 1) * Math.pow(u - 1, 3) + s * Math.pow(u - 1, 2); };
+const FONT = '"Nunito", "Fredoka", sans-serif';
+const F = (w, px) => `${w} ${px}px ${FONT}`;
+const C = {
+  sky0: '#090b2c', sky1: '#18134f', sky2: '#3a1a6c',
+  ink: '#141846',
+  teal: ['#a4fbef', '#3ccbdc', '#1d64b0'],
+  yellow: '#ffd23f', pink: '#ff5d8f', red: '#ff3b5c', green: '#38e08e', cyan: '#56e8ff', violet: '#8b5cff',
+};
+function rr(x, X, Y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r);
+  x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath();
+}
+function glow(x, cx, cy, r, col, a) {
+  if (a <= 0 || r <= 0) return;
+  const g = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+  g.addColorStop(0, H.rgba(col, a)); g.addColorStop(0.35, H.rgba(col, a * 0.4)); g.addColorStop(1, H.rgba(col, 0));
+  x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.fill();
+}
+function spark(x, cx, cy, r, col, a) {
+  if (a <= 0 || r <= 0) return;
+  x.save(); x.globalAlpha *= a; x.fillStyle = col; x.beginPath();
+  x.moveTo(cx, cy - r); x.quadraticCurveTo(cx, cy, cx + r, cy); x.quadraticCurveTo(cx, cy, cx, cy + r);
+  x.quadraticCurveTo(cx, cy, cx - r, cy); x.quadraticCurveTo(cx, cy, cx, cy - r); x.fill(); x.restore();
+}
+function crescent(x, cx, cy, r, dx, dy, fill) {
+  x.save(); x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.clip();
+  x.beginPath(); x.rect(cx - r - 2, cy - r - 2, 2 * r + 4, 2 * r + 4); x.arc(cx + dx, cy + dy, r * 1.02, 0, TAU);
+  x.fillStyle = fill; x.fill('evenodd'); x.restore();
+}
+function ball(x, cx, cy, r, col, o = {}) {
+  if (r <= 0.3) return;
+  const la = o.la == null ? -2.25 : o.la, lx = Math.cos(la), ly = Math.sin(la);
+  const g = x.createLinearGradient(cx + lx * r, cy + ly * r, cx - lx * r, cy - ly * r);
+  g.addColorStop(0, col[0]); g.addColorStop(0.45, col[1]); g.addColorStop(1, H.rgba(H.mix(col[1], col[2], 0.6)));
+  x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.fill();
+  if (o.inner) { x.save(); x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.clip(); o.inner(); x.restore(); }
+  const sh = o.sh == null ? 0.3 : o.sh;
+  crescent(x, cx, cy, r, lx * r * sh, ly * r * sh, H.rgba(col[2], o.sha == null ? 0.5 : o.sha));
+  crescent(x, cx, cy, r, lx * r * sh * 2.2, ly * r * sh * 2.2, H.rgba(col[2], (o.sha == null ? 0.5 : o.sha) * 0.45));
+  crescent(x, cx, cy, r, -lx * r * 0.075, -ly * r * 0.075, H.rgba(o.rim || '#ffffff', o.rima == null ? 0.42 : o.rima));
+}
+const bez = (P, u) => { const v = 1 - u; return [v * v * v * P[0][0] + 3 * v * v * u * P[1][0] + 3 * v * u * u * P[2][0] + u * u * u * P[3][0], v * v * v * P[0][1] + 3 * v * v * u * P[1][1] + 3 * v * u * u * P[2][1] + u * u * u * P[3][1]]; };
+function arrow(x, P, prog, col, lw, o = {}) {
+  if (prog <= 0) return;
+  const n = 48, a = o.a == null ? 1 : o.a;
+  x.save(); x.globalAlpha *= a; x.strokeStyle = col; x.fillStyle = col; x.lineWidth = lw; x.lineCap = 'round'; x.lineJoin = 'round';
+  if (o.dots) x.setLineDash([0.01, lw * 1.9]);
+  x.beginPath(); const p0 = bez(P, o.from || 0); x.moveTo(p0[0], p0[1]);
+  for (let i = 1; i <= n; i++) { const u = (o.from || 0) + ((prog - (o.from || 0)) * i) / n; const p = bez(P, u); x.lineTo(p[0], p[1]); }
+  x.stroke(); x.setLineDash([]);
+  if (o.head !== false && prog > 0.08) {
+    const e = bez(P, prog), e0 = bez(P, prog - 0.02), ang = Math.atan2(e[1] - e0[1], e[0] - e0[0]), hs = lw * 1.5 * cl(prog * 5);
+    x.translate(e[0], e[1]); x.rotate(ang); x.beginPath(); x.moveTo(hs * 1.1, 0); x.lineTo(-hs * 0.8, hs); x.lineTo(-hs * 0.8, -hs); x.closePath();
+    x.lineWidth = lw * 0.7; x.fill(); x.stroke();
+  }
+  x.restore();
+}
+function text(x, s, cx, cy, px, col, o = {}) {
+  x.save(); x.font = F(o.w || 900, px); x.textAlign = o.align || 'center'; x.textBaseline = 'middle';
+  x.globalAlpha *= o.a == null ? 1 : o.a;
+  x.fillStyle = o.shadow || 'rgba(10,8,46,0.55)'; x.fillText(s, cx + px * 0.03, cy + px * 0.07);
+  x.fillStyle = col; x.fillText(s, cx, cy); x.restore();
+}
+function pill(x, cx, cy, s, px, o = {}) {
+  const sc = o.s == null ? 1 : o.s, a = o.a == null ? 1 : o.a;
+  if (sc <= 0.01 || a <= 0.01) return;
+  x.save(); x.font = F(o.w || 900, px);
+  const tw = x.measureText(s).width, w = tw + px * 1.15, h = px * 1.6;
+  x.translate(cx, cy); x.scale(sc, sc); x.globalAlpha *= a;
+  x.fillStyle = 'rgba(10,8,46,0.4)'; rr(x, -w / 2, -h / 2 + px * 0.2, w, h, h / 2); x.fill();
+  x.fillStyle = o.bg || '#ffffff';
+  if (o.ptr) { x.beginPath(); x.moveTo(-px * 0.35, h / 2 - 2); x.lineTo(0, h / 2 + px * 0.45); x.lineTo(px * 0.35, h / 2 - 2); x.fill(); }
+  rr(x, -w / 2, -h / 2, w, h, h / 2); x.fill();
+  x.fillStyle = 'rgba(255,255,255,0.35)'; rr(x, -w / 2 + h * 0.25, -h / 2 + h * 0.12, w - h * 0.5, h * 0.16, h * 0.08); x.fill();
+  x.fillStyle = o.fg || C.ink; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(s, 0, px * 0.06);
+  x.restore();
+  return w;
+}
+let STARS = null;
+function stars() {
+  if (STARS) return STARS;
+  const r = H.rng(77), a = [], sp = [];
+  for (let i = 0; i < 620; i++) a.push({ x: r.range(0, 1680), y: r.range(0, 1120), d: r.pick([0.15, 0.3, 0.3, 0.55, 1]), s: r.range(0.6, 2.0), ph: r.range(0, TAU), sp: r.range(0.8, 2.6), c: r.pick(['#ffffff', '#cfe4ff', '#ffe9c7', '#dccbff']) });
+  for (let i = 0; i < 16; i++) sp.push({ x: r.range(0, 1680), y: r.range(0, 1120), d: r.range(0.3, 0.9), s: r.range(6, 13), ph: r.range(0, TAU) });
+  STARS = { a, sp }; return STARS;
+}
+function sky(x, W, H_, t, cam = {}) {
+  const px = cam.x || 0, py = cam.y || 0, lz = Math.log(cam.z || 1);
+  const g = x.createLinearGradient(0, 0, W * 0.3, H_);
+  g.addColorStop(0, C.sky0); g.addColorStop(0.5, C.sky1); g.addColorStop(1, C.sky2);
+  x.fillStyle = g; x.fillRect(0, 0, W, H_);
+  glow(x, W * 0.86, H_ * 0.12, 700, '#7b34c6', 0.34);
+  glow(x, W * 0.05, H_ * 1.0, 620, '#2448b4', 0.4);
+  glow(x, W * 0.45, H_ * 0.6, 520, '#4a2a9c', 0.16);
+  const S = stars();
+  const place = (s) => {
+    const k = Math.exp(lz * s.d * 0.6);
+    let sx = (((s.x - px * s.d) % 1680) + 1680) % 1680 - 200, sy = (((s.y - py * s.d) % 1120) + 1120) % 1120 - 200;
+    return [(sx - 640) * k + 640, (sy - 360) * k + 360];
+  };
+  for (const s of S.a) {
+    const [sx, sy] = place(s);
+    if (sx < -4 || sx > W + 4 || sy < -4 || sy > H_ + 4) continue;
+    x.globalAlpha = (0.55 + 0.45 * Math.sin(t * s.sp + s.ph)) * (0.45 + s.d * 0.55);
+    x.fillStyle = s.c; x.beginPath(); x.arc(sx, sy, s.s * (0.7 + 0.35 * s.d), 0, TAU); x.fill();
+  }
+  x.globalAlpha = 1;
+  for (const s of S.sp) {
+    const [sx, sy] = place(s); const tw = 0.6 + 0.4 * Math.sin(t * 1.7 + s.ph);
+    glow(x, sx, sy, s.s * 2.2, '#bfa8ff', 0.25 * tw);
+    spark(x, sx, sy, s.s * tw, '#ffffff', 0.9);
+  }
+}
+const PL = {
+  coral: { c: ['#ffd29a', '#ff7a4a', '#7a1f4f'], glow: '#ff8a50', tilt: 0.1, atmo: [255, 226, 190],
+    bands: [[-0.7, -0.5, '#ffe2b8', 0.5], [-0.32, -0.12, '#e8553a', 0.6], [0.05, 0.22, '#ffb27a', 0.5], [0.4, 0.62, '#c43c46', 0.55]] },
+  moon: { c: ['#e8e6ff', '#a7a2d8', '#4a3f8c'], craters: true },
+};
+function bands(x, r, B, tilt) {
+  x.save(); x.rotate(tilt || 0);
+  for (const [v0, v1, col, a] of B) {
+    x.beginPath();
+    for (let i = 0; i <= 20; i++) { const u = (i / 20) * 2 - 1; x.lineTo(u * r * 1.1, (v0 + 0.13 * (1 - u * u)) * r); }
+    for (let i = 20; i >= 0; i--) { const u = (i / 20) * 2 - 1; x.lineTo(u * r * 1.1, (v1 + 0.13 * (1 - u * u)) * r); }
+    x.fillStyle = H.rgba(col, a == null ? 1 : a); x.fill();
+  }
+  x.restore();
+}
+function atmosphere(x, cx, cy, r, rgb, atA) {
+  x.save(); x.lineCap = 'round'; const ga0 = x.globalAlpha;
+  const la = -2.25, ag = x.createLinearGradient(cx + Math.cos(la) * r, cy + Math.sin(la) * r, cx - Math.cos(la) * r, cy - Math.sin(la) * r);
+  ag.addColorStop(0, H.rgba(rgb, 1)); ag.addColorStop(0.55, H.rgba(rgb, 0.5)); ag.addColorStop(1, H.rgba(rgb, 0.08));
+  x.strokeStyle = ag;
+  for (const [lw, a] of [[r * 0.05, 0.08], [r * 0.028, 0.16], [r * 0.014, 0.3], [Math.max(2, r * 0.006), 0.6]]) { x.globalAlpha = ga0 * a * atA; x.lineWidth = lw; x.beginPath(); x.arc(cx, cy, r + lw * 0.15, 0, TAU); x.stroke(); }
+  x.restore();
+}
+function planet(x, cx, cy, r, pal, o = {}) {
+  if (r <= 0.5) return;
+  if (pal.glow) glow(x, cx, cy, r * 1.7, pal.glow, o.glowA == null ? 0.32 : o.glowA);
+  ball(x, cx, cy, r, pal.c, {
+    sh: 0.34, sha: 0.55, rima: 0.35,
+    inner: () => {
+      x.save(); x.translate(cx, cy);
+      if (pal.bands) bands(x, r, pal.bands, pal.tilt);
+      if (pal.craters) { const q = H.rng(5); for (let i = 0; i < 5; i++) { const a = q.range(0, TAU), d = q.range(0.1, 0.65) * r, cr = q.range(0.1, 0.2) * r, qx = Math.cos(a) * d, qy = Math.sin(a) * d; x.fillStyle = 'rgba(80,66,150,0.38)'; x.beginPath(); x.arc(qx, qy, cr, 0, TAU); x.fill(); crescent(x, qx, qy, cr, -cr * 0.3, -cr * 0.3, 'rgba(255,255,255,0.3)'); } }
+      x.restore();
+    },
+  });
+  if (pal.atmo) atmosphere(x, cx, cy, r, pal.atmo, o.atmo == null ? 0.7 : o.atmo);
+}
+// print finish: fine animated grain + soft static mottling (overlay), kills gradient banding
+let GRAIN = null;
+function grainTex() {
+  if (GRAIN) return GRAIN;
+  const S = 256, tile = H.layer(S, S), tc = tile.getContext('2d'), img = tc.createImageData(S, S), d = img.data, r = H.rng(4242);
+  for (let i = 0; i < d.length; i += 4) { const v = 128 + (r() + r() + r() - 1.5) * 92; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
+  tc.putImageData(img, 0, 0);
+  const MW = 320, MH = 180, mot = H.layer(MW, MH), mc = mot.getContext('2d'), mi = mc.createImageData(MW, MH), md = mi.data, nz = H.makeNoise(88);
+  for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) { const v = 128 + nz.fbm2(x * 0.035, y * 0.035, 4) * 70 + nz.n2(x * 0.22, y * 0.22) * 14, k = (y * MW + x) * 4; md[k] = md[k + 1] = md[k + 2] = v; md[k + 3] = 255; }
+  mc.putImageData(mi, 0, 0);
+  GRAIN = { tile, mot };
+  return GRAIN;
+}
+function finish(x, W, H_, t) {
+  const G = grainTex(), f = Math.floor(t * 24);
+  x.save(); x.globalCompositeOperation = 'overlay';
+  x.globalAlpha = 0.12; x.imageSmoothingEnabled = true; x.drawImage(G.mot, 0, 0, W, H_);
+  const pat = x.createPattern(G.tile, 'repeat'); pat.setTransform(new DOMMatrix().translateSelf((f * 73) % 256, (f * 151) % 256));
+  x.globalAlpha = 0.09; x.fillStyle = pat; x.fillRect(0, 0, W, H_);
+  x.restore();
+}
+function eye(x, ex, ey, er, o) {
+  const look = o.look || [0, 0];
+  if ((o.happy || 0) > 0.5) {
+    x.save(); x.strokeStyle = '#ffffff'; x.lineWidth = er * 0.42; x.lineCap = 'round';
+    x.beginPath(); x.arc(ex, ey + er * 0.35, er * 0.62, Math.PI * 1.15, Math.PI * 1.85); x.stroke(); x.restore(); return;
+  }
+  const bl = 1 - 0.92 * (o.blink || 0);
+  x.save(); x.translate(ex, ey); x.scale(1, bl);
+  x.fillStyle = '#ffffff'; x.beginPath(); x.arc(0, 0, er, 0, TAU); x.fill();
+  const pr = er * (o.worry ? 0.5 : 0.56);
+  const px = look[0] * er * 0.36, py = look[1] * er * 0.36;
+  x.fillStyle = '#141638'; x.beginPath(); x.arc(px, py, pr, 0, TAU); x.fill();
+  x.fillStyle = '#ffffff'; x.beginPath(); x.arc(px - pr * 0.35, py - pr * 0.4, pr * 0.32, 0, TAU); x.fill();
+  x.beginPath(); x.arc(px + pr * 0.35, py + pr * 0.35, pr * 0.13, 0, TAU); x.fill();
+  x.restore();
+}
+function badge(x, cx, cy, r, ok, s) {
+  if (s <= 0.01) return;
+  x.save(); x.translate(cx, cy); x.scale(s, s);
+  glow(x, 0, 0, r * 2.4, ok ? C.green : C.red, 0.45);
+  ball(x, 0, 0, r, ok ? ['#9fffc8', C.green, '#178a5a'] : ['#ff9aa8', C.red, '#9c1638'], { sha: 0.4 });
+  x.strokeStyle = '#ffffff'; x.lineWidth = r * 0.26; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath();
+  if (ok) { x.moveTo(-r * 0.42, 0); x.lineTo(-r * 0.1, r * 0.32); x.lineTo(r * 0.45, -r * 0.3); }
+  else { x.moveTo(-r * 0.34, -r * 0.34); x.lineTo(r * 0.34, r * 0.34); x.moveTo(r * 0.34, -r * 0.34); x.lineTo(-r * 0.34, r * 0.34); }
+  x.stroke(); x.restore();
+}
+function flare(x, cx, cy, k, t) {
+  if (k <= 0) return;
+  glow(x, cx, cy, 420 * (0.6 + 0.4 * k), '#ffcf5a', 0.55 * k);
+  glow(x, cx, cy, 160, '#fff6d0', 0.6 * k);
+  x.save(); x.translate(cx, cy); x.rotate(t * 0.25); x.globalAlpha *= 0.32 * k; x.fillStyle = '#ffe28a';
+  for (let i = 0; i < 12; i++) { x.rotate(TAU / 12); x.beginPath(); x.moveTo(0, -12); x.lineTo(330 + 60 * (i % 2), 0); x.lineTo(0, 12); x.fill(); }
+  x.restore();
+}
+function burst(x, cx, cy, age, seed, spread) {
+  if (age < 0 || age > 1.4) return;
+  const r = H.rng(seed);
+  for (let i = 0; i < 18; i++) {
+    const a = r.range(0, TAU), d = (spread || 300) * r.range(0.45, 1) * eo(cl(age / 0.9)), sz = r.range(7, 16) * (1 - cl(age / 1.4));
+    spark(x, cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.8, sz, r.pick(['#ffffff', '#ffe28a', '#9ff7ff', '#ffb0d0']), 1);
+  }
+}
+const blinkAt = (t, ph) => { const u = (t + ph) % 3.3; return u < 0.14 ? Math.sin((u / 0.14) * Math.PI) : 0; };
+function header(x, a) { pill(x, 232, 44, 'How did Earth get water?', 28, { a, bg: 'rgba(255,255,255,0.95)' }); }
+// ===== Tech Glow: palette, helpers and the nine key frames (uses H, glow, rr, seg, back, finish from the kit) =====
+const W_ = 1280, H_ = 720;
+const T = { bg0: '#050816', bg1: '#0a1030', bg2: '#140f3d', cyan: '#38e8ff', violet: '#8b6bff', pink: '#ff5fa8', green: '#3dffa0', amber: '#ffc94a', red: '#ff4d6d', ink: '#eaf1ff', mute: '#8fa3d8' };
+const FS = '"Sora", "Segoe UI", system-ui, sans-serif', FM = '"IBM Plex Mono", ui-monospace, Menlo, monospace';
+const tf = (w, px) => `${w} ${px}px ${FS}`, mf = (w, px) => `${w} ${px}px ${FM}`;
+
+function tbg(x, t) {
+  const g = x.createLinearGradient(0, 0, W_ * 0.4, H_);
+  g.addColorStop(0, T.bg0); g.addColorStop(0.6, T.bg1); g.addColorStop(1, T.bg2);
+  x.fillStyle = g; x.fillRect(0, 0, W_, H_);
+  glow(x, W_ * 0.86, H_ * 0.08, 640, '#6a3df0', 0.28); glow(x, W_ * 0.06, H_ * 0.98, 580, '#1aa7e8', 0.24);
+  x.save(); x.strokeStyle = 'rgba(120,160,255,0.07)'; x.lineWidth = 1;
+  for (let X = 0; X < W_; X += 64) { x.beginPath(); x.moveTo(X, 0); x.lineTo(X, H_); x.stroke(); }
+  for (let Y = 0; Y < H_; Y += 64) { x.beginPath(); x.moveTo(0, Y); x.lineTo(W_, Y); x.stroke(); }
+  x.restore();
+  const r = H.rng(31);
+  for (let i = 0; i < 70; i++) {
+    const px = (r() * W_ + t * 6 * (0.3 + r())) % W_, py = (r() * H_ + H_ * 2 - t * 4 * (0.3 + r())) % H_, s = r.range(0.8, 2.2), ph = r.range(0, TAU);
+    x.globalAlpha = 0.25 + 0.35 * Math.sin(t * 1.6 + ph) ** 2; x.fillStyle = r.pick(['#8fe9ff', '#b9a8ff', '#ffffff']); x.beginPath(); x.arc(px, py, s, 0, TAU); x.fill();
+  }
+  x.globalAlpha = 1;
+}
+function tfinish(x, t) { H.vignette(x, W_, H_, 0.5, '2,4,16'); finish(x, W_, H_, t); }
+function ttext(x, s, cx, cy, px, col, o = {}) {
+  x.save(); x.font = o.mono ? mf(o.w || 600, px) : tf(o.w || 700, px); x.textAlign = o.align || 'center'; x.textBaseline = 'middle';
+  x.globalAlpha *= o.a == null ? 1 : o.a;
+  if (o.glow) { x.shadowColor = H.rgba(o.glow, 0.75); x.shadowBlur = px * 0.55; }
+  x.fillStyle = col; x.fillText(s, cx, cy); x.restore();
+}
+function tchip(x, cx, cy, s, px, o = {}) {
+  const col = o.col || T.cyan; x.save(); x.font = mf(600, px);
+  const w = x.measureText(s).width + px * 1.6, h = px * 2; x.globalAlpha *= o.a == null ? 1 : o.a;
+  if (o.solid) { x.shadowColor = H.rgba(col, 0.7); x.shadowBlur = 22; }
+  x.fillStyle = H.rgba(col, o.solid ? 0.95 : 0.14); rr(x, cx - w / 2, cy - h / 2, w, h, h / 2); x.fill(); x.shadowBlur = 0;
+  x.lineWidth = 1.5; x.strokeStyle = H.rgba(col, 0.9); rr(x, cx - w / 2, cy - h / 2, w, h, h / 2); x.stroke();
+  x.fillStyle = o.solid ? '#06102a' : col; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(s, cx, cy + 1); x.restore(); return w;
+}
+function tcard(x, X, Y, w, h, o = {}) {
+  const col = o.col || T.cyan, r = o.r || 22; x.save(); x.globalAlpha *= o.a == null ? 1 : o.a;
+  x.shadowColor = H.rgba(col, 0.5); x.shadowBlur = 28; x.fillStyle = 'rgba(13,21,56,0.92)'; rr(x, X, Y, w, h, r); x.fill(); x.shadowBlur = 0;
+  const g = x.createLinearGradient(X, Y, X + w, Y + h); g.addColorStop(0, H.rgba(col, 0.95)); g.addColorStop(1, H.rgba(o.col2 || T.violet, 0.85));
+  x.lineWidth = 2.5; x.strokeStyle = g; rr(x, X, Y, w, h, r); x.stroke();
+  x.fillStyle = 'rgba(255,255,255,0.05)'; rr(x, X + 4, Y + 4, w - 8, h * 0.28, Math.max(2, r - 4)); x.fill(); x.restore();
+}
+function tnode(x, cx, cy, r, col, t, o = {}) {
+  const p = 0.5 + 0.5 * Math.sin(t * 3 + (o.ph || 0));
+  glow(x, cx, cy, r * (2.4 + 0.3 * p), col, 0.3 + 0.12 * p);
+  const g = x.createRadialGradient(cx, cy - r * 0.3, r * 0.1, cx, cy, r); g.addColorStop(0, H.rgba(col, 0.38)); g.addColorStop(1, 'rgba(10,16,48,0.96)');
+  x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.fill();
+  x.save(); x.lineWidth = 3; x.strokeStyle = H.rgba(col, 0.95); x.shadowColor = H.rgba(col, 0.8); x.shadowBlur = 18; x.stroke(); x.restore();
+  if (o.ring) { x.save(); x.lineWidth = 1.5; x.strokeStyle = H.rgba(col, 0.4 * (1 - p)); x.beginPath(); x.arc(cx, cy, r * (1.15 + 0.25 * p), 0, TAU); x.stroke(); x.restore(); }
+  if (o.icon) o.icon(x, cx, cy, r * 0.5, col, t);
+  if (o.label) ttext(x, o.label, cx, cy + r + (o.ly || 32), o.lpx || 26, T.ink, { w: 700 });
+}
+function tlink(x, ax, ay, bx, by, col, t, o = {}) {
+  x.save(); x.lineCap = 'round'; x.strokeStyle = H.rgba(col, 0.38); x.lineWidth = o.lw || 3; x.beginPath(); x.moveTo(ax, ay); x.lineTo(bx, by); x.stroke();
+  const n = o.dots == null ? 2 : o.dots;
+  for (let i = 0; i < n; i++) { const u = (t * 0.45 + i / Math.max(n, 1) + (o.ph || 0)) % 1, px = lerp(ax, bx, u), py = lerp(ay, by, u); glow(x, px, py, 18, col, 0.8); x.fillStyle = '#ffffff'; x.beginPath(); x.arc(px, py, 3.5, 0, TAU); x.fill(); }
+  if (o.head) { const ang = Math.atan2(by - ay, bx - ax); x.translate(bx, by); x.rotate(ang); x.fillStyle = H.rgba(col, 0.95); x.beginPath(); x.moveTo(2, 0); x.lineTo(-15, -9); x.lineTo(-15, 9); x.closePath(); x.fill(); }
+  x.restore();
+}
+function wordmark(x, big) {
+  if (big) { ttext(x, 'iLogix Digital', 640, 120, 66, T.ink, { w: 800, glow: T.cyan }); return; }
+  glow(x, 56, 46, 22, T.cyan, 0.8); x.fillStyle = T.cyan; x.beginPath(); x.arc(56, 46, 7, 0, TAU); x.fill();
+  ttext(x, 'iLogix Digital', 76, 46, 22, T.ink, { w: 700, align: 'left' });
+}
+// icons: (x, cx, cy, s, col)
+const ln = (x, col, s) => { x.strokeStyle = col; x.lineWidth = Math.max(2, s * 0.11); x.lineCap = 'round'; x.lineJoin = 'round'; };
+function iPhone(x, cx, cy, s, col) { x.save(); ln(x, col, s); rr(x, cx - s * 0.5, cy - s * 0.9, s, s * 1.8, s * 0.18); x.stroke(); x.beginPath(); x.moveTo(cx - s * 0.14, cy + s * 0.7); x.lineTo(cx + s * 0.14, cy + s * 0.7); x.stroke(); x.restore(); }
+function iMail(x, cx, cy, s, col) { x.save(); ln(x, col, s); rr(x, cx - s * 0.9, cy - s * 0.62, s * 1.8, s * 1.24, s * 0.14); x.stroke(); x.beginPath(); x.moveTo(cx - s * 0.85, cy - s * 0.5); x.lineTo(cx, cy + s * 0.1); x.lineTo(cx + s * 0.85, cy - s * 0.5); x.stroke(); x.restore(); }
+function iChat(x, cx, cy, s, col) { x.save(); ln(x, col, s); x.fillStyle = col; rr(x, cx - s * 0.9, cy - s * 0.7, s * 1.8, s * 1.2, s * 0.35); x.stroke(); x.beginPath(); x.moveTo(cx - s * 0.4, cy + s * 0.5); x.lineTo(cx - s * 0.65, cy + s * 0.95); x.lineTo(cx - s * 0.05, cy + s * 0.5); x.stroke(); for (let i = -1; i <= 1; i++) { x.beginPath(); x.arc(cx + i * s * 0.45, cy - s * 0.1, s * 0.09, 0, TAU); x.fill(); } x.restore(); }
+function iCal(x, cx, cy, s, col) { x.save(); ln(x, col, s); x.fillStyle = col; rr(x, cx - s * 0.85, cy - s * 0.7, s * 1.7, s * 1.5, s * 0.16); x.stroke(); x.beginPath(); x.moveTo(cx - s * 0.85, cy - s * 0.25); x.lineTo(cx + s * 0.85, cy - s * 0.25); x.moveTo(cx - s * 0.4, cy - s * 0.95); x.lineTo(cx - s * 0.4, cy - s * 0.5); x.moveTo(cx + s * 0.4, cy - s * 0.95); x.lineTo(cx + s * 0.4, cy - s * 0.5); x.stroke(); for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) { x.beginPath(); x.arc(cx - s * 0.45 + i * s * 0.45, cy + s * 0.12 + j * s * 0.4, s * 0.07, 0, TAU); x.fill(); } x.restore(); }
+function iPerson(x, cx, cy, s, col) { x.save(); ln(x, col, s); x.beginPath(); x.arc(cx, cy - s * 0.35, s * 0.38, 0, TAU); x.stroke(); x.beginPath(); x.arc(cx, cy + s * 1.0, s * 0.85, Math.PI * 1.15, Math.PI * 1.85); x.stroke(); x.restore(); }
+function iDoc(x, cx, cy, s, col) { x.save(); ln(x, col, s); x.beginPath(); x.moveTo(cx - s * 0.65, cy - s * 0.9); x.lineTo(cx + s * 0.25, cy - s * 0.9); x.lineTo(cx + s * 0.65, cy - s * 0.5); x.lineTo(cx + s * 0.65, cy + s * 0.9); x.lineTo(cx - s * 0.65, cy + s * 0.9); x.closePath(); x.stroke(); x.beginPath(); x.moveTo(cx - s * 0.35, cy - s * 0.1); x.lineTo(cx + s * 0.35, cy - s * 0.1); x.moveTo(cx - s * 0.35, cy + s * 0.25); x.lineTo(cx + s * 0.35, cy + s * 0.25); x.moveTo(cx - s * 0.35, cy + s * 0.6); x.lineTo(cx + s * 0.1, cy + s * 0.6); x.stroke(); x.restore(); }
+function iCheck(x, cx, cy, s, col) { x.save(); ln(x, col, s * 1.1); x.beginPath(); x.moveTo(cx - s * 0.6, cy + s * 0.05); x.lineTo(cx - s * 0.15, cy + s * 0.5); x.lineTo(cx + s * 0.65, cy - s * 0.45); x.stroke(); x.restore(); }
+function iBolt(x, cx, cy, s, col) { x.save(); ln(x, col, s); x.fillStyle = H.rgba(col, 0.25); x.beginPath(); x.moveTo(cx + s * 0.2, cy - s); x.lineTo(cx - s * 0.55, cy + s * 0.1); x.lineTo(cx - s * 0.05, cy + s * 0.1); x.lineTo(cx - s * 0.2, cy + s); x.lineTo(cx + s * 0.55, cy - s * 0.2); x.lineTo(cx + s * 0.05, cy - s * 0.2); x.closePath(); x.fill(); x.stroke(); x.restore(); }
+function iPlan(x, cx, cy, s, col) { x.save(); ln(x, col, s); x.fillStyle = col; for (let i = -1; i <= 1; i++) { x.beginPath(); x.arc(cx - s * 0.65, cy + i * s * 0.6, s * 0.1, 0, TAU); x.fill(); x.beginPath(); x.moveTo(cx - s * 0.3, cy + i * s * 0.6); x.lineTo(cx + s * 0.7, cy + i * s * 0.6); x.stroke(); } x.restore(); }
+function iShield(x, cx, cy, s, col) { x.save(); ln(x, col, s); x.beginPath(); x.moveTo(cx, cy - s); x.lineTo(cx + s * 0.85, cy - s * 0.6); x.lineTo(cx + s * 0.85, cy + s * 0.1); x.quadraticCurveTo(cx + s * 0.8, cy + s * 0.75, cx, cy + s); x.quadraticCurveTo(cx - s * 0.8, cy + s * 0.75, cx - s * 0.85, cy + s * 0.1); x.lineTo(cx - s * 0.85, cy - s * 0.6); x.closePath(); x.stroke(); x.beginPath(); x.moveTo(cx - s * 0.38, cy); x.lineTo(cx - s * 0.08, cy + s * 0.3); x.lineTo(cx + s * 0.42, cy - s * 0.28); x.stroke(); x.restore(); }
+function mayaOrb(x, cx, cy, r, t, label) {
+  glow(x, cx, cy, r * 2.8, T.violet, 0.35);
+  for (let i = 0; i < 3; i++) { const u = (t * 0.6 + i / 3) % 1; x.strokeStyle = H.rgba(T.cyan, 0.5 * (1 - u)); x.lineWidth = 3; x.beginPath(); x.arc(cx, cy, r * (1 + 0.7 * u), 0, TAU); x.stroke(); }
+  const g = x.createRadialGradient(cx - r * 0.3, cy - r * 0.35, r * 0.1, cx, cy, r); g.addColorStop(0, '#9ff6ff'); g.addColorStop(0.5, '#4a7cff'); g.addColorStop(1, '#5a2fd0');
+  x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.fill();
+  x.strokeStyle = 'rgba(255,255,255,0.35)'; x.lineWidth = 2; x.beginPath(); x.arc(cx, cy, r - 3, Math.PI * 1.05, Math.PI * 1.55); x.stroke();
+  const n = 11;
+  for (let i = 0; i < n; i++) { const k = 1 - Math.abs(i - (n - 1) / 2) / (n / 2) * 0.6, hg = r * (0.16 + 0.5 * Math.abs(Math.sin(t * 4 + i * 0.8)) * k); x.fillStyle = 'rgba(255,255,255,0.93)'; rr(x, cx - r * 0.62 + i * (r * 1.24 / (n - 1)) - r * 0.045, cy - hg / 2, r * 0.09, hg, r * 0.045); x.fill(); }
+  if (label) ttext(x, label, cx, cy + r + 34, 26, T.ink, { w: 700 });
+}
+const hd = (x, s, y, px, col, o) => ttext(x, s, 640, y, px, col || T.ink, Object.assign({ w: 800 }, o));
+
+const PANELS = [
+  // 1 HOOK
+  (x, t) => {
+    tbg(x, t); wordmark(x);
+    hd(x, 'Every missed call', 92, 56); hd(x, 'is a missed customer.', 158, 56, T.cyan, { glow: T.cyan });
+    for (let i = 0; i < 3; i++) { x.save(); x.strokeStyle = H.rgba(T.red, 0.55 - 0.15 * i); x.lineWidth = 4; x.lineCap = 'round'; const R = 220 + i * 26; x.beginPath(); x.arc(420, 450, R, -2.45, -2.0); x.stroke(); x.beginPath(); x.arc(420, 450, R, -1.14, -0.69); x.stroke(); x.restore(); }
+    tcard(x, 315, 280, 210, 370, { col: T.red, col2: T.pink });
+    tnode(x, 420, 400, 52, T.red, t, { icon: iPhone, ring: true });
+    tchip(x, 420, 492, 'Missed call', 20, { col: T.red });
+    ttext(x, 'Unknown caller', 420, 545, 18, T.mute, { mono: true, w: 500 });
+    ttext(x, '02:14', 840, 400, 140, T.ink, { mono: true, w: 600, glow: T.cyan });
+    ttext(x, 'AM', 1090, 440, 40, T.amber, { mono: true, w: 600, align: 'left' });
+    tchip(x, 840, 500, 'after hours', 22, { col: T.amber });
+    ttext(x, 'Nobody picks up.', 840, 580, 36, T.mute, { w: 600 });
+  },
+  // 2 MEET MAYA
+  (x, t) => {
+    tbg(x, t); wordmark(x);
+    hd(x, 'Meet Maya', 110, 72, T.ink, { glow: T.violet });
+    tchip(x, 640, 178, 'answers every call, 24/7', 22, { col: T.green });
+    tnode(x, 190, 440, 60, T.cyan, t, { icon: iPhone, label: 'Incoming call', lpx: 22 });
+    tlink(x, 255, 440, 495, 440, T.cyan, t, { head: true });
+    mayaOrb(x, 640, 440, 125, t, null);
+    tchip(x, 640, 625, 'Maya · AI receptionist', 22, { col: T.violet });
+    tcard(x, 810, 300, 400, 150, { col: T.violet, col2: T.cyan });
+    ttext(x, 'MAYA', 842, 332, 16, T.violet, { mono: true, align: 'left' });
+    ttext(x, 'Hi, you’ve reached iLogix.', 842, 378, 26, T.ink, { align: 'left', w: 600 });
+    ttext(x, 'How can I help?', 842, 418, 26, T.ink, { align: 'left', w: 600 });
+  },
+  // 3 WHAT MAYA CAPTURES
+  (x, t) => {
+    tbg(x, t); wordmark(x);
+    hd(x, 'Maya collects the details', 100, 52);
+    tnode(x, 130, 400, 62, T.cyan, t, { icon: iPhone, label: 'Caller' });
+    tlink(x, 195, 400, 308, 400, T.cyan, t, { head: true });
+    mayaOrb(x, 390, 400, 76, t, 'Maya');
+    const F3 = ['Name', 'Phone number', 'Reason for calling'];
+    F3.forEach((s, i) => {
+      const y = 250 + i * 110; tlink(x, 470, 400, 590, y + 46, T.violet, t, { ph: i * 0.2, dots: 1 });
+      tcard(x, 590, y, 310, 92, { col: T.green, col2: T.cyan, r: 18 });
+      x.save(); x.fillStyle = H.rgba(T.green, 0.2); x.beginPath(); x.arc(632, y + 46, 22, 0, TAU); x.fill(); x.restore(); iCheck(x, 632, y + 46, 14, T.green);
+      ttext(x, s, 670, y + 46, 24, T.ink, { align: 'left', w: 600 });
+      tlink(x, 900, y + 46, 1052, 400, T.green, t, { ph: i * 0.3, dots: 1 });
+    });
+    tnode(x, 1130, 400, 78, T.green, t, { icon: iPerson, label: 'Your team', ring: true });
+    tchip(x, 640, 640, 'then hands off to your team', 24, { col: T.green });
+  },
+  // 4 BEYOND CALLS
+  (x, t) => {
+    tbg(x, t); wordmark(x);
+    ttext(x, 'Agentic AI', 70, 230, 76, T.ink, { align: 'left', w: 800 });
+    ttext(x, 'doesn’t just answer.', 70, 322, 52, T.mute, { align: 'left', w: 600 });
+    ttext(x, 'It acts.', 70, 448, 104, T.cyan, { align: 'left', w: 800, glow: T.cyan });
+    const A = [930, 380], S = [[1080, 204, iMail, T.violet], [1165, 380, iCal, T.amber], [1080, 556, iCheck, T.green]];
+    S.forEach(([sx, sy, ic, col], i) => { const a = Math.atan2(sy - A[1], sx - A[0]); tlink(x, A[0] + Math.cos(a) * 112, A[1] + Math.sin(a) * 112, sx - Math.cos(a) * 52, sy - Math.sin(a) * 52, col, t, { head: true, ph: i * 0.25, dots: 1 }); tnode(x, sx, sy, 44, col, t, { icon: ic, ph: i }); });
+    tnode(x, A[0], A[1], 100, T.cyan, t, { icon: iBolt, ring: true });
+  },
+  // 5 PLAN ACT VERIFY
+  (x, t) => {
+    tbg(x, t); wordmark(x);
+    ttext(x, 'Plan.', 395, 82, 58, T.cyan, { w: 800 }); ttext(x, 'Act.', 640, 82, 58, T.violet, { w: 800 }); ttext(x, 'Verify.', 885, 82, 58, T.green, { w: 800 });
+    const N = [[240, T.cyan, iPlan, 'Plan', 'break the goal into steps'], [640, T.violet, iBolt, 'Act', 'use your tools'], [1040, T.green, iCheck, 'Verify', 'check before it counts']];
+    N.forEach(([nx, col, ic, lab, sub], i) => { tnode(x, nx, 340, 84, col, t, { icon: ic, label: lab, ly: 36, lpx: 30, ring: true, ph: i }); ttext(x, sub, nx, 488, 18, T.mute, { mono: true, w: 500 }); });
+    tlink(x, 332, 340, 548, 340, T.cyan, t, { head: true }); tlink(x, 732, 340, 948, 340, T.violet, t, { head: true });
+    x.save(); x.strokeStyle = H.rgba(T.green, 0.5); x.lineWidth = 3; x.lineCap = 'round'; x.setLineDash([10, 10]); x.beginPath(); x.moveTo(1040, 246); x.bezierCurveTo(1040, 150, 240, 150, 240, 246); x.stroke(); x.restore();
+    x.fillStyle = H.rgba(T.cyan, 0.95); x.beginPath(); x.moveTo(240, 252); x.lineTo(230, 232); x.lineTo(250, 232); x.closePath(); x.fill();
+    tchip(x, 640, 174, 'repeat until done', 18, { col: T.green, solid: true });
+    ttext(x, 'TYPICAL JOBS', 640, 575, 16, T.mute, { mono: true });
+    ['qualify leads', 'draft replies', 'triage support'].forEach((s, i) => tchip(x, 380 + i * 260, 625, s, 22, { col: [T.cyan, T.violet, T.green][i] }));
+  },
+  // 6 CONNECTED TO YOUR TOOLS
+  (x, t) => {
+    tbg(x, t); wordmark(x);
+    hd(x, 'Wired into your tools', 82, 54);
+    ['n8n', 'Make', 'GoHighLevel', 'Vapi'].forEach((s, i) => tchip(x, [440, 560, 740, 905][i], 150, s, 20, { col: T.mute }));
+    const S6 = [[220, 250, iPerson, 'CRM', T.cyan], [220, 520, iMail, 'Email', T.violet], [1060, 250, iChat, 'WhatsApp', T.green], [1060, 520, iCal, 'Calendar', T.amber], [640, 590, iDoc, 'Documents', T.pink]];
+    S6.forEach(([sx, sy, ic, lab, col], i) => { const a = Math.atan2(sy - 370, sx - 640); tlink(x, 640 + Math.cos(a) * 96, 370 + Math.sin(a) * 96, sx - Math.cos(a) * 62, sy - Math.sin(a) * 62, col, t, { ph: i * 0.2, dots: 1 }); tnode(x, sx, sy, 56, col, t, { icon: ic, label: lab, ly: 40, lpx: 22, ph: i }); });
+    tnode(x, 640, 370, 90, T.cyan, t, { icon: iBolt, label: null, ring: true });
+  },
+  // 7 GUARDRAILS
+  (x, t) => {
+    tbg(x, t); wordmark(x);
+    hd(x, 'Guardrails keep it on track', 100, 52);
+    tcard(x, 70, 300, 300, 140, { col: T.violet, col2: T.cyan });
+    ttext(x, 'AGENT ACTION', 100, 336, 16, T.violet, { mono: true, align: 'left' }); ttext(x, 'Draft reply', 100, 392, 34, T.ink, { align: 'left', w: 700 });
+    tlink(x, 372, 370, 520, 370, T.violet, t, { head: true });
+    tnode(x, 640, 370, 110, T.green, t, { icon: iShield, label: 'Guardrail check', ly: 40, ring: true });
+    tlink(x, 762, 370, 908, 370, T.green, t, { head: true });
+    tcard(x, 910, 300, 300, 140, { col: T.green, col2: T.cyan });
+    ttext(x, 'YOUR TEAM', 940, 336, 16, T.green, { mono: true, align: 'left' }); ttext(x, 'Stays in control', 940, 392, 28, T.ink, { align: 'left', w: 700 });
+    ['allowed actions only', 'approved data only', 'hand-off to a human'].forEach((s, i) => tchip(x, 300 + i * 340, 610, s, 20, { col: T.green }));
+  },
+  // 8 PROCESS
+  (x, t) => {
+    tbg(x, t); wordmark(x);
+    hd(x, 'From idea to live in weeks', 100, 54);
+    const S8 = [['DISCOVER', 'Fixed-scope', 'quote', T.cyan, iDoc], ['BUILD', 'Weekly', 'working demos', T.violet, iBolt], ['SCALE', 'Launch, training,', 'improvements', T.green, iCheck]];
+    S8.forEach(([a, b, c, col, ic], i) => { const X = 70 + i * 390; tcard(x, X, 190, 360, 300, { col, col2: T.cyan }); ic(x, X + 70, 270, 26, col); ttext(x, a, X + 30, 345, 20, col, { mono: true, align: 'left' }); ttext(x, b, X + 30, 400, 32, T.ink, { align: 'left', w: 700 }); ttext(x, c, X + 30, 446, 32, T.ink, { align: 'left', w: 700 }); if (i < 2) tlink(x, X + 364, 340, X + 386, 340, col, t, { head: true, dots: 0 }); });
+    tchip(x, 410, 585, 'Fixed price, quoted upfront', 22, { col: T.amber }); tchip(x, 890, 585, 'Delivered in weeks', 22, { col: T.green });
+  },
+  // 9 CTA
+  (x, t) => {
+    tbg(x, t); wordmark(x, true);
+    tchip(x, 640, 192, 'Engineering-led since 2015', 20, { col: T.mute });
+    tcard(x, 310, 260, 660, 130, { col: T.cyan, col2: T.violet, r: 65 });
+    mayaOrb(x, 400, 325, 42, t, null);
+    ttext(x, 'Talk to Maya', 700, 325, 48, T.ink, { w: 800, glow: T.cyan });
+    tchip(x, 640, 450, 'Book a free discovery call', 26, { col: T.violet, solid: true });
+    ttext(x, 'ilogixdigital.com', 640, 540, 36, T.cyan, { mono: true, w: 600, glow: T.cyan });
+    ttext(x, 'Software, AI and growth systems for ambitious businesses.', 640, 615, 24, T.mute, { w: 500 });
+  },
+];
+const PANEL_T = [1.8, 5.0, 9.0, 12.6, 17.0, 21.0, 24.8, 28.5, 33.0];
+// ===== iLogix storyboard data and page build =====
+const BEATS = [
+  { t: '0.0 – 3.5 s', name: 'Missed call', text: 'Every missed call is a missed customer. · Missed call · after hours · Nobody picks up.', kind: 'cont',
+    from: 'Opening shot. Title words pop in over a ringing phone with red ring arcs. The 02:14 AM clock rolls in on the right. At 3.2 s the phone is answered: a green ripple sweeps out and the phone slides left.',
+    sound: 'Room hum, two-tone phone ring twice, a low falling blip for “nobody picks up”, then a click and rising shimmer as the call is answered.',
+    en: 'A customer calls at 2 a.m. Nobody answers.', hi: 'रात दो बजे ग्राहक का कॉल। कोई जवाब नहीं।' },
+  { t: '3.5 – 7.0 s', name: 'Meet Maya', text: 'Meet Maya · answers every call, 24/7 · Maya · AI receptionist · Hi, you’ve reached iLogix. How can I help?', kind: 'cont',
+    from: 'Continuous. The answered call link draws to the Maya orb, which powers on with a pulse ring and a moving voice waveform. A greeting bubble pops in.',
+    sound: 'Power-on swell, soft pluck chord, tick per waveform pulse, pop for the bubble, chip pops.',
+    en: 'Meet Maya, an AI receptionist that answers every call, 24/7.', hi: 'मिलिए माया से, एक AI रिसेप्शनिस्ट जो हर कॉल उठाती है, चौबीसों घंटे।' },
+  { t: '7.0 – 11.5 s', name: 'What Maya collects', text: 'Maya collects the details · Name · Phone number · Reason for calling · then hands off to your team', kind: 'cont',
+    from: 'Continuous. The orb slides left and shrinks into the flow. Three field cards stack in one by one, each ticking green, then lines carry the data to the Your team node.',
+    sound: 'Rising ding on each tick (three notes), data-packet blips along the links, success ding when the team node lights up.',
+    en: 'She notes the name, number and reason, then hands off to your team.', hi: 'वो नाम, नंबर और वजह नोट करती है, फिर आपकी टीम को सौंप देती है।' },
+  { t: '11.5 – 14.5 s', name: 'Beyond answering', text: 'Agentic AI doesn’t just answer. It acts.', kind: 'cut',
+    from: 'Scene change. The team node’s glow expands into a full-screen cyan shock ring, then clears to a new frame: a big agent node with mail, calendar and check nodes flying out of it.',
+    sound: 'Sub-bass swell and riser into the flash, glassy hit on “It acts.”, ping per satellite node.',
+    en: 'But agentic AI does more than answer. It acts.', hi: 'लेकिन एजेंटिक AI सिर्फ़ जवाब नहीं देता, काम भी करता है।' },
+  { t: '14.5 – 19.5 s', name: 'Plan, act, verify', text: 'Plan. Act. Verify. · repeat until done · qualify leads · draft replies · triage support', kind: 'cont',
+    from: 'Continuous. The agent node splits into three and slides into a row. The Verify node loops a dotted line back to Plan. Three job chips pop in underneath.',
+    sound: 'One pluck per node (rising), loop whoosh as the dotted line draws, soft tock per job chip.',
+    en: 'It plans, acts, and verifies. Qualifying leads, drafting replies, triaging support.', hi: 'यह प्लान करता है, काम करता है, और जाँचता है। लीड छाँटना, जवाब लिखना, सपोर्ट संभालना।' },
+  { t: '19.5 – 24.0 s', name: 'Connected to your tools', text: 'Wired into your tools · n8n · Make · GoHighLevel · Vapi · CRM · Email · WhatsApp · Calendar · Documents', kind: 'cont',
+    from: 'Continuous. The Verify node’s glow becomes the hub, and the Plan/Act/Verify row dissolves into spokes. Five tool nodes pop around it, one per spoke, with the tool-name chips along the top.',
+    sound: 'Radiating ping per spoke, tick per tool chip, steady low pulse under the hub.',
+    en: 'Connected to your CRM, email, WhatsApp and calendar. No manual handoffs.', hi: 'आपके CRM, ईमेल, WhatsApp और कैलेंडर से जुड़ा, बिना मैन्युअल हैंडऑफ़ के।' },
+  { t: '24.0 – 27.5 s', name: 'Guardrails', text: 'Guardrails keep it on track · Draft reply · Guardrail check · Stays in control · allowed actions only · approved data only · hand-off to a human', kind: 'cut',
+    from: 'Scene change. A grid push moves the camera forward and the spokes collapse into one shield node. An action card travels through the shield and lands on the team card.',
+    sound: 'Whoosh on the push, lock thud as the shield closes, ding when the action passes, chips tick in.',
+    en: 'Guardrails keep every action on track.', hi: 'गार्डरेल्स हर काम को सही रास्ते पर रखते हैं।' },
+  { t: '27.5 – 31.5 s', name: 'Process', text: 'From idea to live in weeks · Discover · Build · Scale · Fixed price, quoted upfront · Delivered in weeks', kind: 'cont',
+    from: 'Continuous. The shield drops down and splits into three step cards. Arrows link them, and the two promise chips pop in underneath.',
+    sound: 'Rising pop per card, a stamp on “Fixed price”, ding on “Delivered in weeks”.',
+    en: 'Discover, build, scale. Fixed price, delivered in weeks.', hi: 'डिस्कवर, बिल्ड, स्केल। फ़िक्स्ड प्राइस, कुछ ही हफ़्तों में डिलीवरी।' },
+  { t: '31.5 – 35.0 s', name: 'Call to action', text: 'iLogix Digital · Engineering-led since 2015 · Talk to Maya · Book a free discovery call · ilogixdigital.com · Software, AI and growth systems for ambitious businesses.', kind: 'cont',
+    from: 'Continuous. The three step cards converge into the Talk to Maya button, the wordmark glows in at the top, and the URL types on. Held about one second at the end.',
+    sound: 'Warm resolving chord on the button, sparkle on the wordmark, key ticks as the URL types, soft outro tail.',
+    en: 'Talk to Maya, or book a free call with iLogix.', hi: 'माया से बात कीजिए, या iLogix के साथ फ़्री कॉल बुक कीजिए।' },
+];
+const FACTS = [
+  'From your website: Maya answers 24/7 and collects name, phone number and reason for calling, then hands off to your team. Agentic AI follows Plan, Act, Verify with guardrails, and handles jobs like qualifying leads, drafting replies and triaging support. Tools named: n8n, Make, GoHighLevel, Vapi. Process: Discover, Build, Scale, with a fixed-price quote and delivery in weeks. Calls to action: Talk to Maya and Book a free discovery call.',
+  'My own illustrations, not from the site: the 02:14 AM missed-call hook, Maya’s greeting line, the short descriptions under Plan, Act and Verify, the “repeat until done” label, and the three example guardrails. The Maya conversation is a scripted example, not a real call.',
+  'I left out the numbers on your site (10+ years, 50+ automations, 4+ countries) to keep the video to one idea. I can add “50+ automations shipped” to the last beat if you want proof.',
+  'Your site gives no brand colors, and I only used a plain-text wordmark. I used a dark navy with cyan and violet glow. Send your logo and colors and I will match them.',
+  'This is my own take on the Tech Glow look (neon-edged cards, node diagrams, pulsing light), built with the same drawing and sound toolkit as the Earth video. It is not the atlas’s exact source for that style. Paste that style’s prompt and I will rebuild in its exact look.',
+  'Length is 35 seconds at 16:9 (1280×720). It works for the website, LinkedIn and YouTube. A 9:16 version for Reels and Shorts needs a re-layout, and I can do it. On-screen text is English. The Hindi voiceover lines are below, and a Hindi on-screen version is possible.',
+  'The Hindi lines keep common English terms (AI, CRM, WhatsApp, Discover/Build/Scale) the way they are spoken in everyday Hindi.',
+];
+function buildPage() {
+  const grid = document.getElementById('grid');
+  BEATS.forEach((b, i) => {
+    const li = document.createElement('li'); li.className = 'card';
+    li.innerHTML = '<canvas width="1280" height="720" id="p' + i + '" aria-label="Key frame for beat ' + (i + 1) + ': ' + b.name + '"></canvas>' +
+      '<div class="meta"><div class="tag"><b>' + (i + 1) + '</b><span>' + b.t + '</span><i>' + b.name + '</i></div>' +
+      '<dl class="row"><dt>On-screen text</dt><dd>' + b.text + '</dd></dl>' +
+      '<dl class="row"><dt>How it gets here</dt><dd><span class="chip ' + b.kind + '">' + (b.kind === 'cut' ? 'Scene change' : 'Continuous') + '</span>' + b.from + '</dd></dl>' +
+      '<dl class="row"><dt>Key sounds</dt><dd>' + b.sound + '</dd></dl>' +
+      '<dl class="row"><dt>Voiceover · English</dt><dd>' + b.en + '</dd></dl>' +
+      '<dl class="row"><dt>Voiceover · Hindi</dt><dd lang="hi">' + b.hi + '</dd></dl></div>';
+    grid.appendChild(li);
+  });
+  const ul = document.getElementById('facts');
+  FACTS.forEach((f) => { const li = document.createElement('li'); li.textContent = f; ul.appendChild(li); });
+}
+async function drawAll() {
+  try { await Promise.all(['800 66px "Sora"', '700 26px "Sora"', '600 20px "IBM Plex Mono"'].map((f) => document.fonts.load(f, 'AaZz09?'))); await document.fonts.ready; } catch (e) { /* draw with fallbacks */ }
+  PANELS.forEach((fn, i) => {
+    const cv = document.getElementById('p' + i), x = cv.getContext('2d');
+    x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cv.width, cv.height);
+    try { fn(x, PANEL_T[i]); tfinish(x, PANEL_T[i]); }
+    catch (err) { x.fillStyle = '#ff3b5c'; x.font = '28px sans-serif'; x.fillText('Panel ' + (i + 1) + ' failed: ' + err.message, 40, 60); console.error(err); }
+  });
+}
+buildPage();
+drawAll();
+</script>

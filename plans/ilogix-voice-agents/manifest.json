@@ -1,0 +1,13 @@
+{
+  "title": "iLogix Voice Agents Explainer",
+  "out": "ilogix_voice_agents.html",
+  "scripts": [
+    "engine/harness.js",
+    "styles/flat-vector/style.js",
+    "styles/tech-glow/style.js",
+    "styles/_sound/sound.js",
+    "plans/ilogix-voice-agents/scene_landscape.js",
+    "plans/ilogix-voice-agents/scene_portrait.js",
+    "engine/player.js"
+  ]
+}
