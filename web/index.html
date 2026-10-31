@@ -5,98 +5,115 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>iLogix Video Studio</title>
 <style>
-:root{--bg:#050816;--bg2:#0a1030;--panel:#0d1538;--panel2:#111c4a;--edge:#1f2e6b;--text:#eaf0ff;--muted:#93a3d6;--accent:#2fe3ff;--accent-ink:#031018;--violet:#8b6bff;--ok:#5dffb0}
-@media (prefers-color-scheme: light){:root{--bg:#f3f6ff;--bg2:#e9eeff;--panel:#fff;--panel2:#f3f6ff;--edge:#d3dbf3;--text:#0d1538;--muted:#53628f;--accent:#0a7ea4;--accent-ink:#fff;--violet:#6a4fe0;--ok:#0a7a4d}}
+@font-face{font-family:Sora;font-weight:600;font-display:swap;src:url(fonts/sora-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:Sora;font-weight:700;font-display:swap;src:url(fonts/sora-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:Sora;font-weight:800;font-display:swap;src:url(fonts/sora-latin-800-normal.woff2) format("woff2")}
+:root{--bg:#f5f6f8;--panel:#fff;--ink:#101218;--mute:#5b6372;--line:#dde0e7;--btn:#101218;--btn-ink:#fff;--focus:#2f5bff;--disp:Sora,system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#0d0f13;--panel:#14171d;--ink:#f2f4f8;--mute:#98a1b1;--line:#252a35;--btn:#f2f4f8;--btn-ink:#0d0f13;--focus:#7c9bff}}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:radial-gradient(1100px 500px at 85% -10%,rgba(139,107,255,.18),transparent 60%),radial-gradient(900px 500px at -5% 10%,rgba(47,227,255,.12),transparent 60%),var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
-header{padding:44px 0 8px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px;color:var(--muted);font-size:14px}
-.dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
-h1{font-size:clamp(28px,5vw,44px);line-height:1.1;margin:14px 0 10px;letter-spacing:-.5px}
-.lead{color:var(--muted);max-width:60ch;margin:0}
-nav{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 0}
-nav a{color:var(--text);text-decoration:none;font-size:14px;padding:6px 14px;border:1px solid var(--edge);border-radius:99px;background:var(--panel)}
-nav a:hover{border-color:var(--accent)}
-section{padding:40px 0 8px}
-h2{font-size:22px;margin:0 0 4px;letter-spacing:-.2px}
-.sub{color:var(--muted);margin:0 0 20px;font-size:15px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
-.card{background:var(--panel);border:1px solid var(--edge);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
-.poster{position:relative;display:block;width:100%;aspect-ratio:16/10;background:#02040f;border:0;padding:0;cursor:pointer;overflow:hidden}
-.poster img{width:100%;height:100%;object-fit:contain;display:block;transition:transform .25s}
-.poster:hover img{transform:scale(1.03)}
-.play{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:flex-end;padding:10px;background:linear-gradient(transparent 60%,rgba(2,4,15,.5))}
-.play span{width:42px;height:42px;border-radius:50%;background:var(--accent);display:grid;place-items:center;box-shadow:0 6px 24px rgba(0,0,0,.5)}
-.play svg{width:17px;height:17px;margin-left:2px;fill:var(--accent-ink)}
-.body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
-.tags{display:flex;gap:6px;flex-wrap:wrap}
-.tag{font-size:12px;padding:2px 9px;border-radius:99px;border:1px solid var(--edge);color:var(--muted)}
-.tag.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 55%,transparent)}
-.card h3{margin:4px 0 0;font-size:18px;line-height:1.25}
-.card p{margin:0;color:var(--muted);font-size:14px}
-.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:10px}
-.btn{font:600 13px/1 system-ui,sans-serif;padding:9px 13px;border-radius:9px;text-decoration:none;cursor:pointer;border:1px solid var(--edge);background:var(--panel2);color:var(--text);display:inline-flex;align-items:center;gap:6px}
-.btn:hover{border-color:var(--accent)}
-.btn.main{background:var(--accent);color:var(--accent-ink);border-color:transparent}
-.styles{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
-.style img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
-.style .body{gap:2px}
-.style h3{margin:0;font-size:16px}
-form{background:var(--panel);border:1px solid var(--edge);border-radius:16px;padding:18px;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+.top{display:flex;align-items:center;justify-content:space-between;padding:22px 0}
+.logo{font:700 17px var(--disp);letter-spacing:-.02em;text-decoration:none}
+.top nav{display:flex;gap:26px;font-size:14px}
+.top nav a{text-decoration:none;color:var(--mute)}
+.top nav a:hover{color:var(--ink)}
+.hero{padding:40px 0 20px;display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:40px;align-items:end}
+.hero h1{font:800 clamp(40px,6.6vw,84px)/.98 var(--disp);letter-spacing:-.045em;margin:0}
+.hero p{max-width:42ch;color:var(--mute);font-size:17px;margin:0}
+.cta{display:flex;gap:22px;align-items:center;flex-wrap:wrap;margin-top:24px}
+.btn{font:600 15px/1 var(--disp);padding:15px 22px;border-radius:999px;border:0;background:var(--btn);color:var(--btn-ink);text-decoration:none;cursor:pointer;display:inline-block}
+.btn:hover{opacity:.88}
+.link{font-size:15px;color:var(--ink);text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line);text-decoration-thickness:2px}
+.link:hover{text-decoration-color:var(--ink)}
+/* live stage */
+.live{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:44px;align-items:start;padding:30px 0 90px}
+.stagebar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:14px;color:var(--mute);gap:12px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--panel)}
+.seg button{font:600 13px var(--disp);border:0;background:none;color:var(--mute);padding:8px 14px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.stage{width:100%;aspect-ratio:16/11.4;border-radius:18px;overflow:hidden;background:#000;box-shadow:0 0 0 1px var(--line),0 24px 60px -28px rgba(10,14,30,.45);margin:0 auto;transition:width .35s ease,aspect-ratio .35s ease}
+.stage.tall{width:min(100%,400px);aspect-ratio:9/19.6}
+.stage iframe{width:100%;height:100%;border:0;display:block}
+.styles{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.styles button{all:unset;box-sizing:border-box;width:100%;cursor:pointer;padding:12px 0 12px 18px;border-left:3px solid var(--line);color:var(--mute);transition:color .2s,border-color .2s}
+.styles button:hover{color:var(--ink)}
+.styles button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.styles button[aria-pressed=true]{color:var(--ink);border-left-color:var(--ink)}
+.styles b{display:block;font:600 21px/1.2 var(--disp);letter-spacing:-.02em}
+.styles span{display:block;font-size:14px;margin-top:2px;opacity:.9}
+.livehead{font:600 14px var(--disp);color:var(--mute);margin:0 0 10px}
+/* library */
+.sec{padding:20px 0 90px}
+.sec h2{font:700 clamp(28px,4vw,40px)/1.1 var(--disp);letter-spacing:-.035em;margin:0 0 10px}
+.sub{color:var(--mute);margin:0 0 40px;max-width:52ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:48px 28px}
+.item{display:flex;flex-direction:column;gap:12px}
+.poster{position:relative;display:block;width:100%;aspect-ratio:16/10;background:#05070d;border:0;padding:0;cursor:pointer;overflow:hidden;border-radius:14px;box-shadow:0 0 0 1px var(--line)}
+.poster img{width:100%;height:100%;object-fit:contain;display:block;transition:transform .4s}
+.poster:hover img{transform:scale(1.035)}
+.pbtn{position:absolute;right:12px;bottom:12px;width:44px;height:44px;border-radius:50%;background:var(--bg);display:grid;place-items:center}
+.pbtn svg{width:16px;height:16px;margin-left:2px;fill:var(--ink)}
+.item h3{font:600 19px/1.25 var(--disp);letter-spacing:-.02em;margin:2px 0 0}
+.meta{font-size:13px;color:var(--mute);margin:-6px 0 0}
+.item p{margin:0;color:var(--mute);font-size:15px}
+.acts{display:flex;gap:18px;flex-wrap:wrap;font-size:14px;margin-top:2px}
+.acts a,.acts button{font:inherit;color:var(--ink);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line);text-decoration-thickness:2px}
+.acts a:hover,.acts button:hover{text-decoration-color:var(--ink)}
+/* brief */
+.brief{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:56px;padding:20px 0 100px;border-top:1px solid var(--line);padding-top:80px}
+.brief h2{font:700 clamp(28px,4vw,40px)/1.1 var(--disp);letter-spacing:-.035em;margin:0 0 14px}
+.brief .sub{margin:0}
+form{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
 .f{display:flex;flex-direction:column;gap:6px}.f.wide{grid-column:1/-1}
-label{font-size:13px;color:var(--muted);font-weight:600}
-input,select,textarea{font:inherit;color:var(--text);background:var(--bg2);border:1px solid var(--edge);border-radius:10px;padding:10px 12px;width:100%}
-input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
-textarea{min-height:90px;resize:vertical}
-pre{margin:0;white-space:pre-wrap;word-break:break-word;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;background:var(--bg2);border:1px solid var(--edge);border-radius:10px;padding:12px;color:var(--muted);max-height:260px;overflow:auto}
-.note{color:var(--muted);font-size:13px}
-footer{padding:36px 0 56px;color:var(--muted);font-size:13px}
+label{font-size:13px;color:var(--mute);font-weight:600}
+input,select,textarea{font:inherit;font-size:15px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 13px;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--focus);outline-offset:1px;border-color:transparent}
+textarea{min-height:92px;resize:vertical}
+pre{margin:0;white-space:pre-wrap;word-break:break-word;font:13px/1.55 ui-monospace,Menlo,Consolas,monospace;background:var(--panel);border:1px dashed var(--line);border-radius:10px;padding:14px;color:var(--mute);max-height:240px;overflow:auto}
+.note{color:var(--mute);font-size:14px;margin-left:14px}
+footer{padding:0 0 60px;color:var(--mute);font-size:13px}
 /* modal */
-.modal{position:fixed;inset:0;background:rgba(2,4,15,.82);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal{position:fixed;inset:0;background:rgba(6,8,14,.8);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
 .modal.open{display:flex}
-.sheet{position:relative;width:min(1000px,100%);height:min(88vh,760px);background:var(--panel);border:1px solid var(--edge);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.sheet{width:min(1000px,100%);height:min(88vh,760px);background:var(--panel);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
 .sheet.portrait{width:min(460px,100%);height:min(92vh,860px)}
-.sheet header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border-bottom:1px solid var(--edge)}
-.sheet header b{font-size:15px}
+.sheethead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.sheethead b{font:600 15px var(--disp)}
 .sheet iframe{flex:1;width:100%;border:0;background:#000}
-.x{font:600 14px system-ui;border:1px solid var(--edge);background:var(--panel2);color:var(--text);border-radius:8px;padding:7px 12px;cursor:pointer}
-@media (max-width:520px){header{padding-top:28px}}
+.x{font:600 13px var(--disp);border:1px solid var(--line);background:none;color:var(--ink);border-radius:999px;padding:8px 16px;cursor:pointer}
+@media (max-width:900px){.stage{aspect-ratio:4/6.3}.stage.tall{aspect-ratio:9/24}.live{grid-template-columns:minmax(0,1fr);gap:22px}.live>div{min-width:0}.styles{flex-direction:row;overflow-x:auto;gap:8px;padding-bottom:6px}.styles button{border:1px solid var(--line);border-radius:999px;padding:9px 16px;white-space:nowrap;width:auto}.styles button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}.styles span{display:none}.styles b{font-size:15px}.brief{grid-template-columns:minmax(0,1fr);gap:28px}.hero{padding-top:24px;grid-template-columns:1fr;gap:20px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
-<header class="wrap">
-  <div class="brand"><span class="dot"></span> iLogix Video Studio</div>
-  <h1>Animated explainers,<br>made once, shown in seven styles.</h1>
-  <p class="lead">Short animated videos for iLogix, TripNido and the education channel. Preview them here, download the MP4s, or send a brief for a new one. Videos come with captions, brand colours and no-music audio.</p>
-  <nav><a href="#videos">Videos</a><a href="#styles">Styles</a><a href="#brief">New video brief</a></nav>
-</header>
+<div class="wrap">
+<div class="top"><a class="logo" href="#">iLogix Video Studio</a><nav><a href="#videos">Videos</a><a href="#brief">Request a video</a></nav></div>
+<section class="hero">
+  <h1>One script.<br>Seven looks.</h1>
+  <div><p>Short animated explainers with captions and sound effects, built to take your own music. Change the style below and the same video redraws.</p>
+  <div class="cta"><a class="btn" href="#brief">Request a video</a><a class="link" href="#videos">See finished videos</a></div></div>
+</section>
+<section class="live" aria-label="Live style switcher">
+  <div>
+    <div class="stagebar"><span id="stname">The water cycle, in Tech Glow</span>
+      <span class="seg" role="group" aria-label="Shape"><button type="button" id="sw" aria-pressed="true">Wide 16:9</button><button type="button" id="st" aria-pressed="false">Vertical 9:16</button></span></div>
+    <div class="stage" id="stage"><iframe id="sf" title="Live style preview" src="v/sample-water-cycle.html?style=tech-glow" allow="autoplay; fullscreen"></iframe></div>
+  </div>
+  <div><p class="livehead">Pick a style</p><ul class="styles" id="slist"></ul></div>
+</section>
 
-<main class="wrap">
-<section id="videos">
-  <h2>Videos</h2>
-  <p class="sub">Click a poster to play. Downloads have no music, so you can add your own track.</p>
+<section class="sec" id="videos">
+  <h2>Finished videos</h2>
+  <p class="sub">Press play to watch. Downloads have captions and sound effects but no music, so you can lay your own track over them.</p>
   <div class="grid" id="vgrid"></div>
 </section>
 
-<section id="styles">
-  <h2>Styles</h2>
-  <p class="sub">The same scene (a water-cycle timeline) in each look. Pick a style from the dropdown in any player.</p>
-  <div class="styles">
-    <div class="card style"><img src="img/style-tech-glow.jpg" alt="Tech Glow style" loading="lazy"><div class="body"><h3>Tech Glow</h3><p>Dark, neon glow. iLogix, SaaS, AI.</p></div></div>
-    <div class="card style"><img src="img/style-glass.jpg" alt="Glass UI style" loading="lazy"><div class="body"><h3>Glass UI</h3><p>Frosted panels over soft colour. Apps and demos.</p></div></div>
-    <div class="card style"><img src="img/style-isometric.jpg" alt="Isometric Pastel style" loading="lazy"><div class="body"><h3>Isometric Pastel</h3><p>Soft pastel slabs. Travel, lifestyle.</p></div></div>
-    <div class="card style"><img src="img/style-paper-cut.jpg" alt="Paper Cut style" loading="lazy"><div class="body"><h3>Paper Cut</h3><p>Layered paper on deep teal. Education, stories.</p></div></div>
-    <div class="card style"><img src="img/style-whiteboard.jpg" alt="Whiteboard style" loading="lazy"><div class="body"><h3>Whiteboard</h3><p>Hand-drawn marker. Teaching.</p></div></div>
-    <div class="card style"><img src="img/style-blueprint.jpg" alt="Blueprint style" loading="lazy"><div class="body"><h3>Blueprint</h3><p>White line-work on blue. Technical topics.</p></div></div>
-    <div class="card style"><img src="img/style-neo-brutal.jpg" alt="Neo-brutalist style" loading="lazy"><div class="body"><h3>Neo-brutalist</h3><p>Thick outlines, loud colour. Social reels.</p></div></div>
-  </div>
-</section>
-
-<section id="brief">
-  <h2>New video brief</h2>
-  <p class="sub">Fill this in, copy the brief and paste it into your Claude chat for this project. Claude builds the video and sends you the MP4s.</p>
+<section class="brief" id="brief">
+  <div><h2>Request a video</h2><p class="sub">Give us the topic, the points to cover and a style. The brief below is what gets the video built. For now, copy it and paste it into the Claude chat for this project.</p></div>
   <form id="bf" onsubmit="return false">
     <div class="f"><label for="b-topic">Topic</label><input id="b-topic" placeholder="e.g. Why is the sky blue?"></div>
     <div class="f"><label for="b-brand">For</label><select id="b-brand"><option>iLogix</option><option>TripNido</option><option>Education channel</option><option>Other</option></select></div>
@@ -106,20 +123,18 @@ footer{padding:36px 0 56px;color:var(--muted);font-size:13px}
     <div class="f"><label for="b-audio">Audio</label><select id="b-audio"><option>Sound effects only (I will add music)</option><option>Sound effects plus music</option><option>Leave room for voiceover</option></select></div>
     <div class="f"><label for="b-cap">Captions</label><select id="b-cap"><option>On (burned in, plus an .srt file)</option><option>Off</option></select></div>
     <div class="f"><label for="b-brandkit">Brand kit (optional)</label><input id="b-brandkit" placeholder="Name, logo file, brand colours"></div>
-    <div class="f wide"><label for="b-pts">Key points or script (one per line)</label><textarea id="b-pts" placeholder="Hook&#10;Main point 1&#10;Main point 2&#10;Call to action"></textarea></div>
+    <div class="f wide"><label for="b-pts">Key points or script, one per line</label><textarea id="b-pts" placeholder="Hook&#10;Main point 1&#10;Main point 2&#10;Call to action"></textarea></div>
     <div class="f wide"><label for="b-notes">Facts, sources, brand notes (optional)</label><textarea id="b-notes" placeholder="Links, numbers that must be correct, words to avoid"></textarea></div>
-    <div class="f wide"><label>Brief to paste</label><pre id="out"></pre></div>
-    <div class="f wide"><div class="row" style="padding:0"><button class="btn main" id="copy" type="button">Copy brief</button><span class="note" id="cmsg"></span></div></div>
+    <div class="f wide"><label>Brief</label><pre id="out"></pre></div>
+    <div class="f wide"><div><button class="btn" id="copy" type="button">Copy brief</button><span class="note" id="cmsg" role="status"></span></div></div>
   </form>
 </section>
-</main>
-
-<footer class="wrap">Built with the ilogix-animated-video engine. Sample content in demos is illustrative.</footer>
-
-<div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Video player">
-  <div class="sheet" id="sheet"><header><b id="mt"></b><button class="x" id="mx">Close</button></header><iframe id="mf" title="Video player" allow="autoplay; fullscreen"></iframe></div>
+<footer>Built with the ilogix-animated-video engine. Sample content in demos is illustrative.</footer>
 </div>
 
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Video player">
+  <div class="sheet" id="sheet"><div class="sheethead"><b id="mt"></b><button class="x" id="mx">Close</button></div><iframe id="mf" title="Video player" allow="autoplay; fullscreen"></iframe></div>
+</div>
 <script>
 var VIDEOS=[
  {t:'Voice agents and agentic AI',d:'iLogix explainer: a missed call becomes a booked customer.',img:'img/ilogix.jpg',src:'v/ilogix-voice-agents.html',sb:'s/ilogix-voice-agents.html',tags:['35 s','16:9 + 9:16','Tech Glow'],dl:[['16:9','downloads/ilogix-voice-agents_16x9_no-music.mp4'],['9:16','downloads/ilogix-voice-agents_9x16_no-music.mp4']],p:false},
@@ -131,11 +146,10 @@ var VIDEOS=[
 ];
 var g=document.getElementById('vgrid');
 VIDEOS.forEach(function(v,i){
-  var c=document.createElement('article');c.className='card';
-  c.innerHTML='<button class="poster" data-i="'+i+'" aria-label="Play '+v.t+'"><img src="'+v.img+'" alt="" loading="lazy"><span class="play"><span><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></span></span></button>'+
-  '<div class="body"><div class="tags">'+v.tags.map(function(x,j){return '<span class="tag'+(j===0&&!/Demo|Archive/.test(x)?' ok':'')+'">'+x+'</span>'}).join('')+'</div><h3>'+v.t+'</h3><p>'+v.d+'</p>'+
-  '<div class="row"><button class="btn main" data-i="'+i+'">Play</button>'+(v.sb?'<a class="btn" href="'+v.sb+'">Storyboard</a>':'')+
-  v.dl.map(function(d){return '<a class="btn" href="'+d[1]+'" download>Download '+d[0]+'</a>'}).join('')+'</div></div>';
+  var c=document.createElement('article');c.className='item';
+  c.innerHTML='<button class="poster" data-i="'+i+'" aria-label="Play '+v.t+'"><img src="'+v.img+'" alt="" loading="lazy"><span class="pbtn"><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></span></button>'+
+  '<h3>'+v.t+'</h3><p class="meta">'+v.tags.join('  \u00b7  ')+'</p><p>'+v.d+'</p>'+
+  '<div class="acts"><button data-i="'+i+'">Play</button>'+(v.sb?'<a href="'+v.sb+'">Storyboard</a>':'')+v.dl.map(function(d){return '<a href="'+d[1]+'" download>Download '+d[0]+'</a>'}).join('')+'</div>';
   g.appendChild(c);
 });
 var M=document.getElementById('modal'),F=document.getElementById('mf'),SH=document.getElementById('sheet');
@@ -144,6 +158,21 @@ function closeV(){M.classList.remove('open');F.src='about:blank';document.body.s
 g.addEventListener('click',function(e){var b=e.target.closest('[data-i]');if(b)openV(+b.getAttribute('data-i'))});
 document.getElementById('mx').onclick=closeV;M.addEventListener('click',function(e){if(e.target===M)closeV()});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&M.classList.contains('open'))closeV()});
+// live stage
+var STY=[['tech-glow','Tech Glow','Dark neon glow. AI, SaaS.'],['glass','Glass UI','Frosted panels. Apps, demos.'],['isometric','Isometric Pastel','Soft slabs. Travel, lifestyle.'],['paper-cut','Paper Cut','Layered paper. Education.'],['whiteboard','Whiteboard','Hand-drawn marker. Teaching.'],['blueprint','Blueprint','Line-work on blue. Technical.'],['neo-brutal','Neo-brutalist','Thick outlines. Social reels.']];
+var cur={style:'tech-glow',asp:'16x9'},sf=document.getElementById('sf'),sl=document.getElementById('slist'),stg=document.getElementById('stage');
+function applyStage(){
+  try{var w=sf.contentWindow;if(w&&w.setStyle){w.setStyle(cur.style);w.setAspect(cur.asp)}}catch(e){}
+  var nm=STY.filter(function(s){return s[0]===cur.style})[0][1];document.getElementById('stname').textContent='The water cycle, in '+nm;
+  Array.prototype.forEach.call(sl.querySelectorAll('button'),function(b){b.setAttribute('aria-pressed',b.dataset.s===cur.style)});
+  stg.classList.toggle('tall',cur.asp==='9x16');
+  document.getElementById('sw').setAttribute('aria-pressed',cur.asp==='16x9');document.getElementById('st').setAttribute('aria-pressed',cur.asp==='9x16');
+}
+STY.forEach(function(s){var li=document.createElement('li');li.innerHTML='<button type="button" data-s="'+s[0]+'" aria-pressed="'+(s[0]===cur.style)+'"><b>'+s[1]+'</b><span>'+s[2]+'</span></button>';sl.appendChild(li)});
+sl.addEventListener('click',function(e){var b=e.target.closest('button');if(b){cur.style=b.dataset.s;applyStage()}});
+document.getElementById('sw').onclick=function(){cur.asp='16x9';applyStage()};
+document.getElementById('st').onclick=function(){cur.asp='9x16';applyStage()};
+sf.addEventListener('load',applyStage);
 // brief builder
 var ids=['topic','brand','len','asp','style','audio','cap','brandkit','pts','notes'],el={};ids.forEach(function(k){el[k]=document.getElementById('b-'+k)});
 function brief(){
