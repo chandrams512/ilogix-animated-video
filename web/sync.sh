@@ -5,5 +5,5 @@ for m in ilogix-voice-agents tripnido-demo edu-sky; do python3 engine/build.py p
 cp dist/ilogix_voice_agents.html web/v/ilogix-voice-agents.html
 cp dist/tripnido_demo.html web/v/tripnido-demo.html
 cp dist/edu_sky.html web/v/edu-sky.html
-for p in sample-automation sample-water-cycle; do python3 engine/build.py plans/$p/plan.json >/dev/null; cp dist/$(echo $p | tr - _).html web/v/$p.html; done
+for p in sample-automation sample-water-cycle earth-water; do python3 engine/build.py plans/$p/plan.json >/dev/null; cp dist/$(echo $p | tr - _).html web/v/$p.html; done
 echo synced

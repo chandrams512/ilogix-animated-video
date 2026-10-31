@@ -32,13 +32,13 @@
     x.save(); rr(x, X, Y, w, h, r); x.clip(); x.fillStyle = H.rgba(col, 0.28); x.fillRect(X, Y, w, Math.max(10, h * 0.1)); x.restore(); x.restore();
   }
   function node(x, cx, cy, r, col, t, o = {}) {
-    const p = 0.5 + 0.5 * Math.sin(t * 3 + (o.ph || 0)), ry = r * 0.55, d = r * 0.32;
+    const p = 0.5 + 0.5 * Math.sin(t * 3 + (o.ph || 0)), ry = r * 0.66, d = r * 0.3;
     x.fillStyle = 'rgba(80,90,150,0.16)'; x.beginPath(); x.ellipse(cx + 6, cy + d + 14, r * 1.05, ry * 1.05, 0, 0, TAU); x.fill();
     x.fillStyle = shade(col, 0.8); x.beginPath(); x.ellipse(cx, cy + d, r, ry, 0, 0, TAU); x.fill(); x.fillRect(cx - r, cy, r * 2, d);
     x.fillStyle = '#ffffff'; x.beginPath(); x.ellipse(cx, cy, r, ry, 0, 0, TAU); x.fill();
     x.fillStyle = H.rgba(col, 0.28); x.beginPath(); x.ellipse(cx, cy, r * 0.8, ry * 0.8, 0, 0, TAU); x.fill();
     if (o.ring) { x.save(); x.lineWidth = 2.5; x.strokeStyle = H.rgba(col, 0.55 * (1 - p)); x.beginPath(); x.ellipse(cx, cy, r * (1.15 + 0.3 * p), ry * (1.15 + 0.3 * p), 0, 0, TAU); x.stroke(); x.restore(); }
-    if (o.icon) o.icon(x, cx, cy - r * 0.7, r * 0.5, Array.isArray(col) ? hexOf(col) : shade(col, 0.85), t);
+    if (o.icon) o.icon(x, cx, cy - 1, r * 0.46, shade(col, 0.78), t);
     if (o.label) text(x, o.label, cx, cy + r + (o.ly || 38), o.lpx || 26, P.ink, {});
   }
   function link(x, ax, ay, bx, by, col, t, o = {}) {

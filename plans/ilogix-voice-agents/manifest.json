@@ -6,7 +6,7 @@
     "engine/styles.js",
     "styles/flat-vector/style.js",
     "styles/tech-glow/style.js",
-    "styles/flat-vector/skin.js",
+    "styles/paper-cut/skin.js",
     "styles/isometric/skin.js",
     "styles/_sound/sound.js",
     "plans/ilogix-voice-agents/scene_landscape.js",

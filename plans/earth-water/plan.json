@@ -1,0 +1,18 @@
+{
+  "title": "How Earth got its water",
+  "style": "paper-cut",
+  "aspect": "16x9",
+  "brand": { "name": "Learn in 20 seconds" },
+  "scenes": [
+    { "type": "hook", "dur": 3.4, "lines": ["Where did Earth's", "water come from?"], "say": "Where did Earth's water come from?" },
+    { "type": "timeline", "dur": 7.4, "title": "A likely story", "points": [
+      { "label": "Hot rock", "sub": "A young, dry Earth" },
+      { "label": "Space rocks", "sub": "Icy asteroids hit" },
+      { "label": "Volcanoes", "sub": "Steam from inside" },
+      { "label": "Cooling", "sub": "Vapour turns to rain" },
+      { "label": "Oceans", "sub": "Water collects" } ],
+      "say": "Scientists think icy space rocks and volcanic steam added water, which rained down as Earth cooled." },
+    { "type": "stat", "dur": 4.6, "value": 71, "suffix": "%", "label": "of Earth's surface is water", "sub": "Most of it is salty ocean", "say": "Today, about seventy-one percent of Earth's surface is water." },
+    { "type": "cta", "dur": 3.4, "lines": ["Every drop is", "billions of years old."], "icon": false, "say": "Every drop is billions of years old." }
+  ]
+}

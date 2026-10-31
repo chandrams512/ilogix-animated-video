@@ -73,9 +73,9 @@ const SC = {
   },
   flow(x, g, sc, lt) {
     const pal = S.pal, cols = COLS(), n = sc.nodes.length; if (sc.title) S.text(x, sc.title, g.C, g.P ? 190 : 100, g.P ? 48 : 44, pal.ink, { w: 800 });
-    const p = (i) => g.P ? [g.C, 340 + i * ((640) / Math.max(1, n - 1))] : [170 + i * (940 / Math.max(1, n - 1)), 350];
+    const p = (i) => g.P ? [g.C - (n > 3 ? 130 : 0), 330 + i * ((n > 3 ? 600 : 540) / Math.max(1, n - 1))] : [170 + i * (940 / Math.max(1, n - 1)), 350];
     for (let i = 0; i < n - 1; i++) { const a = p(i), b = p(i + 1), u = seg(lt, 0.5 + i * 0.5, 1.0 + i * 0.5); if (u > 0) S.link(x, a[0], a[1], lerp(a[0], b[0], u), lerp(a[1], b[1], u), cols[i % cols.length], lt, { head: u > 0.95 }); }
-    sc.nodes.forEach((nd, i) => { const [cx, cy] = p(i), u = seg(lt, 0.2 + i * 0.5, 0.7 + i * 0.5); popIn(x, cx, cy, u, () => S.node(x, cx, cy, g.P ? 56 : 64, cols[i % cols.length], lt, { icon: pickIcon(nd.icon || 'bolt'), label: nd.label, ph: i, ring: i === n - 1 })); });
+    sc.nodes.forEach((nd, i) => { const [cx, cy] = p(i), u = seg(lt, 0.2 + i * 0.5, 0.7 + i * 0.5); popIn(x, cx, cy, u, () => { S.node(x, cx, cy, g.P ? (n > 3 ? 44 : 56) : 64, cols[i % cols.length], lt, { icon: pickIcon(nd.icon || 'bolt'), label: (g.P && n > 3) ? null : nd.label, ph: i, ring: i === n - 1 }); if (g.P && n > 3) S.text(x, nd.label, cx + 74, cy, 32, pal.ink, { align: 'left' }); }); });
   },
   cta(x, g, sc, lt) {
     const pal = S.pal, ny = g.bh * (g.P ? 0.36 : 0.3); let y = ny;

@@ -5,7 +5,7 @@ preview and the MP4 render match. Sound is synthesized (no audio files). Private
 
 ## Layout
 - `engine/` harness, player page, build and render scripts
-- `styles/` one folder per look (`flat-vector`, `tech-glow`); `_sound/` is the sound kit (original kit, see its README)
+- `styles/` one folder per look (`tech-glow`, `isometric`, `paper-cut`, `whiteboard`, `blueprint`, `neo-brutal`, `glass`); `_sound/` is the sound kit (original kit, see its README)
 - `plans/<name>/` one folder per video: `manifest.json` (script order), scene code, storyboard
 - `archive/earth-water/` the first video, kept as built
 - `docs/` workflow notes
@@ -21,12 +21,19 @@ preview and the MP4 render match. Sound is synthesized (no audio files). Private
 
 ## Styles
 Scenes draw through the style object `S` (see `engine/styles.js`), so one plan renders in any registered style:
-`tech-glow` (dark neon), `flat-vector` (warm paper, education), `isometric` (pastel slabs, travel).
+`tech-glow` (dark neon), `glass` (frosted panels), `isometric` (pastel slabs, travel), `paper-cut` (layered paper on teal, education), `whiteboard` (hand-drawn), `blueprint` (technical), `neo-brutal` (loud social). All are original designs.
 The player has a style dropdown; `?style=isometric` in the URL preselects one.
 Render a style: `python3 engine/render.py 9x16 out dist/ilogix_voice_agents.html ilogix_iso isometric`.
 New style = one file that calls `registerStyle(name, {...})` with the same shape (documented in `engine/styles.js`).
-Skins reuse the line icons from `styles/tech-glow/style.js` and helpers from `styles/flat-vector/style.js`.
+Skins reuse the line icons from `styles/tech-glow/style.js` and shared drawing helpers from `styles/flat-vector/style.js` (kept as a helper file; the old Flat Vector look is archived).
 
 ## Rules
 - Keys go in environment variables, never in the repo. MP4s and voiceover clips are git-ignored.
 - Planned: JSON plan files, so a new video needs a plan, not new code.
+
+
+## Plan videos (fast path)
+1. Write a brief (`brief.txt`).
+2. `python3 engine/gen_plan.py brief.txt plans/<name>/plan.json --style paper-cut --aspect 9x16` drafts the JSON with any OpenAI-compatible LLM (Groq, Gemini and OpenRouter have free tiers; set `LLM_API_KEY`, optional `LLM_BASE_URL`, `LLM_MODEL`). It validates and retries on its own.
+3. `python3 engine/build.py plans/<name>/plan.json`, check frames, then `python3 engine/render.py 9x16 out dist/<name>.html <prefix> <style>`.
+The `sfx-only` render has captions and sound effects but no music, ready for your own track.

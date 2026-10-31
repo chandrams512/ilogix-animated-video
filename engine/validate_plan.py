@@ -2,7 +2,7 @@
 """Check a JSON plan before building. Usage: python3 engine/validate_plan.py plans/<name>/plan.json
 Exit code 0 = valid. Prints every problem found (useful as a retry prompt for a cheap model)."""
 import json, sys
-STYLES = {'tech-glow', 'flat-vector', 'isometric', 'whiteboard', 'blueprint', 'neo-brutal', 'glass'}
+STYLES = {'tech-glow', 'isometric', 'whiteboard', 'blueprint', 'neo-brutal', 'glass', 'paper-cut'}
 ICONS = {'phone', 'mail', 'chat', 'cal', 'person', 'doc', 'check', 'bolt', 'plan', 'shield', 'pin', 'plane', 'cross'}
 REQ = {'hook': ['lines'], 'steps': ['items'], 'stat': ['value', 'label'], 'chart': ['bars'], 'compare': ['left', 'right'], 'timeline': ['points'], 'flow': ['nodes'], 'cta': ['lines']}
 LIM = {'hook': (1, 3, 'lines'), 'steps': (2, 4, 'items'), 'chart': (2, 6, 'bars'), 'timeline': (2, 5, 'points'), 'flow': (2, 5, 'nodes'), 'cta': (1, 3, 'lines')}
