@@ -8,8 +8,9 @@
 @font-face{font-family:Sora;font-weight:600;font-display:swap;src:url(fonts/sora-latin-600-normal.woff2) format("woff2")}
 @font-face{font-family:Sora;font-weight:700;font-display:swap;src:url(fonts/sora-latin-700-normal.woff2) format("woff2")}
 @font-face{font-family:Sora;font-weight:800;font-display:swap;src:url(fonts/sora-latin-800-normal.woff2) format("woff2")}
-:root{--bg:#f5f6f8;--panel:#fff;--ink:#101218;--mute:#5b6372;--line:#dde0e7;--btn:#101218;--btn-ink:#fff;--focus:#2f5bff;--disp:Sora,system-ui,sans-serif}
-@media (prefers-color-scheme:dark){:root{--bg:#0d0f13;--panel:#14171d;--ink:#f2f4f8;--mute:#98a1b1;--line:#252a35;--btn:#f2f4f8;--btn-ink:#0d0f13;--focus:#7c9bff}}
+:root{--bg:#f7f8fc;--panel:#fff;--ink:#1c2133;--mute:#5d6579;--line:#e2e6f0;--btn:#4f46e5;--btn-ink:#fff;--sel:#4f46e5;--sel-ink:#fff;--focus:#4f46e5;--tint:#eef0fb;--warm:#fff3ea;--deep:#2b2f6e;--shadow:0 1px 2px rgba(28,33,51,.05),0 12px 32px -14px rgba(60,70,130,.22);--disp:Sora,system-ui,sans-serif}
+:root[data-theme=dark]{--bg:#161a26;--panel:#202536;--ink:#eef1f8;--mute:#a3abc0;--line:#313852;--btn:#8b83ff;--btn-ink:#14162a;--sel:#8b83ff;--sel-ink:#14162a;--focus:#a49eff;--tint:#1b2030;--warm:#241f2c;--deep:#232852;--shadow:0 1px 2px rgba(0,0,0,.25),0 12px 32px -14px rgba(0,0,0,.5)}
+
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
@@ -134,16 +135,70 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
 .sheethead b{font:600 15px var(--disp)}
 .sheet iframe{flex:1;width:100%;border:0;background:#000}
 .x{font:600 13px var(--disp);border:1px solid var(--line);background:none;color:var(--ink);border-radius:999px;padding:8px 16px;cursor:pointer}
-@media (max-width:760px){.top nav a:not(.btn){display:none}}
+@media (max-width:760px){.top nav a:not(.btn){display:none}.nav .top{padding:12px 16px}.logo{font-size:15px;white-space:nowrap}.top nav{gap:8px}.top nav .btn{font-size:12px;padding:9px 12px;white-space:nowrap}.tbtn{padding:8px 11px;font-size:12px}}
 @media (max-width:900px){.stage{aspect-ratio:4/6.3}.stage.tall{aspect-ratio:9/24}.live{grid-template-columns:minmax(0,1fr);gap:22px}.live>div{min-width:0}.styles{flex-direction:row;overflow-x:auto;gap:8px;padding-bottom:6px}.styles button{border:1px solid var(--line);border-radius:999px;padding:9px 16px;white-space:nowrap;width:auto}.styles button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}.styles span{display:none}.styles b{font-size:15px}.brief{grid-template-columns:minmax(0,1fr);gap:28px}.hero{padding-top:24px;grid-template-columns:1fr;gap:20px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+/* ===== sectioned layout (light by default, soft dark optional) ===== */
+body{background:var(--bg)}
+.nav{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav .top{padding:14px 24px}
+.top nav{align-items:center}
+.tbtn{font:600 13px var(--disp);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:9px 14px;cursor:pointer}
+.band{padding:84px 0}
+.band .sec{padding:0}
+.b-plain{background:var(--bg)}
+.b-tint{background:var(--tint)}
+.b-warm{background:var(--warm)}
+.b-hero{padding:56px 0 70px;background:radial-gradient(900px 420px at 12% -10%,color-mix(in srgb,var(--sel) 16%,transparent),transparent 70%),radial-gradient(700px 380px at 95% 10%,color-mix(in srgb,#ff8a5b 16%,transparent),transparent 70%),var(--bg)}
+.b-deep{background:linear-gradient(160deg,var(--deep),color-mix(in srgb,var(--deep) 70%,#000));color:#eef0ff}
+.eyebrow{font:700 12px var(--disp);letter-spacing:.14em;text-transform:uppercase;color:var(--sel);margin:0 0 12px}
+.b-deep .eyebrow{color:#b9b4ff}
+.hero{padding:0 0 34px}
+.hero h1{font-size:clamp(40px,6.2vw,80px)}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,#4f46e5,#ff7a59);-webkit-background-clip:text;background-clip:text;color:transparent}
+.btn{box-shadow:0 8px 20px -10px color-mix(in srgb,var(--btn) 80%,transparent)}
+.live{background:var(--panel);border:1px solid var(--line);border-radius:26px;padding:26px;box-shadow:var(--shadow);margin:0}
+.live .stage{box-shadow:0 0 0 1px var(--line)}
+.seg button[aria-pressed=true],.filters button[aria-pressed=true]{background:var(--sel);color:var(--sel-ink);border-color:var(--sel)}
+.styles button[aria-pressed=true]{color:var(--ink);border-left-color:var(--sel);background:color-mix(in srgb,var(--sel) 8%,transparent)}
+.proof{margin:26px 0 0;padding:0;border:0;gap:16px}
+.proof>div{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px 22px;box-shadow:var(--shadow)}
+.proof b{color:var(--sel)}
+.how li{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
+.how li::before{background:var(--sel);color:var(--sel-ink)}
+.tier{box-shadow:var(--shadow)}.tier.soon{background:transparent}
+.tag{background:var(--sel);color:var(--sel-ink)}.soon .tag{background:none;color:var(--sel);border-color:var(--sel)}
+.tile img{box-shadow:0 0 0 1px var(--line),var(--shadow)}
+.use{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:var(--shadow)}
+.callout{background:var(--panel);border-radius:0 16px 16px 0;border-left-color:var(--sel);padding:20px 24px}
+.item{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:14px 14px 18px;box-shadow:var(--shadow)}
+.item h3,.item .meta,.item p,.item .acts{padding:0 6px}
+.poster{border-radius:14px}
+.faq details{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 22px;margin:0 0 12px}
+.faq details:last-child{border-bottom:1px solid var(--line)}
+.faq summary{color:var(--ink)}
+.faq .eyebrow,.faq h2,.faq .sub{max-width:none}
+.brief{border:0;padding:0}
+.b-deep .sub,.b-deep label{color:#c4c8ee}
+.b-deep h2{color:#fff}
+.b-deep form{background:var(--panel);border-radius:22px;padding:26px;box-shadow:0 24px 60px -24px rgba(0,0,0,.5)}
+.b-deep form label{color:var(--mute)}
+.b-deep .note{color:#c4c8ee}
+.b-deep form .note{color:var(--mute)}
+.foot{background:#171a2b;color:#c4c8e0;padding:34px 0;font-size:14px}
+.foot .wrap{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.foot b{color:#fff;font:700 17px var(--disp)}.foot p{margin:6px 0 0;color:#9aa1c4;font-size:13px}
+.foot .btn{background:#8b83ff;color:#14162a}
+.filters{margin-top:6px}
+@media (max-width:900px){.band{padding:56px 0}.b-hero{padding:34px 0 48px}.live{padding:16px;border-radius:20px}}
 </style>
 </head>
 <body>
-<div class="wrap">
-<div class="top"><a class="logo" href="#">iLogix Video Studio</a><nav><a href="#how">How it works</a><a href="#guide">Guide</a><a href="#scenes">Scene types</a><a href="#realestate">Real estate</a><a href="#videos">Videos</a><a href="#faq">FAQ</a><a class="btn" href="#brief">Request a video</a></nav></div>
+<header class="nav"><div class="wrap top"><a class="logo" href="#">iLogix Video Studio</a><nav><a href="#how">How it works</a><a href="#guide">Guide</a><a href="#scenes">Scene types</a><a href="#realestate">Real estate</a><a href="#videos">Videos</a><a href="#faq">FAQ</a><a class="btn" href="#brief">Request a video</a><button type="button" id="theme" class="tbtn" aria-label="Switch light or dark theme">Dark</button></nav></div></header>
+<div class="band b-hero"><div class="wrap">
 <section class="hero">
-  <h1>One script.<br>Seven looks.</h1>
+  <h1>One script.<br><em>Seven looks.</em></h1>
   <div><p>Short animated explainers with captions and sound effects, built to take your own music. Change the style below and the same video redraws.</p>
   <div class="cta"><a class="btn" href="#brief">Request a video</a><a class="link" href="#videos">See finished videos</a></div>
   <ul class="reassure"><li>Captions included</li><li>Sound effects only: bring your own music</li><li>Wide and vertical from one script</li></ul></div>
@@ -156,12 +211,13 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
   </div>
   <div><p class="livehead">Pick a style</p><ul class="styles" id="slist"></ul></div>
 </section>
-
 <div class="proof" id="proof" aria-label="At a glance"></div>
-
+</div></div>
+<div class="band b-plain"><div class="wrap">
 <section class="sec" id="how">
-  <h2>How it works</h2>
-  <p class="sub">Four steps from idea to a video you can post. <a class="link" href="#guide">Read the full guide</a>.</p>
+  <div class="eyebrow">How it works</div>
+  <h2>From idea to a video you can post</h2>
+  <p class="sub">Four steps, and you approve the words before anything is built. <a class="link" href="#guide">Read the full guide</a>.</p>
   <ol class="how">
     <li><b>Send a brief</b>Topic, points, style and the scenes you want. The form at the bottom builds it for you.</li>
     <li><b>Approve the storyboard</b>You see the scenes and the words before anything is built, so changes are cheap.</li>
@@ -169,23 +225,11 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
     <li><b>Download and post</b>Wide and vertical MP4s, captions file and cover image. Add your own music on top.</li>
   </ol>
 </section>
-
-<section class="sec faq" id="guide">
-  <h2>How to use the studio</h2>
-  <p class="sub">Open any step for the details. Everything starts from the form at the bottom of this page.</p>
-  <details open><summary>1. Send your brief</summary><p>Fill in the topic, length, shape and style, tick the scenes you want, and write the key points one per line. Press Copy brief and paste it into the Claude chat for this project. If you are unsure, leave the points empty and a hook, three points and a closing line will be proposed.</p></details>
-  <details><summary>2. Pick a style and a shape</summary><p>Try the styles in the live preview at the top of the page: the same video redraws in each one. Choose vertical 9:16 for Reels and Shorts, wide 16:9 for YouTube, or both. Vertical videos can be set to keep text clear of the app buttons.</p></details>
-  <details><summary>3. Approve the storyboard</summary><p>You get the scene list and the exact words first. Change anything you like; nothing is built until you say OK.</p></details>
-  <details><summary>4. Get your files</summary><p>A wide and a vertical MP4 with captions and sound effects but no music, a captions file and a cover image. Lay your own music over the MP4 in any editor or in Instagram. Every video is checked for text that runs off the frame or overlaps before it is sent. Watch it once with sound before you post.</p></details>
-  <details><summary>Add your logo and colours</summary><p>Send a logo file and, if you have them, your brand colours. If you only send the logo, the colours are picked from it. They apply to every scene and every style.</p></details>
-  <details><summary>Hindi videos</summary><p>Send the text in Hindi, or ask for a Hindi draft. On-screen text and captions are set in a Devanagari font. Have a Hindi reader check the wording before posting.</p></details>
-  <details><summary>Add a voiceover</summary><p>Each scene's caption line is what gets spoken. You can send your own recording of each line, or ask for an AI voice (English or Hindi). The scenes are then lengthened to fit the voice and the captions follow it. This step is still being tested, so ask before relying on it.</p></details>
-  <details><summary>Many videos from a spreadsheet</summary><p>For offers, units or personalised videos, send one row per video (name, price, code, phone and so on). One template then makes all of them in the same style.</p></details>
-  <details><summary>Real estate</summary><p>Choose Real estate in the form and add the project's RERA number. It is printed on every scene, and phrases that promise returns are rejected. Rules differ by state, so check yours before posting.</p></details>
-</section>
-
+</div></div>
+<div class="band b-tint"><div class="wrap">
 <section class="sec" id="tiers">
-  <h2>Two kinds of video</h2>
+  <div class="eyebrow">Two kinds of video</div>
+  <h2>Two kinds of video, kept apart</h2>
   <p class="sub">They are made differently, so they are kept apart and priced apart.</p>
   <div class="tiers">
     <div class="tier"><span class="tag">Available now</span><h3>Explainer videos</h3>
@@ -196,8 +240,10 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
       <ul><li>Always labelled as AI-generated</li><li>Clip and still-image scenes already work in the engine; the model providers are still being chosen</li><li>Not part of the explainer price</li></ul></div>
   </div>
 </section>
-
+</div></div>
+<div class="band b-plain"><div class="wrap">
 <section class="sec" id="scenes">
+  <div class="eyebrow">Scene types</div>
   <h2>Fifteen scene types</h2>
   <p class="sub">A video is a short run of scenes. Pick the ones that fit your message. Each works in every style and in both wide and vertical.</p>
   <ol class="how">
@@ -207,8 +253,10 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
   </ol>
   <div class="scenes" id="sgrid"></div>
 </section>
-
+</div></div>
+<div class="band b-warm"><div class="wrap">
 <section class="sec" id="realestate">
+  <div class="eyebrow">Real estate</div>
   <h2>For real estate</h2>
   <p class="sub">Project launches, price plans, locations and one video per unit. Built from the same scenes, with the RERA number printed on every one.</p>
   <div class="uses">
@@ -221,15 +269,35 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
   </div>
   <p class="callout"><b>Before you publish.</b> Ads for a registered project should show its RERA registration number, and claims must match the registered details. Leave out promises of assured returns, and label artist's impressions. The studio prints the number and flags those phrases, but the rules differ by state, so check yours. Walkthroughs from real footage are best shot by you; we add captions, an end card and a QR code. Demo numbers on this page are made up.</p>
 </section>
-
+</div></div>
+<div class="band b-plain"><div class="wrap">
 <section class="sec" id="videos">
+  <div class="eyebrow">Library</div>
   <h2>Finished videos</h2>
   <p class="sub">Press play to watch. Downloads have captions and sound effects but no music, so you can lay your own track over them.</p>
   <div class="filters" id="vfil" role="group" aria-label="Filter videos"></div>
   <div class="grid" id="vgrid"></div>
 </section>
-
+</div></div>
+<div class="band b-tint"><div class="wrap">
+<section class="sec faq" id="guide">
+  <div class="eyebrow">Guide</div>
+  <h2>How to use the studio</h2>
+  <p class="sub">Open any step for the details. Everything starts from the form at the bottom of this page.</p>
+  <details open><summary>1. Send your brief</summary><p>Fill in the topic, length, shape and style, tick the scenes you want, and write the key points one per line. Press Copy brief and paste it into the Claude chat for this project. If you are unsure, leave the points empty and a hook, three points and a closing line will be proposed.</p></details>
+  <details><summary>2. Pick a style and a shape</summary><p>Try the styles in the live preview at the top of the page: the same video redraws in each one. Choose vertical 9:16 for Reels and Shorts, wide 16:9 for YouTube, or both. Vertical videos can be set to keep text clear of the app buttons.</p></details>
+  <details><summary>3. Approve the storyboard</summary><p>You get the scene list and the exact words first. Change anything you like; nothing is built until you say OK.</p></details>
+  <details><summary>4. Get your files</summary><p>A wide and a vertical MP4 with captions and sound effects but no music, a captions file and a cover image. Lay your own music over the MP4 in any editor or in Instagram. Every video is checked for text that runs off the frame or overlaps before it is sent. Watch it once with sound before you post.</p></details>
+  <details><summary>Add your logo and colours</summary><p>Send a logo file and, if you have them, your brand colours. If you only send the logo, the colours are picked from it. They apply to every scene and every style.</p></details>
+  <details><summary>Hindi videos</summary><p>Send the text in Hindi, or ask for a Hindi draft. On-screen text and captions are set in a Devanagari font. Have a Hindi reader check the wording before posting.</p></details>
+  <details><summary>Add a voiceover</summary><p>Each scene's caption line is what gets spoken. You can send your own recording of each line, or ask for an AI voice (English or Hindi). The scenes are then lengthened to fit the voice and the captions follow it. This step is still being tested, so ask before relying on it.</p></details>
+  <details><summary>Many videos from a spreadsheet</summary><p>For offers, units or personalised videos, send one row per video (name, price, code, phone and so on). One template then makes all of them in the same style.</p></details>
+  <details><summary>Real estate</summary><p>Choose Real estate in the form and add the project's RERA number. It is printed on every scene, and phrases that promise returns are rejected. Rules differ by state, so check yours before posting.</p></details>
+</section>
+</div></div>
+<div class="band b-plain"><div class="wrap">
 <section class="sec faq" id="faq">
+  <div class="eyebrow">FAQ</div>
   <h2>Questions</h2>
   <p class="sub">The short answers.</p>
   <details><summary>Can I add my own music?</summary><p>Yes. The download has captions and sound effects only, so your track goes straight on top in any editor or in Instagram. Versions with a music bed can be made if you prefer.</p></details>
@@ -241,9 +309,10 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
   <details><summary>How is a video checked?</summary><p>Each plan is validated, then every scene is tested in the chosen style, wide and vertical, for text that runs off the frame or overlaps. A person then looks at the result before it is sent.</p></details>
   <details><summary>What does it cost?</summary><p>Pricing is being worked out while we test. Send a brief and you will get a quote before anything is built.</p></details>
 </section>
-
+</div></div>
+<div class="band b-deep"><div class="wrap">
 <section class="brief" id="brief">
-  <div><h2>Request a video</h2><p class="sub">Give us the topic, the points to cover and a style. The brief below is what gets the video built. For now, copy it and paste it into the Claude chat for this project.</p></div>
+  <div><div class="eyebrow">Request a video</div><h2>Tell us what to make</h2><p class="sub">Give us the topic, the points to cover and a style. The brief below is what gets the video built. For now, copy it and paste it into the Claude chat for this project.</p></div>
   <form id="bf" onsubmit="return false">
     <div class="f"><label for="b-topic">Topic</label><input id="b-topic" placeholder="e.g. Why is the sky blue?"></div>
     <div class="f"><label for="b-brand">For</label><select id="b-brand"><option>iLogix</option><option>TripNido</option><option>Education channel</option><option>Real estate</option><option>Other</option></select></div>
@@ -261,8 +330,8 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
     <div class="f wide"><div><button class="btn" id="copy" type="button">Copy brief</button><span class="note" id="cmsg" role="status"></span></div></div>
   </form>
 </section>
-<footer>Built with the ilogix-animated-video engine. Sample content in demos is illustrative.</footer>
-</div>
+</div></div>
+<footer class="foot"><div class="wrap"><div><b>iLogix Video Studio</b><p>Built with the ilogix-animated-video engine. Sample content in demos is illustrative.</p></div><a class="btn" href="#brief">Request a video</a></div></footer>
 
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Video player">
   <div class="sheet" id="sheet"><div class="sheethead"><b id="mt"></b><button class="x" id="mx">Close</button></div><iframe id="mf" title="Video player" allow="autoplay; fullscreen"></iframe></div>
@@ -313,6 +382,12 @@ SCN.forEach(function(c,i){
 });
 sg.addEventListener('click',function(e){var b=e.target.closest('[data-sc]');if(!b)return;var t=b.getAttribute('data-sc'),n=b.querySelector('b').textContent;
   document.getElementById('mt').textContent=n;SH.className='sheet';F.onload=function(){F.onload=null;setTimeout(function(){try{var w=F.contentWindow,t0=w.eval('PLAN.scenes.filter(function(x){return x.type==="'+t+'"})[0]._t0');var sb=w.document.getElementById('scrub');sb.value=t0+0.01;sb.dispatchEvent(new Event('input'));w.document.getElementById('play').click()}catch(er){}},900)};F.src='v/scene-gallery.html';M.classList.add('open');document.body.style.overflow='hidden'});
+
+// theme: light by default, dark on request (remembered per browser)
+(function(){var b=document.getElementById('theme'),r=document.documentElement;
+function set(t){if(t==='dark')r.setAttribute('data-theme','dark');else r.removeAttribute('data-theme');b.textContent=t==='dark'?'Light':'Dark'}
+var t='light';try{t=localStorage.getItem('theme')||'light'}catch(e){}
+set(t);b.onclick=function(){var n=r.getAttribute('data-theme')==='dark'?'light':'dark';set(n);try{localStorage.setItem('theme',n)}catch(e){}}})();
 // proof strip
 (function(){var d=[[7,'original styles'],[15,'scene types'],[VIDEOS.length,'finished videos on this page'],[2,'shapes from one script']];document.getElementById('proof').innerHTML=d.map(function(x){return '<div><b>'+x[0]+'</b><span>'+x[1]+'</span></div>'}).join('')})();
 // live stage

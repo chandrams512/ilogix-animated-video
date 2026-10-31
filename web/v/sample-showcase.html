@@ -33,6 +33,7 @@ button.ctl:focus-visible, input:focus-visible, .big:focus-visible { outline: 2px
 #scrub { flex: 1 1 200px; min-width: 120px; accent-color: var(--accent); }
 .time { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 92px; text-align: right; }
 button.ctl[hidden] { display: none; }
+@media (max-width: 560px) { #vo, #loop, #fs { display: none; } .big span { transform: scale(.62); } }
 </style>
 <div class="stage" id="stage">
   <canvas id="cv" width="1280" height="720" aria-label="Animated explainer: Showcase of scene types"></canvas>
