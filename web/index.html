@@ -63,6 +63,21 @@ a{color:inherit}
 .acts{display:flex;gap:18px;flex-wrap:wrap;font-size:14px;margin-top:2px}
 .acts a,.acts button{font:inherit;color:var(--ink);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line);text-decoration-thickness:2px}
 .acts a:hover,.acts button:hover{text-decoration-color:var(--ink)}
+.scenes{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:26px 18px}
+.tile{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:8px}
+.tile:focus-visible{outline:2px solid var(--focus);outline-offset:4px;border-radius:12px}
+.tile img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:12px;box-shadow:0 0 0 1px var(--line);display:block;transition:transform .3s}
+.tile:hover img{transform:translateY(-3px)}
+.tile b{font:600 16px var(--disp);letter-spacing:-.015em}
+.tile span{font-size:13.5px;color:var(--mute);line-height:1.45}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:22px;margin:0 0 44px;padding:0;list-style:none;counter-reset:s}
+.how li{counter-increment:s;padding-left:0;color:var(--mute);font-size:15px}
+.how li::before{content:counter(s);display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--bg);font:700 14px var(--disp);margin-bottom:10px}
+.how b{color:var(--ink);display:block;font:600 16px var(--disp);margin-bottom:2px}
+.chk{display:flex;flex-wrap:wrap;gap:8px}
+.chk label{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:500;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:7px 13px;background:var(--panel);cursor:pointer}
+.chk input{width:auto;margin:0;accent-color:var(--ink)}
+.chk label:has(input:checked){border-color:var(--ink)}
 /* brief */
 .brief{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:56px;padding:20px 0 100px;border-top:1px solid var(--line);padding-top:80px}
 .brief h2{font:700 clamp(28px,4vw,40px)/1.1 var(--disp);letter-spacing:-.035em;margin:0 0 14px}
@@ -91,7 +106,7 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
 </head>
 <body>
 <div class="wrap">
-<div class="top"><a class="logo" href="#">iLogix Video Studio</a><nav><a href="#videos">Videos</a><a href="#brief">Request a video</a></nav></div>
+<div class="top"><a class="logo" href="#">iLogix Video Studio</a><nav><a href="#scenes">Scene types</a><a href="#videos">Videos</a><a href="#brief">Request a video</a></nav></div>
 <section class="hero">
   <h1>One script.<br>Seven looks.</h1>
   <div><p>Short animated explainers with captions and sound effects, built to take your own music. Change the style below and the same video redraws.</p>
@@ -104,6 +119,17 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
     <div class="stage" id="stage"><iframe id="sf" title="Live style preview" src="v/sample-water-cycle.html?style=tech-glow" allow="autoplay; fullscreen"></iframe></div>
   </div>
   <div><p class="livehead">Pick a style</p><ul class="styles" id="slist"></ul></div>
+</section>
+
+<section class="sec" id="scenes">
+  <h2>Fifteen scene types</h2>
+  <p class="sub">A video is a short run of scenes. Pick the ones that fit your message. Each works in every style and in both wide and vertical.</p>
+  <ol class="how">
+    <li><b>Pick your scenes</b>Click a tile below to watch it. Mix a few: for example a hook, a stat, a pricing table and an end card.</li>
+    <li><b>Send the words</b>For each scene, the text it needs: a quote and a name, a price and a code, three checklist items. Tick the scenes in the brief form and add the text in the box.</li>
+    <li><b>Get your video</b>We build it in your style with captions and sound effects, and send wide and vertical MP4s with no music.</li>
+  </ol>
+  <div class="scenes" id="sgrid"></div>
 </section>
 
 <section class="sec" id="videos">
@@ -123,6 +149,7 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
     <div class="f"><label for="b-audio">Audio</label><select id="b-audio"><option>Sound effects only (I will add music)</option><option>Sound effects plus music</option><option>Leave room for voiceover</option></select></div>
     <div class="f"><label for="b-cap">Captions</label><select id="b-cap"><option>On (burned in, plus an .srt file)</option><option>Off</option></select></div>
     <div class="f"><label for="b-brandkit">Brand kit (optional)</label><input id="b-brandkit" placeholder="Name, logo file, brand colours"></div>
+    <div class="f wide"><label>Scenes to include (optional)</label><div class="chk" id="b-scenes"></div></div>
     <div class="f wide"><label for="b-pts">Key points or script, one per line</label><textarea id="b-pts" placeholder="Hook&#10;Main point 1&#10;Main point 2&#10;Call to action"></textarea></div>
     <div class="f wide"><label for="b-notes">Facts, sources, brand notes (optional)</label><textarea id="b-notes" placeholder="Links, numbers that must be correct, words to avoid"></textarea></div>
     <div class="f wide"><label>Brief</label><pre id="out"></pre></div>
@@ -160,6 +187,16 @@ function closeV(){M.classList.remove('open');F.src='about:blank';document.body.s
 g.addEventListener('click',function(e){var b=e.target.closest('[data-i]');if(b)openV(+b.getAttribute('data-i'))});
 document.getElementById('mx').onclick=closeV;M.addEventListener('click',function(e){if(e.target===M)closeV()});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&M.classList.contains('open'))closeV()});
+// scene types
+var SCN=[['hook','Hook','A bold opening line.'],['steps','Steps','Two to four cards with a tag and an icon.'],['stat','Big number','A number that counts up, with a label.'],['chart','Bar chart','Two to six bars that grow in.'],['compare','Compare','Two lists side by side, red against green.'],['timeline','Timeline','Two to five points joined by a line.'],['flow','Flow','Boxes linked by moving arrows.'],['cta','Call to action','A closing line with a button and tag.'],['testimonial','Testimonial','A quote with stars and the person\'s name.'],['offer','Offer','Price, old price, code and deadline.'],['pricing','Pricing table','Two or three plans with prices and features.'],['checklist','Checklist','Items that tick off one by one.'],['beforeafter','Before and after','Two big numbers with an arrow between.'],['phone','Phone screen','Your app or page inside a phone frame.'],['endcard','End card','Phone, email, web and a QR code.']];
+var sg=document.getElementById('sgrid'),bs=document.getElementById('b-scenes');
+SCN.forEach(function(c,i){
+  var b=document.createElement('button');b.className='tile';b.type='button';b.setAttribute('data-sc',c[0]);
+  b.innerHTML='<img src="img/scene-'+c[0]+'.jpg" alt="" loading="lazy"><b>'+c[1]+'</b><span>'+c[2]+'</span>';sg.appendChild(b);
+  var l=document.createElement('label');l.innerHTML='<input type="checkbox" value="'+c[1]+'"> '+c[1];bs.appendChild(l);
+});
+sg.addEventListener('click',function(e){var b=e.target.closest('[data-sc]');if(!b)return;var t=b.getAttribute('data-sc'),n=b.querySelector('b').textContent;
+  document.getElementById('mt').textContent=n;SH.className='sheet';F.onload=function(){F.onload=null;setTimeout(function(){try{var w=F.contentWindow,t0=w.eval('PLAN.scenes.filter(function(x){return x.type==="'+t+'"})[0]._t0');var sb=w.document.getElementById('scrub');sb.value=t0+0.01;sb.dispatchEvent(new Event('input'));w.document.getElementById('play').click()}catch(er){}},900)};F.src='v/scene-gallery.html';M.classList.add('open');document.body.style.overflow='hidden'});
 // live stage
 var STY=[['tech-glow','Tech Glow','Dark neon glow. AI, SaaS.'],['glass','Glass UI','Frosted panels. Apps, demos.'],['isometric','Isometric Pastel','Soft slabs. Travel, lifestyle.'],['paper-cut','Paper Cut','Layered paper. Education.'],['whiteboard','Whiteboard','Hand-drawn marker. Teaching.'],['blueprint','Blueprint','Line-work on blue. Technical.'],['neo-brutal','Neo-brutalist','Thick outlines. Social reels.']];
 var cur={style:'tech-glow',asp:'16x9'},sf=document.getElementById('sf'),sl=document.getElementById('slist'),stg=document.getElementById('stage');
@@ -181,12 +218,12 @@ function brief(){
   var pts=el.pts.value.trim(),notes=el.notes.value.trim();
   return 'New animated video for the ilogix-animated-video repo.\n\n'+
   'Topic: '+(el.topic.value.trim()||'(add a topic)')+'\nFor: '+el.brand.value+'\nLength: '+el.len.value+'\nShape: '+el.asp.value+'\nStyle: '+el.style.value+'\nAudio: '+el.audio.value+'\n\n'+
-  'Key points / script:\n'+(pts||'(none given: please propose a hook, 3 points and a call to action)')+'\n\n'+
+  (function(){var c=[].slice.call(document.querySelectorAll('#b-scenes input:checked')).map(function(i){return i.value});return c.length?'Scenes to include: '+c.join(', ')+'\n\n':''})()+'Key points / script:\n'+(pts||'(none given: please propose a hook, 3 points and a call to action)')+'\n\n'+
   (notes?'Facts, sources, brand notes:\n'+notes+'\n\n':'')+
   'Please: write a short storyboard first, wait for my OK, then build it as a JSON plan in the repo (docs/plan-format.md), check the frames, render the MP4s and push to GitHub. Use only facts I gave or that you can source, and label any sample content.';
 }
 var out=document.getElementById('out');function upd(){out.textContent=brief()}
-ids.forEach(function(k){el[k].addEventListener('input',upd);el[k].addEventListener('change',upd)});upd();
+ids.forEach(function(k){el[k].addEventListener('input',upd);el[k].addEventListener('change',upd)});bs.addEventListener('change',upd);upd();
 document.getElementById('copy').onclick=function(){
   var m=document.getElementById('cmsg'),txt=brief();
   function ok(){m.textContent='Copied. Paste it into your Claude chat.'}

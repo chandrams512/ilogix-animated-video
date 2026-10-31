@@ -1,0 +1,251 @@
+{
+  "title": "Scene types",
+  "style": "glass",
+  "aspect": "16x9",
+  "brand": {
+    "name": "iLogix Digital"
+  },
+  "scenes": [
+    {
+      "type": "hook",
+      "dur": 4.2,
+      "lines": [
+        "Where does",
+        "rain come from?"
+      ],
+      "say": "Sample opening line."
+    },
+    {
+      "type": "steps",
+      "dur": 4.6,
+      "title": "Three steps",
+      "items": [
+        {
+          "title": "Heat up",
+          "sub": "evaporation",
+          "icon": "bolt"
+        },
+        {
+          "title": "Cool down",
+          "sub": "condensation",
+          "icon": "plan"
+        },
+        {
+          "title": "Fall",
+          "sub": "precipitation",
+          "icon": "check"
+        }
+      ],
+      "say": "Sample steps with a tag and an icon."
+    },
+    {
+      "type": "stat",
+      "dur": 4.2,
+      "value": 21,
+      "suffix": "x",
+      "label": "more likely to qualify",
+      "sub": "Sample figure for layout only",
+      "say": "Fast replies can change who you win."
+    },
+    {
+      "type": "chart",
+      "dur": 4.2,
+      "title": "Sample: reply time (minutes)",
+      "bars": [
+        {
+          "label": "Manual",
+          "value": 45
+        },
+        {
+          "label": "With an AI agent",
+          "value": 1
+        }
+      ],
+      "say": "An agent can reply in about a minute. Sample data."
+    },
+    {
+      "type": "compare",
+      "dur": 4.6,
+      "title": "Manual vs automated",
+      "left": {
+        "title": "Manual",
+        "items": [
+          "Slow replies",
+          "Missed follow-ups",
+          "Copy and paste"
+        ]
+      },
+      "right": {
+        "title": "Automated",
+        "items": [
+          "Instant reply",
+          "Every lead followed up",
+          "One connected flow"
+        ]
+      },
+      "say": "Manual follow-up misses leads. Automation does not."
+    },
+    {
+      "type": "timeline",
+      "dur": 7,
+      "title": "The water cycle",
+      "points": [
+        {
+          "label": "Evaporation",
+          "sub": "Sun warms water"
+        },
+        {
+          "label": "Condensation",
+          "sub": "Vapour forms clouds"
+        },
+        {
+          "label": "Precipitation",
+          "sub": "Rain or snow falls"
+        },
+        {
+          "label": "Collection",
+          "sub": "Water gathers again"
+        }
+      ],
+      "say": "The sun warms water, vapour forms clouds, rain falls, and the water gathers again."
+    },
+    {
+      "type": "flow",
+      "dur": 4.4,
+      "title": "How it flows",
+      "nodes": [
+        {
+          "label": "Lead",
+          "icon": "person"
+        },
+        {
+          "label": "Agent",
+          "icon": "bolt"
+        },
+        {
+          "label": "CRM",
+          "icon": "doc"
+        }
+      ],
+      "say": "A lead comes in, an agent replies, and your CRM is updated."
+    },
+    {
+      "type": "cta",
+      "dur": 4.2,
+      "lines": [
+        "Automate",
+        "your follow-ups."
+      ],
+      "button": "ilogixdigital.com",
+      "tag": "AI automation",
+      "say": "Automate your follow-ups with iLogix."
+    },
+    {
+      "type": "testimonial",
+      "dur": 4.4,
+      "quote": "They turned our long product update into a clear 20 second video in a day.",
+      "name": "Sample customer",
+      "role": "Founder, Sample Co.",
+      "say": "Sample testimonial for layout only."
+    },
+    {
+      "type": "offer",
+      "dur": 4.6,
+      "headline": "Diwali launch offer",
+      "was": "Rs 999",
+      "price": "Rs 499",
+      "code": "DIWALI",
+      "deadline": "Ends 15 Nov",
+      "button": "Claim offer",
+      "say": "A limited time offer, with code and deadline."
+    },
+    {
+      "type": "pricing",
+      "dur": 5,
+      "title": "Pick a plan",
+      "plans": [
+        {
+          "name": "Starter",
+          "price": "Rs 7,999",
+          "per": "/month",
+          "items": [
+            "8 videos",
+            "1 brand",
+            "1 revision"
+          ]
+        },
+        {
+          "name": "Growth",
+          "price": "Rs 14,999",
+          "per": "/month",
+          "hot": true,
+          "items": [
+            "16 videos",
+            "2 styles",
+            "Captions"
+          ]
+        },
+        {
+          "name": "Agency",
+          "price": "Rs 29,999",
+          "per": "/month",
+          "items": [
+            "30 videos",
+            "Many brands",
+            "Approvals"
+          ]
+        }
+      ],
+      "say": "Plans from starter to agency. Sample prices only."
+    },
+    {
+      "type": "checklist",
+      "dur": 4.6,
+      "title": "What you get",
+      "items": [
+        "Captions on every video",
+        "Sound effects, no music",
+        "Wide and vertical",
+        "Your brand colours"
+      ],
+      "say": "Captions, sound effects, two shapes and your brand colours."
+    },
+    {
+      "type": "beforeafter",
+      "dur": 4.4,
+      "title": "Reply time",
+      "before": {
+        "label": "Before",
+        "value": "45 min",
+        "note": "Manual follow-ups"
+      },
+      "after": {
+        "label": "After",
+        "value": "1 min",
+        "note": "With an AI agent"
+      },
+      "say": "Sample numbers: from forty five minutes to one."
+    },
+    {
+      "type": "phone",
+      "dur": 4.2,
+      "title": "Your app, in motion",
+      "image": "screen.png",
+      "caption": "Sample screen, illustrative",
+      "say": "Show your app on a phone screen."
+    },
+    {
+      "type": "endcard",
+      "dur": 5,
+      "lines": [
+        "Let's make yours."
+      ],
+      "phone": "+91 00000 00000",
+      "email": "hello@example.com",
+      "web": "ilogixdigital.com",
+      "qr": "https://ilogixdigital.com",
+      "tagline": "Sample contact details",
+      "say": "Contact details and a QR code to finish."
+    }
+  ]
+}
