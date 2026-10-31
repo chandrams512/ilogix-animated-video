@@ -44,3 +44,4 @@ The `sfx-only` render has captions and sound effects but no music, ready for you
 - `engine/cutdown.py` makes a 15 s or 6 s version of a plan.
 - `engine/brand_colors.py` accent colours from a logo.
 - Scene types: hook, steps, stat, chart, compare, timeline, flow, cta, testimonial, offer, pricing, checklist, beforeafter, endcard, phone (see `docs/plan-format.md`).
+- Real estate: `docs/real-estate.md` (RERA footer, sample plans `plans/re-*`). Product tiers (explainers vs AI clips): `docs/tiers.md`.

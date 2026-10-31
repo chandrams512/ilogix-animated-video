@@ -8,6 +8,7 @@ REQ = {'hook': ['lines'], 'steps': ['items'], 'stat': ['value', 'label'], 'chart
        'testimonial': ['quote', 'name'], 'offer': ['headline'], 'pricing': ['plans'], 'checklist': ['items'], 'beforeafter': ['before', 'after'], 'endcard': ['lines'], 'phone': ['image']}
 LIM = {'hook': (1, 3, 'lines'), 'steps': (2, 4, 'items'), 'chart': (2, 6, 'bars'), 'timeline': (2, 5, 'points'), 'flow': (2, 5, 'nodes'), 'cta': (1, 3, 'lines'),
        'pricing': (2, 3, 'plans'), 'checklist': (2, 5, 'items'), 'endcard': (1, 3, 'lines')}
+BANNED = ['assured return', 'guaranteed return', 'guaranteed appreciation', 'assured rental', 'guaranteed rental', 'assured appreciation', 'risk free', 'risk-free']
 errs = []
 try: plan = json.load(open(sys.argv[1], encoding='utf-8'))
 except Exception as e: print('Not valid JSON:', e); sys.exit(1)
@@ -55,5 +56,13 @@ else:
         total = max(total, s.get('start', total) + d)
         if len(s.get('say', '')) > 140: errs.append('%s: say is too long for a caption (max 140 characters)' % where)
     if total > 90: errs.append('total length %.0f s is over 90 s' % total)
+br = plan.get('brand') or {}
+for k in ('rera', 'disclaimer'):
+    if len(str(br.get(k, ''))) > 70: errs.append('brand.%s is over 70 characters' % k)
+if plan.get('industry') == 'real-estate':
+    if not br.get('rera'): errs.append('real-estate plans need brand.rera (the project RERA registration number, shown on every scene). Check your state RERA rules for the exact format')
+    blob = json.dumps(plan, ensure_ascii=False).lower()
+    for b in BANNED:
+        if b in blob: errs.append('real-estate: remove %r (return/appreciation promises are not allowed in ads)' % b)
 print('\n'.join('- ' + e for e in errs) if errs else 'Plan is valid.')
 sys.exit(1 if errs else 0)

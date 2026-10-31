@@ -1,0 +1,44 @@
+{
+  "title": "Green Park Heights 3 BHK",
+  "style": "isometric",
+  "aspect": "9x16",
+  "industry": "real-estate",
+  "safe": true,
+  "brand": {
+    "name": "Green Park Heights",
+    "rera": "RERA No. SAMPLE-0002 (demo)",
+    "disclaimer": "Sample content for testing."
+  },
+  "scenes": [
+    {
+      "type": "hook",
+      "dur": 2.8,
+      "lines": [
+        "Green Park Heights",
+        "3 BHK available"
+      ],
+      "say": "3 BHK available at Green Park Heights."
+    },
+    {
+      "type": "offer",
+      "dur": 4.6,
+      "headline": "3 BHK at Green Park Heights",
+      "price": "Rs 1.1 Cr",
+      "deadline": "1050 sq ft carpet",
+      "button": "Book a visit",
+      "say": "3 BHK, 1050 square feet carpet, Rs 1.1 Cr."
+    },
+    {
+      "type": "endcard",
+      "dur": 4,
+      "lines": [
+        "Book a",
+        "site visit"
+      ],
+      "phone": "+91 98000 00002",
+      "web": "greenpark.example",
+      "qr": "https://greenpark.example",
+      "say": "Book a site visit today."
+    }
+  ]
+}

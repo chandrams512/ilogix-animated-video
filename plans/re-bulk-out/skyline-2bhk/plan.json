@@ -1,0 +1,44 @@
+{
+  "title": "Skyline Residency 2 BHK",
+  "style": "isometric",
+  "aspect": "9x16",
+  "industry": "real-estate",
+  "safe": true,
+  "brand": {
+    "name": "Skyline Residency",
+    "rera": "RERA No. SAMPLE-0001 (demo)",
+    "disclaimer": "Sample content for testing."
+  },
+  "scenes": [
+    {
+      "type": "hook",
+      "dur": 2.8,
+      "lines": [
+        "Skyline Residency",
+        "2 BHK available"
+      ],
+      "say": "2 BHK available at Skyline Residency."
+    },
+    {
+      "type": "offer",
+      "dur": 4.6,
+      "headline": "2 BHK at Skyline Residency",
+      "price": "Rs 78 L",
+      "deadline": "720 sq ft carpet",
+      "button": "Book a visit",
+      "say": "2 BHK, 720 square feet carpet, Rs 78 L."
+    },
+    {
+      "type": "endcard",
+      "dur": 4,
+      "lines": [
+        "Book a",
+        "site visit"
+      ],
+      "phone": "+91 98000 00001",
+      "web": "skyline.example",
+      "qr": "https://skyline.example",
+      "say": "Book a site visit today."
+    }
+  ]
+}

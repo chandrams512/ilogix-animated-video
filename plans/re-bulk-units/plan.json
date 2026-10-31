@@ -1,0 +1,13 @@
+{
+  "title": "{{project}} {{unit}}",
+  "style": "isometric",
+  "aspect": "9x16",
+  "industry": "real-estate",
+  "safe": true,
+  "brand": { "name": "{{project}}", "rera": "{{rera}}", "disclaimer": "Sample content for testing." },
+  "scenes": [
+    { "type": "hook", "dur": 2.8, "lines": ["{{project}}", "{{unit}} available"], "say": "{{unit}} available at {{project}}." },
+    { "type": "offer", "dur": 4.6, "headline": "{{unit}} at {{project}}", "price": "Rs {{price}}", "deadline": "{{carpet}} sq ft carpet", "button": "Book a visit", "say": "{{unit}}, {{carpet}} square feet carpet, Rs {{price}}." },
+    { "type": "endcard", "dur": 4, "lines": ["Book a", "site visit"], "phone": "{{phone}}", "web": "{{web}}", "qr": "https://{{web}}", "say": "Book a site visit today." }
+  ]
+}

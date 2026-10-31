@@ -29,6 +29,40 @@ a{color:inherit}
 .btn:hover{opacity:.88}
 .link{font-size:15px;color:var(--ink);text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line);text-decoration-thickness:2px}
 .link:hover{text-decoration-color:var(--ink)}
+/* nav button, reassurance, proof, tiers, use cases, faq, filters */
+.top nav .btn{padding:10px 16px;font-size:13px;color:var(--btn-ink)}
+.top nav .btn:hover{color:var(--btn-ink)}
+.reassure{display:flex;flex-wrap:wrap;gap:6px 18px;margin:18px 0 0;padding:0;list-style:none;font-size:13.5px;color:var(--mute)}
+.reassure li::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ink);margin-right:8px;vertical-align:middle}
+.proof{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px;padding:34px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 0 90px}
+.proof b{display:block;font:800 clamp(34px,5vw,54px)/1 var(--disp);letter-spacing:-.04em}
+.proof span{display:block;font-size:14px;color:var(--mute);margin-top:6px}
+.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:24px}
+.tier{border:1px solid var(--line);border-radius:18px;background:var(--panel);padding:30px;display:flex;flex-direction:column;gap:12px}
+.tier.soon{background:none;border-style:dashed}
+.tier h3{font:700 24px/1.15 var(--disp);letter-spacing:-.03em;margin:0}
+.tier p{margin:0;color:var(--mute);font-size:15px}
+.tier ul{margin:4px 0 0;padding-left:18px;color:var(--mute);font-size:14.5px}
+.tag{align-self:flex-start;font:600 12px var(--disp);letter-spacing:.02em;border-radius:999px;padding:5px 12px;background:var(--ink);color:var(--bg)}
+.soon .tag{background:none;color:var(--ink);border:1px solid var(--ink)}
+.uses{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:34px 28px}
+.use h3{font:600 19px/1.25 var(--disp);letter-spacing:-.02em;margin:0 0 4px}
+.use p{margin:0 0 8px;color:var(--mute);font-size:15px}
+.use .by{font-size:13px;color:var(--mute)}
+.use button{font:inherit;font-size:14px;color:var(--ink);background:none;border:0;padding:0;margin-top:6px;cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line);text-decoration-thickness:2px}
+.use button:hover{text-decoration-color:var(--ink)}
+.callout{margin:40px 0 0;padding:18px 22px;border-left:3px solid var(--ink);color:var(--mute);font-size:14.5px;max-width:72ch}
+.callout b{color:var(--ink)}
+.faq details{border-top:1px solid var(--line);padding:18px 0}
+.faq details:last-child{border-bottom:1px solid var(--line)}
+.faq summary{cursor:pointer;font:600 17px/1.35 var(--disp);letter-spacing:-.015em;list-style:none;display:flex;justify-content:space-between;gap:16px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-weight:400;font-size:22px;line-height:1}
+.faq details[open] summary::after{content:"\2212"}
+.faq details p{margin:10px 0 0;color:var(--mute);max-width:70ch;font-size:15.5px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 34px}
+.filters button{font:600 13px var(--disp);border:1px solid var(--line);background:var(--panel);color:var(--mute);border-radius:999px;padding:8px 16px;cursor:pointer}
+.filters button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 /* live stage */
 .live{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:44px;align-items:start;padding:30px 0 90px}
 .stagebar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:14px;color:var(--mute);gap:12px;flex-wrap:wrap}
@@ -100,17 +134,19 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
 .sheethead b{font:600 15px var(--disp)}
 .sheet iframe{flex:1;width:100%;border:0;background:#000}
 .x{font:600 13px var(--disp);border:1px solid var(--line);background:none;color:var(--ink);border-radius:999px;padding:8px 16px;cursor:pointer}
+@media (max-width:760px){.top nav a:not(.btn){display:none}}
 @media (max-width:900px){.stage{aspect-ratio:4/6.3}.stage.tall{aspect-ratio:9/24}.live{grid-template-columns:minmax(0,1fr);gap:22px}.live>div{min-width:0}.styles{flex-direction:row;overflow-x:auto;gap:8px;padding-bottom:6px}.styles button{border:1px solid var(--line);border-radius:999px;padding:9px 16px;white-space:nowrap;width:auto}.styles button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}.styles span{display:none}.styles b{font-size:15px}.brief{grid-template-columns:minmax(0,1fr);gap:28px}.hero{padding-top:24px;grid-template-columns:1fr;gap:20px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<div class="top"><a class="logo" href="#">iLogix Video Studio</a><nav><a href="#scenes">Scene types</a><a href="#videos">Videos</a><a href="#brief">Request a video</a></nav></div>
+<div class="top"><a class="logo" href="#">iLogix Video Studio</a><nav><a href="#how">How it works</a><a href="#scenes">Scene types</a><a href="#realestate">Real estate</a><a href="#videos">Videos</a><a href="#faq">FAQ</a><a class="btn" href="#brief">Request a video</a></nav></div>
 <section class="hero">
   <h1>One script.<br>Seven looks.</h1>
   <div><p>Short animated explainers with captions and sound effects, built to take your own music. Change the style below and the same video redraws.</p>
-  <div class="cta"><a class="btn" href="#brief">Request a video</a><a class="link" href="#videos">See finished videos</a></div></div>
+  <div class="cta"><a class="btn" href="#brief">Request a video</a><a class="link" href="#videos">See finished videos</a></div>
+  <ul class="reassure"><li>Captions included</li><li>Sound effects only: bring your own music</li><li>Wide and vertical from one script</li></ul></div>
 </section>
 <section class="live" aria-label="Live style switcher">
   <div>
@@ -119,6 +155,32 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
     <div class="stage" id="stage"><iframe id="sf" title="Live style preview" src="v/sample-water-cycle.html?style=tech-glow" allow="autoplay; fullscreen"></iframe></div>
   </div>
   <div><p class="livehead">Pick a style</p><ul class="styles" id="slist"></ul></div>
+</section>
+
+<div class="proof" id="proof" aria-label="At a glance"></div>
+
+<section class="sec" id="how">
+  <h2>How it works</h2>
+  <p class="sub">Four steps from idea to a video you can post.</p>
+  <ol class="how">
+    <li><b>Send a brief</b>Topic, points, style and the scenes you want. The form at the bottom builds it for you.</li>
+    <li><b>Approve the storyboard</b>You see the scenes and the words before anything is built, so changes are cheap.</li>
+    <li><b>We build and check it</b>Every video is checked frame by frame for text that overflows or collides, in the style you picked.</li>
+    <li><b>Download and post</b>Wide and vertical MP4s, captions file and cover image. Add your own music on top.</li>
+  </ol>
+</section>
+
+<section class="sec" id="tiers">
+  <h2>Two kinds of video</h2>
+  <p class="sub">They are made differently, so they are kept apart and priced apart.</p>
+  <div class="tiers">
+    <div class="tier"><span class="tag">Available now</span><h3>Explainer videos</h3>
+      <p>Animated scenes built from your script: prices, offers, steps, charts, checklists and end cards. Drawn by code, so every video matches your brand and costs little to make.</p>
+      <ul><li>Seven styles, fifteen scene types</li><li>Captions and sound effects included</li><li>Hundreds of variants from one spreadsheet</li></ul></div>
+    <div class="tier soon"><span class="tag">In testing</span><h3>AI clips</h3>
+      <p>Generated footage for moments an animation cannot show: text to video, a photo brought to life, a brand reel from your link. Each clip costs real compute, so it is a separate tier with its own price.</p>
+      <ul><li>Always labelled as AI-generated</li><li>Mixed with explainer scenes when it helps</li><li>Not part of the explainer price</li></ul></div>
+  </div>
 </section>
 
 <section class="sec" id="scenes">
@@ -132,22 +194,51 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
   <div class="scenes" id="sgrid"></div>
 </section>
 
+<section class="sec" id="realestate">
+  <h2>For real estate</h2>
+  <p class="sub">Project launches, price plans, locations and one video per unit. Built from the same scenes, with the RERA number printed on every one.</p>
+  <div class="uses">
+    <div class="use"><h3>Project launch reel</h3><p>Headline, location, amenities, prices and a site-visit end card with a QR code.</p><div class="by">Hook · Timeline · Checklist · Pricing · End card</div><button type="button" data-v="re-launch-reel">Watch the sample</button></div>
+    <div class="use"><h3>Price and payment plan</h3><p>Plans side by side, so the buyer sees the number and what it covers.</p><div class="by">Pricing · Chart · Compare</div></div>
+    <div class="use"><h3>Location and commute</h3><p>Travel times to the Metro, school, hospital and office, one after another.</p><div class="by">Timeline · Flow</div></div>
+    <div class="use"><h3>Rent or buy</h3><p>Monthly rent against an EMI, then what to check before signing.</p><div class="by">Before and after · Checklist</div><button type="button" data-v="re-emi-vs-rent">Watch the sample</button></div>
+    <div class="use"><h3>Buyer stories</h3><p>A short quote from a family that has moved in, with their name and the project.</p><div class="by">Testimonial · End card</div></div>
+    <div class="use"><h3>A video per unit</h3><p>One template and a spreadsheet of units: price, carpet area and contact change per video.</p><div class="by">Bulk from CSV</div><button type="button" data-v="re-unit-skyline">Watch one</button></div>
+  </div>
+  <p class="callout"><b>Before you publish.</b> Ads for a registered project should show its RERA registration number, and claims must match the registered details. Leave out promises of assured returns, and label artist's impressions. The studio prints the number and flags those phrases, but the rules differ by state, so check yours. Walkthroughs from real footage are best shot by you; we add captions, an end card and a QR code. Demo numbers on this page are made up.</p>
+</section>
+
 <section class="sec" id="videos">
   <h2>Finished videos</h2>
   <p class="sub">Press play to watch. Downloads have captions and sound effects but no music, so you can lay your own track over them.</p>
+  <div class="filters" id="vfil" role="group" aria-label="Filter videos"></div>
   <div class="grid" id="vgrid"></div>
+</section>
+
+<section class="sec faq" id="faq">
+  <h2>Questions</h2>
+  <p class="sub">The short answers.</p>
+  <details><summary>Can I add my own music?</summary><p>Yes. The download has captions and sound effects only, so your track goes straight on top in any editor or in Instagram. Versions with a music bed can be made if you prefer.</p></details>
+  <details><summary>Which languages work?</summary><p>English text for now. Hindi is planned for later, and so is a voiceover step. Today you can ask us to leave room for a voiceover you record yourself.</p></details>
+  <details><summary>Can it use my logo and colours?</summary><p>Yes. Send a name or logo and your colours, or let the studio pick colours from the logo. They apply to every style and every scene.</p></details>
+  <details><summary>What do I get back?</summary><p>A wide 16:9 and a vertical 9:16 MP4, a captions file, a cover image, and a short preview GIF if you want one for email.</p></details>
+  <details><summary>Are these videos AI-generated?</summary><p>The explainers are animated by code from your script, so the same brief always gives the same video. AI-generated clips are a separate kind of video, still in testing, and are always labelled as such.</p></details>
+  <details><summary>Do you handle real estate rules?</summary><p>The studio prints your RERA number on every scene and flags phrases such as assured returns. That helps, but the rules differ by state and the advertiser is responsible, so check yours before posting.</p></details>
+  <details><summary>How is a video checked?</summary><p>Each plan is validated, then every scene is tested in the chosen style, wide and vertical, for text that runs off the frame or overlaps. A person then looks at the result before it is sent.</p></details>
+  <details><summary>What does it cost?</summary><p>Pricing is being worked out while we test. Send a brief and you will get a quote before anything is built.</p></details>
 </section>
 
 <section class="brief" id="brief">
   <div><h2>Request a video</h2><p class="sub">Give us the topic, the points to cover and a style. The brief below is what gets the video built. For now, copy it and paste it into the Claude chat for this project.</p></div>
   <form id="bf" onsubmit="return false">
     <div class="f"><label for="b-topic">Topic</label><input id="b-topic" placeholder="e.g. Why is the sky blue?"></div>
-    <div class="f"><label for="b-brand">For</label><select id="b-brand"><option>iLogix</option><option>TripNido</option><option>Education channel</option><option>Other</option></select></div>
+    <div class="f"><label for="b-brand">For</label><select id="b-brand"><option>iLogix</option><option>TripNido</option><option>Education channel</option><option>Real estate</option><option>Other</option></select></div>
     <div class="f"><label for="b-len">Length</label><select id="b-len"><option>10 s</option><option selected>20 s</option><option>35 s</option><option>60 s</option></select></div>
     <div class="f"><label for="b-asp">Shape</label><select id="b-asp"><option>9:16 vertical</option><option>16:9 wide</option><option>Both</option></select></div>
     <div class="f"><label for="b-style">Style</label><select id="b-style"><option>Tech Glow</option><option>Glass UI</option><option>Isometric Pastel</option><option>Paper Cut</option><option>Whiteboard</option><option>Blueprint</option><option>Neo-brutalist</option></select></div>
     <div class="f"><label for="b-audio">Audio</label><select id="b-audio"><option>Sound effects only (I will add music)</option><option>Sound effects plus music</option><option>Leave room for voiceover</option></select></div>
     <div class="f"><label for="b-cap">Captions</label><select id="b-cap"><option>On (burned in, plus an .srt file)</option><option>Off</option></select></div>
+    <div class="f"><label for="b-rera">RERA number (real estate only)</label><input id="b-rera" placeholder="Project registration number"></div>
     <div class="f"><label for="b-brandkit">Brand kit (optional)</label><input id="b-brandkit" placeholder="Name, logo file, brand colours"></div>
     <div class="f wide"><label>Scenes to include (optional)</label><div class="chk" id="b-scenes"></div></div>
     <div class="f wide"><label for="b-pts">Key points or script, one per line</label><textarea id="b-pts" placeholder="Hook&#10;Main point 1&#10;Main point 2&#10;Call to action"></textarea></div>
@@ -173,20 +264,30 @@ var VIDEOS=[
  {t:'One template, a video per shop',d:'Made in bulk from a spreadsheet row: shop name, offer, price, code and contact details change per video.',img:'img/bulk-offer.jpg',src:'v/offer-bulk.html',tags:['Bulk','11 s','9:16','Reels-safe','Captions'],dl:[['9:16 (captions, no music)','downloads/offer-bulk_9x16_sfx-only.mp4']],p:true},
  {t:'How Earth got its water',d:'Where Earth\'s water likely came from, in the original Paper Cut style.',img:'img/earth.jpg',src:'v/earth-water.html',tags:['Plan-built','19 s','16:9','Paper Cut','Captions'],dl:[['16:9 (captions, no music)','downloads/earth-water_16x9_sfx-only.mp4']]}
 ];
-var g=document.getElementById('vgrid');
-VIDEOS.forEach(function(v,i){
+VIDEOS.push(
+ {c:'Explainers',t:'How to travel at the speed of light',d:'Light is fast, speed costs energy, and only light itself reaches it. Isometric Pastel, with captions.',img:'img/speed-of-light.jpg',src:'v/speed-of-light.html',tags:['Plan-built','20 s','9:16','Isometric','Captions'],dl:[['9:16 (captions, no music)','downloads/speed-of-light_9x16_sfx-only.mp4']],p:true},
+ {c:'Real estate',id:'re-launch-reel',t:'Skyline Residency launch reel',d:'Sample project: location, amenities, prices and a site-visit end card. RERA footer on every scene. All details are made up.',img:'img/re-launch-reel.jpg',src:'v/re-launch-reel.html',tags:['Real estate','Sample','22 s','9:16','Isometric'],dl:[['9:16 (captions, no music)','downloads/re-launch-reel_9x16_sfx-only.mp4']],p:true},
+ {c:'Real estate',id:'re-emi-vs-rent',t:'Rent or buy? Do the math',d:'Sample numbers, then a checklist of what to confirm before signing.',img:'img/re-emi-vs-rent.jpg',src:'v/re-emi-vs-rent.html',tags:['Real estate','Sample','17 s','9:16','Glass UI'],dl:[['9:16 (captions, no music)','downloads/re-emi-vs-rent_9x16_sfx-only.mp4']],p:true},
+ {c:'Real estate',id:'re-unit-skyline',t:'One video per unit',d:'Made from a spreadsheet row: project, unit, price, carpet area, RERA number and contact change per video.',img:'img/re-unit-skyline.jpg',src:'v/re-unit-skyline.html',tags:['Real estate','Bulk','11 s','9:16','Isometric'],dl:[['9:16 (captions, no music)','downloads/re-unit-skyline_9x16_sfx-only.mp4']],p:true}
+);
+VIDEOS.forEach(function(v,i){if(!v.c)v.c=(v.tags.indexOf('Bulk')>=0||v.t.indexOf('scene types')>=0)?'Offers':'Explainers'});
+var g=document.getElementById('vgrid'),fil=document.getElementById('vfil'),curF='All';
+function showVideos(){g.innerHTML='';VIDEOS.forEach(function(v,i){if(curF!=='All'&&v.c!==curF)return;
   var c=document.createElement('article');c.className='item';
   c.innerHTML='<button class="poster" data-i="'+i+'" aria-label="Play '+v.t+'"><img src="'+v.img+'" alt="" loading="lazy"><span class="pbtn"><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></span></button>'+
   '<h3>'+v.t+'</h3><p class="meta">'+v.tags.join('  \u00b7  ')+'</p><p>'+v.d+'</p>'+
   '<div class="acts"><button data-i="'+i+'">Play</button>'+(v.sb?'<a href="'+v.sb+'">Storyboard</a>':'')+v.dl.map(function(d){return '<a href="'+d[1]+'" download>Download '+d[0]+'</a>'}).join('')+'</div>';
   g.appendChild(c);
-});
+});}
+['All','Explainers','Offers','Real estate'].forEach(function(n){var b=document.createElement('button');b.type='button';b.textContent=n;b.setAttribute('aria-pressed',n==='All');b.onclick=function(){curF=n;Array.prototype.forEach.call(fil.children,function(x){x.setAttribute('aria-pressed',x===b)});showVideos()};fil.appendChild(b)});
+showVideos();
 var M=document.getElementById('modal'),F=document.getElementById('mf'),SH=document.getElementById('sheet');
 function openV(i){var v=VIDEOS[i];document.getElementById('mt').textContent=v.t;SH.className='sheet'+(v.p?' portrait':'');F.src=v.src;M.classList.add('open');document.body.style.overflow='hidden'}
 function closeV(){M.classList.remove('open');F.src='about:blank';document.body.style.overflow=''}
 g.addEventListener('click',function(e){var b=e.target.closest('[data-i]');if(b)openV(+b.getAttribute('data-i'))});
 document.getElementById('mx').onclick=closeV;M.addEventListener('click',function(e){if(e.target===M)closeV()});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&M.classList.contains('open'))closeV()});
+document.getElementById('realestate').addEventListener('click',function(e){var b=e.target.closest('[data-v]');if(!b)return;for(var i=0;i<VIDEOS.length;i++)if(VIDEOS[i].id===b.getAttribute('data-v'))return openV(i)});
 // scene types
 var SCN=[['hook','Hook','A bold opening line.'],['steps','Steps','Two to four cards with a tag and an icon.'],['stat','Big number','A number that counts up, with a label.'],['chart','Bar chart','Two to six bars that grow in.'],['compare','Compare','Two lists side by side, red against green.'],['timeline','Timeline','Two to five points joined by a line.'],['flow','Flow','Boxes linked by moving arrows.'],['cta','Call to action','A closing line with a button and tag.'],['testimonial','Testimonial','A quote with stars and the person\'s name.'],['offer','Offer','Price, old price, code and deadline.'],['pricing','Pricing table','Two or three plans with prices and features.'],['checklist','Checklist','Items that tick off one by one.'],['beforeafter','Before and after','Two big numbers with an arrow between.'],['phone','Phone screen','Your app or page inside a phone frame.'],['endcard','End card','Phone, email, web and a QR code.']];
 var sg=document.getElementById('sgrid'),bs=document.getElementById('b-scenes');
@@ -197,6 +298,8 @@ SCN.forEach(function(c,i){
 });
 sg.addEventListener('click',function(e){var b=e.target.closest('[data-sc]');if(!b)return;var t=b.getAttribute('data-sc'),n=b.querySelector('b').textContent;
   document.getElementById('mt').textContent=n;SH.className='sheet';F.onload=function(){F.onload=null;setTimeout(function(){try{var w=F.contentWindow,t0=w.eval('PLAN.scenes.filter(function(x){return x.type==="'+t+'"})[0]._t0');var sb=w.document.getElementById('scrub');sb.value=t0+0.01;sb.dispatchEvent(new Event('input'));w.document.getElementById('play').click()}catch(er){}},900)};F.src='v/scene-gallery.html';M.classList.add('open');document.body.style.overflow='hidden'});
+// proof strip
+(function(){var d=[[7,'original styles'],[15,'scene types'],[VIDEOS.length,'finished videos on this page'],[2,'shapes from one script']];document.getElementById('proof').innerHTML=d.map(function(x){return '<div><b>'+x[0]+'</b><span>'+x[1]+'</span></div>'}).join('')})();
 // live stage
 var STY=[['tech-glow','Tech Glow','Dark neon glow. AI, SaaS.'],['glass','Glass UI','Frosted panels. Apps, demos.'],['isometric','Isometric Pastel','Soft slabs. Travel, lifestyle.'],['paper-cut','Paper Cut','Layered paper. Education.'],['whiteboard','Whiteboard','Hand-drawn marker. Teaching.'],['blueprint','Blueprint','Line-work on blue. Technical.'],['neo-brutal','Neo-brutalist','Thick outlines. Social reels.']];
 var cur={style:'tech-glow',asp:'16x9'},sf=document.getElementById('sf'),sl=document.getElementById('slist'),stg=document.getElementById('stage');
@@ -213,12 +316,13 @@ document.getElementById('sw').onclick=function(){cur.asp='16x9';applyStage()};
 document.getElementById('st').onclick=function(){cur.asp='9x16';applyStage()};
 sf.addEventListener('load',applyStage);
 // brief builder
-var ids=['topic','brand','len','asp','style','audio','cap','brandkit','pts','notes'],el={};ids.forEach(function(k){el[k]=document.getElementById('b-'+k)});
+var ids=['topic','brand','len','asp','style','audio','cap','rera','brandkit','pts','notes'],el={};ids.forEach(function(k){el[k]=document.getElementById('b-'+k)});
 function brief(){
   var pts=el.pts.value.trim(),notes=el.notes.value.trim();
   return 'New animated video for the ilogix-animated-video repo.\n\n'+
   'Topic: '+(el.topic.value.trim()||'(add a topic)')+'\nFor: '+el.brand.value+'\nLength: '+el.len.value+'\nShape: '+el.asp.value+'\nStyle: '+el.style.value+'\nAudio: '+el.audio.value+'\n\n'+
   (function(){var c=[].slice.call(document.querySelectorAll('#b-scenes input:checked')).map(function(i){return i.value});return c.length?'Scenes to include: '+c.join(', ')+'\n\n':''})()+'Key points / script:\n'+(pts||'(none given: please propose a hook, 3 points and a call to action)')+'\n\n'+
+  (el.brand.value==='Real estate'?'RERA number: '+(el.rera.value.trim()||'(needed before we can build it)')+'\nReal estate: only claims that match the registered project details, no return promises, label artist impressions.\n\n':'')+
   (notes?'Facts, sources, brand notes:\n'+notes+'\n\n':'')+
   'Please: write a short storyboard first, wait for my OK, then build it as a JSON plan in the repo (docs/plan-format.md), check the frames, render the MP4s and push to GitHub. Use only facts I gave or that you can source, and label any sample content.';
 }

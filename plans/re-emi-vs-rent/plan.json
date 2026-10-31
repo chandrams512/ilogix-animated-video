@@ -1,0 +1,13 @@
+{
+  "title": "Rent or buy? (sample)",
+  "style": "glass",
+  "aspect": "9x16",
+  "safe": true,
+  "brand": { "name": "Home Advisor", "disclaimer": "Sample numbers. Not financial advice." },
+  "scenes": [
+    { "type": "hook", "dur": 3, "lines": ["Rent or buy?", "Do the math."], "say": "Rent or buy? Do the math." },
+    { "type": "beforeafter", "dur": 5, "title": "Monthly cost, sample numbers", "before": { "label": "Rent", "value": "Rs 25k", "note": "Paid every month" }, "after": { "label": "EMI", "value": "Rs 22k", "note": "Towards a home you own" }, "say": "A sample rent of twenty five thousand against an EMI of twenty two thousand." },
+    { "type": "checklist", "dur": 5, "title": "Check before you buy", "items": ["RERA registration number", "Carpet area in agreement", "Payment plan in writing", "Possession date in writing"], "say": "Check the RERA number, carpet area, payment plan and possession date." },
+    { "type": "endcard", "dur": 4, "lines": ["Ask before", "you sign"], "web": "homeadvisor.example", "qr": "https://homeadvisor.example", "say": "Ask before you sign." }
+  ]
+}

@@ -9,4 +9,6 @@ for p in sample-automation sample-water-cycle earth-water; do python3 engine/bui
 python3 engine/build.py plans/sample-showcase/plan.json >/dev/null; cp dist/sample_showcase.html web/v/sample-showcase.html
 python3 engine/build.py plans/bulk-offers/sharma-sweets/plan.json >/dev/null; cp dist/sharma_sweets.html web/v/offer-bulk.html
 python3 engine/build.py plans/scene-gallery/plan.json >/dev/null 2>&1; cp dist/scene_gallery.html web/v/scene-gallery.html
+for p in speed-of-light re-launch-reel re-emi-vs-rent; do python3 engine/build.py plans/$p/plan.json >/dev/null; cp dist/$(echo $p | tr - _).html web/v/$p.html; done
+python3 engine/build.py plans/re-bulk-out/skyline-2bhk/plan.json >/dev/null; cp dist/skyline_2bhk.html web/v/re-unit-skyline.html
 echo synced

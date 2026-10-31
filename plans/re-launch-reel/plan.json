@@ -1,0 +1,20 @@
+{
+  "title": "Skyline Residency launch reel (sample)",
+  "style": "isometric",
+  "aspect": "9x16",
+  "industry": "real-estate",
+  "safe": true,
+  "brand": { "name": "Skyline Residency", "rera": "RERA No. SAMPLE-0000 (demo only)", "disclaimer": "Sample project. Prices illustrative." },
+  "scenes": [
+    { "type": "hook", "dur": 3, "lines": ["2 and 3 BHK homes", "near the Metro"], "sub": "Skyline Residency (sample project)", "say": "Two and three BHK homes, near the Metro." },
+    { "type": "timeline", "dur": 5, "title": "Everything close by", "points": [
+      { "label": "Metro", "sub": "5 min" }, { "label": "School", "sub": "8 min" }, { "label": "Hospital", "sub": "10 min" }, { "label": "Office hub", "sub": "20 min" } ],
+      "say": "Metro in five minutes, school in eight, hospital in ten." },
+    { "type": "checklist", "dur": 4.5, "title": "Inside the project", "items": ["Clubhouse and pool", "Kids play area", "24x7 security", "Covered parking"], "say": "Clubhouse, play area, security and parking." },
+    { "type": "pricing", "dur": 5, "title": "Homes and prices", "plans": [
+      { "name": "2 BHK", "price": "Rs 78 L", "per": "onwards", "items": ["720 sq ft carpet", "Construction-linked"] },
+      { "name": "3 BHK", "price": "Rs 1.1 Cr", "per": "onwards", "hot": true, "items": ["1,050 sq ft carpet", "Construction-linked"] } ],
+      "say": "Two BHK from seventy eight lakh. Three BHK from one point one crore." },
+    { "type": "endcard", "dur": 4, "lines": ["Book a", "site visit"], "phone": "+91 98000 00000", "web": "skyline.example", "qr": "https://skyline.example", "say": "Book a site visit today." }
+  ]
+}

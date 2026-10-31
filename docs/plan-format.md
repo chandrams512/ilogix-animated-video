@@ -48,6 +48,8 @@ Icons: phone, mail, chat, cal, person, doc, check, bolt, plan, shield, pin, plan
 - `"short": true` on a scene marks it for the short cut: `python3 engine/cutdown.py plans/<name>/plan.json --max 15` writes `plans/<name>-15s/`.
 - Bulk and personalised videos: `python3 engine/bulk.py plans/<template>/plan.json data.csv --name <batch> [--render 9x16 --out out/]`. Use `{{column}}` in any text of the template. See `plans/bulk-template/`.
 - QR codes need `pip install segno`.
+- Compliance footer: `"brand": { "rera": "RERA No. ...", "disclaimer": "Artist's impression." }` prints one small line (two in vertical) at the bottom of every scene; each is up to 70 characters. Wide captions move up a little to make room.
+- `"industry": "real-estate"` makes the validator require `brand.rera` and reject phrases such as "assured returns", "guaranteed appreciation" and "risk free". It is a safety net, not legal advice: check your state RERA rules. See `docs/real-estate.md`.
 
 ## Checks
 - `python3 engine/validate_plan.py plan.json` checks the plan.

@@ -92,11 +92,20 @@ function drawCaptions(x, g, t) {
   const words = c.text.split(/\s+/), u = (t - c.t) / (c.dur || 2), cur = Math.min(words.length - 1, Math.floor(u * words.length * 1.15)), px = g.P ? 38 : 34, maxW = g.P ? 620 : 1000;
   x.save(); x.font = `800 ${px}px "Nunito", "Sora", system-ui, sans-serif`;
   const lines = [], widths = []; let cur2 = [], cw = 0; words.forEach((w, i) => { const ww = x.measureText(w + ' ').width; if (cw + ww > maxW && cur2.length) { lines.push(cur2); widths.push(cw); cur2 = []; cw = 0; } cur2.push([w, i, ww]); cw += ww; }); lines.push(cur2); widths.push(cw);
-  const lh = px * 1.35, bh = lines.length * lh + 26, y0 = g.bh * (g.P ? 0.84 : 0.9) - bh / 2, bw = Math.max.apply(null, widths) + 44;
+  const lh = px * 1.35, bh = lines.length * lh + 26, y0 = g.bh * (g.P ? 0.84 : (BRAND.rera || BRAND.disclaimer) ? 0.86 : 0.9) - bh / 2, bw = Math.max.apply(null, widths) + 44;
   x.globalAlpha *= seg(t, c.t, c.t + 0.15) * (1 - seg(t, c.t + (c.dur || 2) - 0.12, c.t + (c.dur || 2)));
   x.fillStyle = 'rgba(4,8,24,0.72)'; rr(x, g.C - bw / 2, y0, bw, bh, 22); x.fill();
   x.textBaseline = 'middle'; x.textAlign = 'left';
   lines.forEach((ln, li) => { let xx = g.C - widths[li] / 2; ln.forEach(([w, i, ww]) => { x.fillStyle = i === cur ? S.pal.cyan : (i < cur ? '#ffffff' : 'rgba(255,255,255,0.62)'); x.fillText(w, xx, y0 + 13 + li * lh + lh / 2); xx += ww; }); });
+  x.restore();
+}
+
+// Compliance footer (e.g. RERA number, 'artist's impression'): brand.rera and brand.disclaimer, shown on every scene.
+function drawFooter(x, g, t) {
+  const parts = [BRAND.rera, BRAND.disclaimer].filter(Boolean); if (!parts.length) return;
+  x.save(); x.globalAlpha *= seg(t, 0.3, 0.7); const px = g.P ? 21 : 17;
+  if (g.P) parts.forEach((p, i) => S.text(x, p, g.C, g.bh - 30 - (parts.length - 1 - i) * 30, px, S.pal.mute, { w: 700 }));
+  else S.text(x, parts.join('  \u00b7  '), g.C, g.bh - 14, px, S.pal.mute, { w: 700 });
   x.restore();
 }
 
@@ -110,6 +119,7 @@ function planDraw(x, W, Hh, t) {
     x.save(); x.globalAlpha *= seg(lt, 0, 0.25) * (last ? 1 : 1 - seg(lt, sc._d - 0.3, sc._d)); SC[sc.type](x, g, sc, lt); x.restore();
   });
   if (window.CAPTIONS_ON) { window.__CAP = true; drawCaptions(x, g, t); window.__CAP = false; }
+  drawFooter(x, g, t);
   x.restore();
   S.finish(x, t);
 }
