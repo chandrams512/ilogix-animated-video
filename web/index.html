@@ -179,7 +179,7 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
       <ul><li>Seven styles, fifteen scene types</li><li>Captions and sound effects included</li><li>Hundreds of variants from one spreadsheet</li></ul></div>
     <div class="tier soon"><span class="tag">In testing</span><h3>AI clips</h3>
       <p>Generated footage for moments an animation cannot show: text to video, a photo brought to life, a brand reel from your link. Each clip costs real compute, so it is a separate tier with its own price.</p>
-      <ul><li>Always labelled as AI-generated</li><li>Mixed with explainer scenes when it helps</li><li>Not part of the explainer price</li></ul></div>
+      <ul><li>Always labelled as AI-generated</li><li>Clip and still-image scenes already work in the engine; the model providers are still being chosen</li><li>Not part of the explainer price</li></ul></div>
   </div>
 </section>
 
@@ -219,7 +219,7 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
   <h2>Questions</h2>
   <p class="sub">The short answers.</p>
   <details><summary>Can I add my own music?</summary><p>Yes. The download has captions and sound effects only, so your track goes straight on top in any editor or in Instagram. Versions with a music bed can be made if you prefer.</p></details>
-  <details><summary>Which languages work?</summary><p>English text for now. Hindi is planned for later, and so is a voiceover step. Today you can ask us to leave room for a voiceover you record yourself.</p></details>
+  <details><summary>Which languages work?</summary><p>English and Hindi on-screen text and captions. A voiceover step (an AI voice, or your own recording, with the video timed to it) is built and still being tested, so ask before relying on it.</p></details>
   <details><summary>Can it use my logo and colours?</summary><p>Yes. Send a name or logo and your colours, or let the studio pick colours from the logo. They apply to every style and every scene.</p></details>
   <details><summary>What do I get back?</summary><p>A wide 16:9 and a vertical 9:16 MP4, a captions file, a cover image, and a short preview GIF if you want one for email.</p></details>
   <details><summary>Are these videos AI-generated?</summary><p>The explainers are animated by code from your script, so the same brief always gives the same video. AI-generated clips are a separate kind of video, still in testing, and are always labelled as such.</p></details>
@@ -265,6 +265,7 @@ var VIDEOS=[
  {t:'How Earth got its water',d:'Where Earth\'s water likely came from, in the original Paper Cut style.',img:'img/earth.jpg',src:'v/earth-water.html',tags:['Plan-built','19 s','16:9','Paper Cut','Captions'],dl:[['16:9 (captions, no music)','downloads/earth-water_16x9_sfx-only.mp4']]}
 ];
 VIDEOS.push(
+ {c:'Explainers',t:'बारिश कहाँ से आती है?',d:'Hindi sample in Paper Cut: on-screen text and captions in Devanagari.',img:'img/sample-hindi.jpg',src:'v/sample-hindi.html',tags:['Hindi','Sample','13 s','9:16','Paper Cut'],dl:[['9:16 (captions, no music)','downloads/sample-hindi_9x16_sfx-only.mp4']],p:true},
  {c:'Explainers',t:'How to travel at the speed of light',d:'Light is fast, speed costs energy, and only light itself reaches it. Isometric Pastel, with captions.',img:'img/speed-of-light.jpg',src:'v/speed-of-light.html',tags:['Plan-built','20 s','9:16','Isometric','Captions'],dl:[['9:16 (captions, no music)','downloads/speed-of-light_9x16_sfx-only.mp4']],p:true},
  {c:'Real estate',id:'re-launch-reel',t:'Skyline Residency launch reel',d:'Sample project: location, amenities, prices and a site-visit end card. RERA footer on every scene. All details are made up.',img:'img/re-launch-reel.jpg',src:'v/re-launch-reel.html',tags:['Real estate','Sample','22 s','9:16','Isometric'],dl:[['9:16 (captions, no music)','downloads/re-launch-reel_9x16_sfx-only.mp4']],p:true},
  {c:'Real estate',id:'re-emi-vs-rent',t:'Rent or buy? Do the math',d:'Sample numbers, then a checklist of what to confirm before signing.',img:'img/re-emi-vs-rent.jpg',src:'v/re-emi-vs-rent.html',tags:['Real estate','Sample','17 s','9:16','Glass UI'],dl:[['9:16 (captions, no music)','downloads/re-emi-vs-rent_9x16_sfx-only.mp4']],p:true},

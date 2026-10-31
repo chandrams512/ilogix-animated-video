@@ -5,6 +5,20 @@
   function star(x, cx, cy, r, col) { x.save(); x.fillStyle = col; x.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? r * 0.45 : r; x.lineTo(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad); } x.closePath(); x.fill(); x.restore(); }
   const fade = (x, u, fn) => { x.save(); x.globalAlpha *= Math.min(1, Math.max(0, u)); fn(); x.restore(); };
 
+  // draws an image/frame to cover a rounded card (or the whole frame with sc.full), with an optional title above and badge chip at the top right
+  function mediaScene(x, g, sc, lt, im, badge, zoom) {
+    const pal = S.pal, P = g.P, full = !!sc.full, W = g.bw, Hh = g.bh;
+    const X = full ? 0 : (P ? 60 : 190), Y = full ? 0 : (sc.title ? (P ? 200 : 125) : (P ? 150 : 100)), w = full ? W : (P ? 600 : 900), h = full ? Hh : (P ? (sc.title ? 760 : 820) : (sc.title ? 440 : 480));
+    if (sc.title && !full) fade(x, seg(lt, 0.1, 0.5), () => S.text(x, sc.title, g.C, P ? 150 : 90, P ? 44 : 40, pal.ink, { w: 800 }));
+    popIn(x, X + w / 2, Y + h / 2, seg(lt, 0.05, 0.55), () => {
+      x.save(); rr(x, X, Y, w, h, full ? 0 : 28); x.clip(); x.fillStyle = '#0b0d12'; x.fillRect(X, Y, w, h);
+      if (im && im.complete && im.naturalWidth) { const k = Math.max(w / im.naturalWidth, h / im.naturalHeight) * (1 + zoom), dw = im.naturalWidth * k, dh = im.naturalHeight * k; x.drawImage(im, X + (w - dw) / 2, Y + (h - dh) / 2, dw, dh); }
+      x.restore();
+      if (!full) { x.save(); x.strokeStyle = H.rgba(pal.ink, 0.18); x.lineWidth = 2; rr(x, X, Y, w, h, 28); x.stroke(); x.restore(); }
+    });
+    if (badge) fade(x, seg(lt, 0.4, 0.8), () => S.chip(x, W - 40 - (String(badge).length * 6.2 + 24), P ? 56 : 54, badge, 22, { col: pal.amber, solid: true }));
+  }
+
   Object.assign(SC, {
     testimonial(x, g, sc, lt) {
       const pal = S.pal, P = g.P, w = P ? 620 : 900, px = P ? 36 : 38, lh = px * 1.38, X = g.C - w / 2;
@@ -74,6 +88,9 @@
       rows.forEach((r, i) => { const ry = P ? yy + i * 66 : yy + 20 + i * 70, rx = P ? g.C - 270 : 120; fade(x, seg(lt, 1.0 + i * 0.25, 1.4 + i * 0.25), () => { ICONS()[r[0]](x, rx + 18, ry, 17, pal.cyan); S.text(x, r[1], rx + 54, ry, P ? 30 : 32, pal.ink, { align: 'left', w: 700 }); }); });
       if (sc.tagline) fade(x, seg(lt, 1.6, 2.0), () => S.text(x, sc.tagline, ax, P ? Math.min(960, yy + rows.length * 66 + 30) : 480, 26, pal.mute, { align: al, w: 700 }));
     },
+    // ---- media scenes: 'clip' (video, sampled into frames by build.py) and 'image' (a still with a slow zoom). Both can carry a badge.
+    clip(x, g, sc, lt) { mediaScene(x, g, sc, lt, sc._fr ? sc._fr[Math.min(sc._fr.length - 1, Math.floor(lt * sc.fps))] : null, sc.badge === undefined ? 'AI-generated' : sc.badge, 0.03); },
+    image(x, g, sc, lt) { mediaScene(x, g, sc, lt, sc._img, sc.badge || '', 0.08 * Math.min(1, lt / sc._d)); },
     phone(x, g, sc, lt) {
       const pal = S.pal, P = g.P; 
       const pw = P ? 380 : 232, ph = P ? 760 : 470, px0 = P ? g.C - pw / 2 : 280, py0 = P ? 190 : 80;
@@ -87,7 +104,9 @@
       if (P && sc.caption) fade(x, seg(lt, 0.9, 1.4), () => S.text(x, sc.caption, g.C, 990, 28, pal.mute, { w: 700 }));
     },
   });
-  PLAN.scenes.forEach((sc) => { if (sc.type === 'phone' && sc.image) { sc._img = new Image(); sc._img.src = sc.image; } });
+  window.PRELOAD = window.PRELOAD || [];
+  const load = (src) => { const im = new Image(); im.src = src; window.PRELOAD.push(im.decode ? im.decode().catch(() => {}) : Promise.resolve()); return im; };
+  PLAN.scenes.forEach((sc) => { if ((sc.type === 'phone' || sc.type === 'image') && sc.image) sc._img = load(sc.image); if (sc.type === 'clip' && sc.frames) sc._fr = sc.frames.map(load); });
   const SND = {
     testimonial: (k, sc, T0) => { k.play('pop', T0 + 0.2, { gain: 0.8 }); k.play('sparkle', T0 + 0.6, { gain: 0.6, n: 5 }); },
     offer: (k, sc, T0) => { k.play('impact', T0 + 0.15, { gain: 0.5 }); k.play('riser', T0 + 0.5, { dur: 0.8, gain: 0.5 }); k.play('success', T0 + 1.3, { gain: 0.9 }); if (sc.button) k.play('ding', T0 + 1.9, { f: 'E6', gain: 0.6 }); },
@@ -95,6 +114,8 @@
     checklist: (k, sc, T0) => { sc.items.forEach((_, j) => k.play('tick', T0 + 0.55 + j * 0.4, { gain: 0.8 })); k.play('success', T0 + 0.9 + sc.items.length * 0.4, { gain: 0.8 }); },
     beforeafter: (k, sc, T0) => { k.play('pop', T0 + 0.25, { gain: 0.8 }); k.play('riser', T0 + 0.6, { dur: 0.6, gain: 0.45 }); k.play('pop', T0 + 0.95, { gain: 0.9 }); k.play('success', T0 + 1.5, { gain: 0.8 }); },
     endcard: (k, sc, T0) => { k.play('impact', T0 + 0.12, { gain: 0.5 }); k.play('sparkle', T0 + 0.5, { gain: 0.7, n: 6 }); k.play('success', T0 + 1.3, { gain: 0.8 }); },
+    clip: (k, sc, T0) => { k.play('pop', T0 + 0.15, { gain: 0.8 }); k.play('sparkle', T0 + 0.5, { gain: 0.5, n: 4 }); },
+    image: (k, sc, T0) => { k.play('pop', T0 + 0.15, { gain: 0.8 }); },
     phone: (k, sc, T0) => { k.play('pop', T0 + 0.2, { gain: 0.9 }); k.play('blip', T0 + 0.8, { f: 'E6', dur: 0.1, gain: 0.5 }); },
   };
   window.SCENE_SOUND = SND;

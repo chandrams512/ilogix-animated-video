@@ -1,0 +1,45 @@
+{
+ "title": "AI clips sample",
+ "style": "glass",
+ "aspect": "9x16",
+ "safe": true,
+ "brand": {
+  "name": "iLogix Studio"
+ },
+ "scenes": [
+  {
+   "type": "hook",
+   "dur": 3,
+   "lines": [
+    "Footage an animation",
+    "cannot show"
+   ],
+   "say": "Footage an animation cannot show."
+  },
+  {
+   "type": "clip",
+   "dur": 4,
+   "title": "Generated clip (test)",
+   "prompt": "A slow aerial shot over a mountain range at sunrise",
+   "say": "A generated clip, always labelled."
+  },
+  {
+   "type": "image",
+   "dur": 4,
+   "title": "Still with a slow zoom",
+   "image": "photo.jpg",
+   "badge": "Sample image",
+   "say": "Or a still image with a slow zoom."
+  },
+  {
+   "type": "cta",
+   "dur": 3.5,
+   "lines": [
+    "Mix both with",
+    "explainer scenes"
+   ],
+   "button": "Ask us",
+   "say": "Mix both with explainer scenes."
+  }
+ ]
+}

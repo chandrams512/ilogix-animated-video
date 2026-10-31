@@ -39,6 +39,8 @@ Check it first with `python3 engine/validate_plan.py plans/<name>/plan.json` (th
 | `beforeafter` | `title`, `before{label, value, note}`, `after{...}` | value up to 9 characters |
 | `endcard` | `lines[]`, `phone`, `email`, `web`, `qr` (a URL, made into a QR code at build), `tagline` | needs at least one contact or qr |
 | `phone` | `image` (file next to the plan), `title`, `caption` | screenshot shown in a phone frame |
+| `clip` | `prompt` (made by `engine/clips.py`) or `file` (a video you have), `title`, `badge` (default "AI-generated"), `full`, `fps` | up to 12 s; an AI clip must keep its badge |
+| `image` | `image` (file next to the plan), `title`, `badge`, `full` | a still with a slow zoom; real-estate plans need a badge such as "Artist's impression" |
 
 Icons: phone, mail, chat, cal, person, doc, check, bolt, plan, shield, pin, plane, cross.
 
@@ -50,6 +52,10 @@ Icons: phone, mail, chat, cal, person, doc, check, bolt, plan, shield, pin, plan
 - QR codes need `pip install segno`.
 - Compliance footer: `"brand": { "rera": "RERA No. ...", "disclaimer": "Artist's impression." }` prints one small line (two in vertical) at the bottom of every scene; each is up to 70 characters. Wide captions move up a little to make room.
 - `"industry": "real-estate"` makes the validator require `brand.rera` and reject phrases such as "assured returns", "guaranteed appreciation" and "risk free". It is a safety net, not legal advice: check your state RERA rules. See `docs/real-estate.md`.
+
+- Hindi: write the text in Devanagari and set `"lang": "hi"`. The Noto Sans Devanagari font is embedded automatically when the plan contains Hindi, and it backs up every style's font. `python3 engine/gen_plan.py brief.txt out.json --lang hi` asks the model for Hindi. End sentences with the danda (।).
+- Voiceover: `python3 engine/tts.py plans/<name>/plan.json --provider estimate|azure|elevenlabs|edge|file`, then build. See `docs/voiceover.md`. `"voice": false` in the plan ignores an existing voice folder.
+- AI clips: add a `clip` scene with a `prompt`, then `python3 engine/clips.py plans/<name>/plan.json --provider mock` (free test) or a paid provider with `--usd-per-clip` and `--max-usd`. See `docs/tiers.md`.
 
 ## Checks
 - `python3 engine/validate_plan.py plan.json` checks the plan.

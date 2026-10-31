@@ -2,12 +2,14 @@
 // Scene types: hook, steps, stat, chart, compare, timeline, flow, cta. See docs/plan-format.md.
 // Everything draws through S (the active style), so any registered style works. Captions and brand kit are built in.
 const DURATION = PLAN.scenes.reduce((end, sc) => { sc._t0 = sc.start != null ? sc.start : end; sc._d = sc.dur || 3; return Math.max(end, sc._t0 + sc._d); }, 0);
+// Hindi: add the Devanagari font to every canvas font stack as a fallback (Latin text keeps the style's own font).
+if (window.HINDI) { const d = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'font'); Object.defineProperty(CanvasRenderingContext2D.prototype, 'font', { get: d.get, set(v) { d.set.call(this, /Noto Sans Devanagari/.test(v) ? v : String(v).replace(/(;|$)/, ', "Noto Sans Devanagari"$1')); } }); }
 const BRAND = Object.assign({ name: '', logoText: '' }, PLAN.brand || {});
 window.HAS_CAPTIONS = false; window.CAPTIONS_ON = true;
 (function applyBrand() {
   const c = BRAND.colors || {}; Object.keys(STYLES).forEach((id) => Object.keys(c).forEach((k) => { if (STYLES[id].pal && /^(cyan|violet|pink|green|amber|red)$/.test(k)) STYLES[id].pal[k] = c[k]; }));
 })();
-const CAPS = (PLAN.captions || PLAN.scenes.filter((s) => s.say).map((s) => ({ t: s._t0 + 0.15, dur: Math.max(1, s._d - 0.4), text: s.say }))).slice();
+const CAPS = (PLAN.captions || PLAN.scenes.filter((s) => s.say).map((s) => ({ t: s._t0 + (s.vdur ? 0.25 : 0.15), dur: s.vdur ? s.vdur + 0.1 : Math.max(1, s._d - 0.4), text: s.say }))).slice();
 window.HAS_CAPTIONS = CAPS.length > 0;
 let LOGO_IMG = null;
 if (BRAND.logo) { LOGO_IMG = new Image(); LOGO_IMG.src = BRAND.logo; }

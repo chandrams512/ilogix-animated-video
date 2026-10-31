@@ -20,9 +20,9 @@
   }
   function card(x, X, Y, w, h, o = {}) { x.save(); x.globalAlpha *= o.a == null ? 1 : o.a; panel(x, X, Y, w, h, o.r || 26, o.col || P.cyan, 0.15); x.restore(); }
   function node(x, cx, cy, r, col, t, o = {}) {
-    const p = 0.5 + 0.5 * Math.sin(t * 3 + (o.ph || 0)); glow(x, cx, cy, r * 2.2, col, 0.22 + 0.08 * p); panel(x, cx - r, cy - r, r * 2, r * 2, r, col, 0.18);
+    const p = 0.5 + 0.5 * Math.sin(t * 3 + (o.ph || 0)); glow(x, cx, cy, r * 2.2, col, 0.22 + 0.08 * p); panel(x, cx - r, cy - r, r * 2, r * 2, r, col, 0.32);
     if (o.ring) { x.strokeStyle = H.rgba(col, 0.45 * (1 - p)); x.lineWidth = 2; x.beginPath(); x.arc(cx, cy, r * (1.15 + 0.25 * p), 0, TAU); x.stroke(); }
-    if (o.icon) o.icon(x, cx, cy, r * 0.5, Array.isArray(col) ? hexOf(col) : col, t);
+    if (o.icon) o.icon(x, cx, cy, r * 0.5, '#f4f7ff', t);
     if (o.label) text(x, o.label, cx, cy + r + (o.ly || 34), o.lpx || 25, P.ink, { w: 700 });
   }
   function link(x, ax, ay, bx, by, col, t, o = {}) {

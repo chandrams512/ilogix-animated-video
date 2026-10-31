@@ -3,6 +3,7 @@
 Usage: python3 engine/render.py <16x9|9x16> <outdir> [html_path] [name_prefix] [style]
 Defaults: dist/ilogix_voice_agents.html, prefix 'ilogix'.
 Env: CAPTIONS=0 (no burned-in captions)   MIXES=sfx-only (render only these audio mixes, comma separated; default all three)
+With a voiceover (see engine/tts.py) it also writes <prefix>_<aspect>_voiceover.mp4: the quiet effects mix plus the voice.
 Also writes <prefix>_<aspect>_cover.jpg (a settled still for thumbnails) and <prefix>_<aspect>_preview.gif (first 6 s, small, for emails).
 Renders frames once (silent), renders both audio mixes offline, then muxes:
   ilogix_<aspect>_sound.mp4 (full effects + music pad)  and  voiceover-mix (quieter, no pad) and sfx-only (full effects, no music, for laying your own track)."""
@@ -58,6 +59,13 @@ async def main():
     gif = os.path.join(OUT, f'{PREFIX}_{ASPECT}_preview.gif')
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-t', '6', '-i', silent, '-vf', f'fps=8,scale={gw}:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96[p];[b][p]paletteuse=dither=bayer:bayer_scale=4', gif], check=True)
     print('wrote', gif, os.path.getsize(gif) // 1024, 'KB', flush=True)
+    vwav = HTML_PATH[:-5] + '_voice.wav'  # written by build.py when the plan has a voiceover
+    if 'voiceover-mix' in MIXES and os.path.exists(vwav):
+        out = os.path.join(OUT, f'{PREFIX}_{ASPECT}_voiceover.mp4')
+        subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', silent, '-f', 'f32le', '-ar', '48000', '-ac', '2', '-i', os.path.join(OUT, '_audio_voiceover-mix.f32'), '-i', vwav,
+                        '-filter_complex', '[1:a][2:a]amix=inputs=2:weights=0.55 1.3:duration=first:normalize=0,alimiter=limit=0.95[o]', '-map', '0:v', '-map', '[o]',
+                        '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', out], check=True)
+        print('wrote', out, os.path.getsize(out) // 1024, 'KB', flush=True)
     for name in [m for m in ('sound', 'voiceover-mix', 'sfx-only') if m in MIXES]:
         out = os.path.join(OUT, f'{PREFIX}_{ASPECT}_{name}.mp4')
         subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', silent, '-f', 'f32le', '-ar', '48000', '-ac', '2', '-i', os.path.join(OUT, f'_audio_{name}.f32'),

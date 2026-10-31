@@ -5,7 +5,7 @@ import json, sys
 STYLES = {'tech-glow', 'isometric', 'whiteboard', 'blueprint', 'neo-brutal', 'glass', 'paper-cut'}
 ICONS = {'phone', 'mail', 'chat', 'cal', 'person', 'doc', 'check', 'bolt', 'plan', 'shield', 'pin', 'plane', 'cross'}
 REQ = {'hook': ['lines'], 'steps': ['items'], 'stat': ['value', 'label'], 'chart': ['bars'], 'compare': ['left', 'right'], 'timeline': ['points'], 'flow': ['nodes'], 'cta': ['lines'],
-       'testimonial': ['quote', 'name'], 'offer': ['headline'], 'pricing': ['plans'], 'checklist': ['items'], 'beforeafter': ['before', 'after'], 'endcard': ['lines'], 'phone': ['image']}
+       'testimonial': ['quote', 'name'], 'offer': ['headline'], 'pricing': ['plans'], 'checklist': ['items'], 'beforeafter': ['before', 'after'], 'endcard': ['lines'], 'phone': ['image'], 'clip': [], 'image': ['image']}
 LIM = {'hook': (1, 3, 'lines'), 'steps': (2, 4, 'items'), 'chart': (2, 6, 'bars'), 'timeline': (2, 5, 'points'), 'flow': (2, 5, 'nodes'), 'cta': (1, 3, 'lines'),
        'pricing': (2, 3, 'plans'), 'checklist': (2, 5, 'items'), 'endcard': (1, 3, 'lines')}
 BANNED = ['assured return', 'guaranteed return', 'guaranteed appreciation', 'assured rental', 'guaranteed rental', 'assured appreciation', 'risk free', 'risk-free']
@@ -47,6 +47,10 @@ else:
                 v2 = s.get(side) or {}
                 if not all(k in v2 for k in ('label', 'value')): errs.append('%s: %s needs label and value' % (where, side))
                 if len(str(v2.get('value', ''))) > 9: errs.append('%s: %s value is too long (max 9 characters)' % (where, side))
+        if t == 'clip':
+            if not (s.get('prompt') or s.get('file')): errs.append('%s: needs a prompt (to generate with engine/clips.py) or a file' % where)
+            if s.get('badge') is False and not s.get('real'): errs.append('%s: AI clips must show a badge; set "real": true only for real footage you own' % where)
+        if t in ('clip', 'image') and len(s.get('title', '')) > 60: errs.append('%s: title is over 60 characters' % where)
         if t == 'endcard' and not any(s.get(k) for k in ('phone', 'email', 'web', 'qr')): errs.append('%s: add at least one of phone, email, web, qr' % where)
         for key in ('items', 'nodes'):
             for it in s.get(key, []):
@@ -64,5 +68,8 @@ if plan.get('industry') == 'real-estate':
     blob = json.dumps(plan, ensure_ascii=False).lower()
     for b in BANNED:
         if b in blob: errs.append('real-estate: remove %r (return/appreciation promises are not allowed in ads)' % b)
+if plan.get('industry') == 'real-estate':
+    for i, s2 in enumerate(plan.get('scenes') or [], 1):
+        if s2.get('type') == 'image' and not s2.get('badge'): errs.append('scene %d (image): real-estate images need a badge such as "Artist\'s impression" or "Actual photo"' % i)
 print('\n'.join('- ' + e for e in errs) if errs else 'Plan is valid.')
 sys.exit(1 if errs else 0)
