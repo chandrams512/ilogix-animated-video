@@ -1,0 +1,18 @@
+{
+  "title": "How to travel at the speed of light",
+  "style": "isometric",
+  "aspect": "9x16",
+  "brand": { "name": "Learn in 20 seconds" },
+  "scenes": [
+    { "type": "hook", "dur": 3.5, "lines": ["Can you travel at", "the speed of light?"], "sub": "Short answer: not quite.", "say": "Can you travel at the speed of light? Not quite." },
+    { "type": "steps", "dur": 6.5, "title": "Why it's so hard", "items": [
+      { "title": "Light is fast", "sub": "299,792 km every second", "icon": "bolt", "tag": "Fact 1" },
+      { "title": "Speed costs energy", "sub": "More, the closer you get", "icon": "plan", "tag": "Fact 2" },
+      { "title": "Only light makes it", "sub": "It has no mass to push", "icon": "check", "tag": "Fact 3" } ],
+      "say": "Light covers almost 300,000 km a second. Nearing that speed takes ever more energy. Only light itself reaches it." },
+    { "type": "flow", "dur": 6, "title": "What you can do", "nodes": [
+      { "label": "Speed up", "icon": "plane" }, { "label": "Time slows", "icon": "cal" }, { "label": "Trip feels shorter", "icon": "person" }, { "label": "Arrive", "icon": "pin" } ],
+      "say": "Go very fast and, for you, time runs slower, so a long trip feels shorter." },
+    { "type": "cta", "dur": 4, "lines": ["Light is the limit."], "button": "Follow for more", "icon": "bolt", "say": "Follow for more." }
+  ]
+}
