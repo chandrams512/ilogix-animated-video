@@ -1,5 +1,7 @@
 # ilogix-animated-video
 
+**New here? Start with [`docs/HOW-TO.md`](docs/HOW-TO.md): step-by-step instructions for making a video, Hindi, voiceover, AI clips and real estate.**
+
 Animated explainer videos drawn on an HTML canvas. One function of time draws every frame, so the browser
 preview and the MP4 render match. Sound is synthesized (no audio files). Private repo.
 
@@ -8,7 +10,7 @@ preview and the MP4 render match. Sound is synthesized (no audio files). Private
 - `styles/` one folder per look (`tech-glow`, `isometric`, `paper-cut`, `whiteboard`, `blueprint`, `neo-brutal`, `glass`); `_sound/` is the sound kit (original kit, see its README)
 - `plans/<name>/` one folder per video: `manifest.json` (script order), scene code, storyboard
 - `archive/earth-water/` the first video, kept as built
-- `docs/` workflow notes
+- `docs/` guides (start with `HOW-TO.md`)
 
 ## Build a player
     python3 engine/build.py plans/ilogix-voice-agents/manifest.json   # writes dist/ilogix_voice_agents.html
@@ -29,7 +31,6 @@ Skins reuse the line icons from `styles/tech-glow/style.js` and shared drawing h
 
 ## Rules
 - Keys go in environment variables, never in the repo. MP4s and voiceover clips are git-ignored.
-- Planned: JSON plan files, so a new video needs a plan, not new code.
 
 
 ## Plan videos (fast path)
