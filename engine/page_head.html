@@ -8,11 +8,11 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; background: var(--bg); }
 body { margin: 0; color: var(--fg); font: 700 15px/1.2 "Nunito", system-ui, sans-serif; display: flex; flex-direction: column; padding-block: 12px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); gap: 12px; }
-.stage { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; position: relative; background: #000; border-radius: 10px; overflow: hidden; }
+.stage { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; position: relative; background: #000; border-radius: 10px; overflow: hidden; container-type: size; }
 canvas { display: block; width: 100%; height: 100%; object-fit: contain; max-width: 100%; }
-.big { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(5,6,28,.35); border: 0; cursor: pointer; color: #fff; }
+.big { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(5,6,28,.16); border: 0; cursor: pointer; color: #fff; }
 .big[hidden] { display: none; }
-.big span { width: 92px; height: 92px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; box-shadow: 0 8px 30px rgba(0,0,0,.45); }
+.big span { margin-top: 36cqh; width: 92px; height: 92px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; box-shadow: 0 8px 30px rgba(0,0,0,.45); }
 .big svg { width: 38px; height: 38px; margin-left: 6px; fill: #050816; }
 .bar { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--bar); border: 1px solid var(--edge); border-radius: 12px; padding: 10px 14px; }
 button.ctl { font: 800 14px/1 "Nunito", system-ui, sans-serif; color: var(--fg); background: transparent; border: 1px solid var(--edge); border-radius: 999px; padding: 9px 14px; cursor: pointer; min-width: 44px; }
