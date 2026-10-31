@@ -139,64 +139,116 @@ footer{padding:0 0 60px;color:var(--mute);font-size:13px}
 @media (max-width:900px){.stage{aspect-ratio:4/6.3}.stage.tall{aspect-ratio:9/24}.live{grid-template-columns:minmax(0,1fr);gap:22px}.live>div{min-width:0}.styles{flex-direction:row;overflow-x:auto;gap:8px;padding-bottom:6px}.styles button{border:1px solid var(--line);border-radius:999px;padding:9px 16px;white-space:nowrap;width:auto}.styles button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}.styles span{display:none}.styles b{font-size:15px}.brief{grid-template-columns:minmax(0,1fr);gap:28px}.hero{padding-top:24px;grid-template-columns:1fr;gap:20px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 
-/* ===== sectioned layout (light by default, soft dark optional) ===== */
-body{background:var(--bg)}
-.nav{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-.nav .top{padding:14px 24px}
-.top nav{align-items:center}
+/* ===== sectioned layout: colour bands, slanted edges, patterns ===== */
+:root{--sl:clamp(18px,3.4vw,54px);--indigo:#4f46e5;--coral:#ff7a59;--mint:#12b886;--sun:#ffc233;
+ --w-bg:#ffffff;--grid-bg:#f1f2fd;--warm-bg:#fff0e4;--mint-bg:#e3f7ef;--dark-bg:#1b1f4b;--deep-bg:#4338ca}
+:root[data-theme=dark]{--w-bg:#161a26;--grid-bg:#1b2033;--warm-bg:#2a2230;--mint-bg:#16282a;--dark-bg:#0f1230;--deep-bg:#2b2a78}
+body{background:var(--w-bg)}
+.nav{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--w-bg) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav .top{padding:14px 24px}.top nav{align-items:center}
 .tbtn{font:600 13px var(--disp);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:9px 14px;cursor:pointer}
-.band{padding:84px 0}
+.band{position:relative;padding:100px 0;overflow:hidden;--acc:var(--indigo)}
+.band>.wrap{position:relative;z-index:2}
 .band .sec{padding:0}
-.b-plain{background:var(--bg)}
-.b-tint{background:var(--tint)}
-.b-warm{background:var(--warm)}
-.b-hero{padding:56px 0 70px;background:radial-gradient(900px 420px at 12% -10%,color-mix(in srgb,var(--sel) 16%,transparent),transparent 70%),radial-gradient(700px 380px at 95% 10%,color-mix(in srgb,#ff8a5b 16%,transparent),transparent 70%),var(--bg)}
-.b-deep{background:linear-gradient(160deg,var(--deep),color-mix(in srgb,var(--deep) 70%,#000));color:#eef0ff}
-.eyebrow{font:700 12px var(--disp);letter-spacing:.14em;text-transform:uppercase;color:var(--sel);margin:0 0 12px}
-.b-deep .eyebrow{color:#b9b4ff}
-.hero{padding:0 0 34px}
-.hero h1{font-size:clamp(40px,6.2vw,80px)}
+.slant{clip-path:polygon(0 var(--sl),100% 0,100% calc(100% - var(--sl)),0 100%);margin-top:calc(var(--sl) * -1);padding-top:calc(100px + var(--sl));padding-bottom:calc(100px + var(--sl))}
+.slant.b-deep{clip-path:polygon(0 var(--sl),100% 0,100% 100%,0 100%);padding-bottom:100px}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font:700 12px var(--disp);letter-spacing:.12em;text-transform:uppercase;color:var(--acc);background:color-mix(in srgb,var(--acc) 13%,transparent);padding:7px 14px;border-radius:999px;margin:0 0 16px}
+.eyebrow::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--acc)}
+.sec h2{font-size:clamp(30px,4.4vw,48px)}
+/* hero */
+.b-hero{--acc:var(--indigo);padding:60px 0 84px;background:radial-gradient(760px 420px at 8% -8%,rgba(79,70,229,.20),transparent 70%),radial-gradient(640px 380px at 98% 6%,rgba(255,122,89,.22),transparent 70%),linear-gradient(180deg,#f4f3ff,var(--w-bg))}
+:root[data-theme=dark] .b-hero{background:radial-gradient(760px 420px at 8% -8%,rgba(139,131,255,.22),transparent 70%),radial-gradient(640px 380px at 98% 6%,rgba(255,122,89,.16),transparent 70%),linear-gradient(180deg,#1d2040,var(--w-bg))}
+.b-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(79,70,229,.16) 1.4px,transparent 1.6px) 0 0/26px 26px;-webkit-mask-image:linear-gradient(180deg,#000 0,transparent 55%);mask-image:linear-gradient(180deg,#000 0,transparent 55%)}
+.deco i{position:absolute;display:block;z-index:1;pointer-events:none}
+.deco .d1{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--coral),#ffb199);right:4%;top:62px;width:44px;height:44px;animation:fl 7s ease-in-out infinite}
+.deco .d2{width:54px;height:54px;border-radius:50%;border:8px solid var(--indigo);left:41%;top:26px;opacity:.55;animation:fl 9s ease-in-out infinite reverse}
+.deco .d3{width:26px;height:26px;left:31%;top:70px;background:linear-gradient(var(--sun),var(--sun)) center/100% 8px no-repeat,linear-gradient(var(--sun),var(--sun)) center/8px 100% no-repeat;animation:fl 6s ease-in-out infinite}
+.deco .d4{width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;border-bottom:34px solid var(--mint);left:3%;top:300px;opacity:.7;transform:rotate(14deg)}
+@keyframes fl{50%{transform:translateY(-14px)}}
+.hero{padding:0 0 34px}.hero h1{font-size:clamp(40px,6.2vw,80px)}
 .hero h1 em{font-style:normal;background:linear-gradient(90deg,#4f46e5,#ff7a59);-webkit-background-clip:text;background-clip:text;color:transparent}
-.btn{box-shadow:0 8px 20px -10px color-mix(in srgb,var(--btn) 80%,transparent)}
-.live{background:var(--panel);border:1px solid var(--line);border-radius:26px;padding:26px;box-shadow:var(--shadow);margin:0}
-.live .stage{box-shadow:0 0 0 1px var(--line)}
+.btn{box-shadow:0 10px 22px -10px color-mix(in srgb,var(--btn) 85%,transparent)}
+.live{background:var(--panel);border:1px solid var(--line);border-radius:28px;padding:26px;box-shadow:0 30px 70px -30px rgba(60,60,140,.35);margin:0}
 .seg button[aria-pressed=true],.filters button[aria-pressed=true]{background:var(--sel);color:var(--sel-ink);border-color:var(--sel)}
-.styles button[aria-pressed=true]{color:var(--ink);border-left-color:var(--sel);background:color-mix(in srgb,var(--sel) 8%,transparent)}
-.proof{margin:26px 0 0;padding:0;border:0;gap:16px}
-.proof>div{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px 22px;box-shadow:var(--shadow)}
-.proof b{color:var(--sel)}
-.how li{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
-.how li::before{background:var(--sel);color:var(--sel-ink)}
-.tier{box-shadow:var(--shadow)}.tier.soon{background:transparent}
-.tag{background:var(--sel);color:var(--sel-ink)}.soon .tag{background:none;color:var(--sel);border-color:var(--sel)}
-.tile img{box-shadow:0 0 0 1px var(--line),var(--shadow)}
-.use{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:var(--shadow)}
-.callout{background:var(--panel);border-radius:0 16px 16px 0;border-left-color:var(--sel);padding:20px 24px}
-.item{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:14px 14px 18px;box-shadow:var(--shadow)}
+.styles button[aria-pressed=true]{color:var(--ink);border-left-color:var(--sel);background:color-mix(in srgb,var(--sel) 9%,transparent)}
+.proof{margin:30px 0 0;padding:0;border:0;gap:16px}
+.proof>div{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px 22px;border-top:5px solid var(--indigo)}
+.proof>div:nth-child(2){border-top-color:var(--coral)}.proof>div:nth-child(3){border-top-color:var(--mint)}.proof>div:nth-child(4){border-top-color:var(--sun)}
+.proof b{color:var(--ink)}
+/* how it works */
+.b-how{background:var(--w-bg);--acc:var(--coral)}
+.b-how::before{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(28,33,51,.10) 1.3px,transparent 1.5px) 0 0/24px 24px;-webkit-mask-image:radial-gradient(70% 90% at 90% 100%,#000,transparent);mask-image:radial-gradient(70% 90% at 90% 100%,#000,transparent)}
+.how li{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:24px;box-shadow:0 18px 40px -26px rgba(40,40,100,.35);border-top:6px solid var(--indigo)}
+.how li:nth-child(2){border-top-color:var(--coral)}.how li:nth-child(3){border-top-color:var(--mint)}.how li:nth-child(4){border-top-color:var(--sun)}
+.how li::before{width:36px;height:36px;border-radius:12px;background:var(--indigo);color:#fff;font-size:16px}
+.how li:nth-child(2)::before{background:var(--coral)}.how li:nth-child(3)::before{background:var(--mint)}.how li:nth-child(4)::before{background:var(--sun);color:#3a2a00}
+/* two kinds: dark band */
+.b-dark{background:radial-gradient(600px 320px at 85% 10%,rgba(124,106,255,.38),transparent 70%),radial-gradient(520px 300px at 5% 100%,rgba(255,122,89,.22),transparent 70%),var(--dark-bg);color:#eceeff;--acc:#a9a3ff}
+.b-dark .eyebrow{color:#cfcbff;background:rgba(255,255,255,.1)}.b-dark .eyebrow::before{background:#a9a3ff}
+.b-dark h2{color:#fff}.b-dark .sub{color:#b8bde6}
+.b-dark .tier{background:#fff;color:#1c2133;border:0;box-shadow:0 30px 60px -30px rgba(0,0,0,.6)}
+.b-dark .tier h3{color:#1c2133}.b-dark .tier p,.b-dark .tier li{color:#566079}
+.b-dark .tier .tag{background:#4f46e5;color:#fff}
+.b-dark .tier.soon{background:rgba(255,255,255,.07);border:1.5px dashed rgba(255,255,255,.4);box-shadow:none}
+.b-dark .tier.soon h3{color:#fff}.b-dark .tier.soon p,.b-dark .tier.soon li{color:#c4c9ee}
+.b-dark .soon .tag{background:transparent;color:#d7d4ff;border:1px solid #b6b0ff}
+/* scene types: lavender grid */
+.b-grid{background:var(--grid-bg);--acc:var(--indigo)}
+.b-grid::before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(79,70,229,.07) 1px,transparent 1px) 0 0/40px 40px,linear-gradient(90deg,rgba(79,70,229,.07) 1px,transparent 1px) 0 0/40px 40px;-webkit-mask-image:linear-gradient(180deg,#000,transparent 80%);mask-image:linear-gradient(180deg,#000,transparent 80%)}
+.b-grid .how li{border-top-width:6px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:10px 10px 14px;box-shadow:0 14px 30px -22px rgba(40,40,100,.45);transition:transform .25s}
+.tile:hover{transform:translateY(-4px)}.tile:hover img{transform:none}
+.tile b,.tile span{padding:0 4px}
+/* real estate: peach with skyline */
+.b-warm{background:linear-gradient(180deg,var(--warm-bg),color-mix(in srgb,var(--warm-bg) 60%,#ffc9ad));--acc:#e8553a;padding-bottom:calc(150px + var(--sl))}
+.b-warm::after{content:"";position:absolute;left:0;right:0;bottom:var(--sl);height:130px;z-index:1;pointer-events:none;opacity:.42;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='130' viewBox='0 0 600 130'%3E%3Cg fill='%23e8553a'%3E%3Crect x='10' y='60' width='46' height='70'/%3E%3Crect x='64' y='30' width='40' height='100'/%3E%3Crect x='112' y='70' width='56' height='60'/%3E%3Crect x='176' y='10' width='44' height='120'/%3E%3Crect x='228' y='50' width='60' height='80'/%3E%3Crect x='296' y='80' width='40' height='50'/%3E%3Crect x='344' y='24' width='48' height='106'/%3E%3Crect x='400' y='64' width='54' height='66'/%3E%3Crect x='462' y='40' width='42' height='90'/%3E%3Crect x='512' y='72' width='70' height='58'/%3E%3C/g%3E%3C/svg%3E") repeat-x bottom/600px 130px}
+.use{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:26px;box-shadow:0 18px 40px -26px rgba(160,70,40,.45)}
+.use::before{content:"";display:block;width:40px;height:40px;border-radius:13px;margin-bottom:16px;background:linear-gradient(135deg,var(--indigo),#8b83ff)}
+.use:nth-child(2)::before{background:linear-gradient(135deg,var(--coral),#ffb199)}.use:nth-child(3)::before{background:linear-gradient(135deg,var(--mint),#7be0bf)}
+.use:nth-child(4)::before{background:linear-gradient(135deg,var(--sun),#ffe08a)}.use:nth-child(5)::before{background:linear-gradient(135deg,#e8553a,#ff9d85)}.use:nth-child(6)::before{background:linear-gradient(135deg,#06b6d4,#7ee0ee)}
+.callout{background:var(--panel);border-radius:0 18px 18px 0;border-left:5px solid var(--coral);padding:20px 24px}
+/* library */
+.b-plain{background:var(--w-bg);--acc:var(--indigo)}
+.item{background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:14px 14px 18px;box-shadow:0 22px 44px -30px rgba(40,40,100,.45)}
 .item h3,.item .meta,.item p,.item .acts{padding:0 6px}
-.poster{border-radius:14px}
-.faq details{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 22px;margin:0 0 12px}
+/* guide + faq: heading left, answers right */
+.split{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,7fr);gap:56px;align-items:start}
+.split .left{position:sticky;top:100px}
+.faq details{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 22px;margin:0 0 12px;box-shadow:0 10px 24px -20px rgba(40,40,100,.4)}
 .faq details:last-child{border-bottom:1px solid var(--line)}
-.faq summary{color:var(--ink)}
-.faq .eyebrow,.faq h2,.faq .sub{max-width:none}
-.brief{border:0;padding:0}
-.b-deep .sub,.b-deep label{color:#c4c8ee}
-.b-deep h2{color:#fff}
-.b-deep form{background:var(--panel);border-radius:22px;padding:26px;box-shadow:0 24px 60px -24px rgba(0,0,0,.5)}
+.faq summary::after{color:var(--acc);font-weight:700}
+.b-mint{background:var(--mint-bg);--acc:#0b8f6b}
+.b-mint::before{content:"";position:absolute;right:-80px;top:40px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(18,184,136,.25),transparent 70%)}
+/* brief */
+.b-deep{background:radial-gradient(700px 360px at 90% 0,rgba(255,122,89,.35),transparent 70%),radial-gradient(600px 400px at 0 100%,rgba(255,255,255,.12),transparent 70%),var(--deep-bg);color:#eef0ff;--acc:#ffd9cf}
+.b-deep::before{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(255,255,255,.18) 1.4px,transparent 1.6px) 0 0/28px 28px;-webkit-mask-image:linear-gradient(180deg,transparent,#000 70%);mask-image:linear-gradient(180deg,transparent,#000 70%)}
+.b-deep .eyebrow{color:#ffd9cf;background:rgba(255,255,255,.14)}.b-deep .eyebrow::before{background:#ffb199}
+.b-deep h2{color:#fff}.b-deep .sub{color:#d6d9ff}
+.brief{display:block;border:0;padding:0}
+.brief>div:first-child{max-width:62ch;margin-bottom:30px}
+.b-deep form{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px 18px;background:var(--panel);border-radius:26px;padding:30px;box-shadow:0 40px 80px -30px rgba(0,0,0,.55);color:var(--ink)}
 .b-deep form label{color:var(--mute)}
-.b-deep .note{color:#c4c8ee}
-.b-deep form .note{color:var(--mute)}
-.foot{background:#171a2b;color:#c4c8e0;padding:34px 0;font-size:14px}
+.b-deep .f{min-width:0}
+.c2{grid-column:span 2}.c3{grid-column:span 3}.c4{grid-column:span 4}.c12{grid-column:1/-1}
+.b-deep textarea,.b-deep pre{height:150px;min-height:0;max-height:none}
+.b-deep textarea{resize:none}
+.b-deep .act>div{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.b-deep .note{color:var(--mute)}
+.foot{background:#12142b;color:#c4c8e0;padding:34px 0;font-size:14px;position:relative;z-index:3}
 .foot .wrap{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
 .foot b{color:#fff;font:700 17px var(--disp)}.foot p{margin:6px 0 0;color:#9aa1c4;font-size:13px}
 .foot .btn{background:#8b83ff;color:#14162a}
 .filters{margin-top:6px}
-@media (max-width:900px){.band{padding:56px 0}.b-hero{padding:34px 0 48px}.live{padding:16px;border-radius:20px}}
+@media (max-width:900px){.band{padding:64px 0}.slant{padding-top:calc(64px + var(--sl));padding-bottom:calc(64px + var(--sl))}.slant.b-deep{padding-bottom:64px}.b-hero{padding:34px 0 52px}.live{padding:16px;border-radius:20px}
+ .split{grid-template-columns:minmax(0,1fr);gap:26px}.split .left{position:static}.c2,.c3,.c4{grid-column:1/-1}.b-deep form{padding:20px}.deco .d1,.deco .d2,.deco .d3,.deco .d4{display:none}.b-warm{padding-bottom:calc(120px + var(--sl))}}
+@media (max-width:760px){.nav .top{padding:12px 16px}}
+@media (prefers-reduced-motion:reduce){.deco i{animation:none!important}}
 </style>
 </head>
 <body>
 <header class="nav"><div class="wrap top"><a class="logo" href="#">iLogix Video Studio</a><nav><a href="#how">How it works</a><a href="#guide">Guide</a><a href="#scenes">Scene types</a><a href="#realestate">Real estate</a><a href="#videos">Videos</a><a href="#faq">FAQ</a><a class="btn" href="#brief">Request a video</a><button type="button" id="theme" class="tbtn" aria-label="Switch light or dark theme">Dark</button></nav></div></header>
 <div class="band b-hero"><div class="wrap">
+<div class="deco" aria-hidden="true"><i class="d1"></i><i class="d2"></i><i class="d3"></i><i class="d4"></i></div>
 <section class="hero">
   <h1>One script.<br><em>Seven looks.</em></h1>
   <div><p>Short animated explainers with captions and sound effects, built to take your own music. Change the style below and the same video redraws.</p>
@@ -213,7 +265,7 @@ body{background:var(--bg)}
 </section>
 <div class="proof" id="proof" aria-label="At a glance"></div>
 </div></div>
-<div class="band b-plain"><div class="wrap">
+<div class="band b-how"><div class="wrap">
 <section class="sec" id="how">
   <div class="eyebrow">How it works</div>
   <h2>From idea to a video you can post</h2>
@@ -226,7 +278,7 @@ body{background:var(--bg)}
   </ol>
 </section>
 </div></div>
-<div class="band b-tint"><div class="wrap">
+<div class="band b-dark slant"><div class="wrap">
 <section class="sec" id="tiers">
   <div class="eyebrow">Two kinds of video</div>
   <h2>Two kinds of video, kept apart</h2>
@@ -241,7 +293,7 @@ body{background:var(--bg)}
   </div>
 </section>
 </div></div>
-<div class="band b-plain"><div class="wrap">
+<div class="band b-grid"><div class="wrap">
 <section class="sec" id="scenes">
   <div class="eyebrow">Scene types</div>
   <h2>Fifteen scene types</h2>
@@ -254,7 +306,7 @@ body{background:var(--bg)}
   <div class="scenes" id="sgrid"></div>
 </section>
 </div></div>
-<div class="band b-warm"><div class="wrap">
+<div class="band b-warm slant"><div class="wrap">
 <section class="sec" id="realestate">
   <div class="eyebrow">Real estate</div>
   <h2>For real estate</h2>
@@ -279,12 +331,12 @@ body{background:var(--bg)}
   <div class="grid" id="vgrid"></div>
 </section>
 </div></div>
-<div class="band b-tint"><div class="wrap">
-<section class="sec faq" id="guide">
+<div class="band b-mint slant"><div class="wrap">
+<section class="sec faq" id="guide"><div class="split"><div class="left">
   <div class="eyebrow">Guide</div>
   <h2>How to use the studio</h2>
   <p class="sub">Open any step for the details. Everything starts from the form at the bottom of this page.</p>
-  <details open><summary>1. Send your brief</summary><p>Fill in the topic, length, shape and style, tick the scenes you want, and write the key points one per line. Press Copy brief and paste it into the Claude chat for this project. If you are unsure, leave the points empty and a hook, three points and a closing line will be proposed.</p></details>
+  </div><div class="right"><details open><summary>1. Send your brief</summary><p>Fill in the topic, length, shape and style, tick the scenes you want, and write the key points one per line. Press Copy brief and paste it into the Claude chat for this project. If you are unsure, leave the points empty and a hook, three points and a closing line will be proposed.</p></details>
   <details><summary>2. Pick a style and a shape</summary><p>Try the styles in the live preview at the top of the page: the same video redraws in each one. Choose vertical 9:16 for Reels and Shorts, wide 16:9 for YouTube, or both. Vertical videos can be set to keep text clear of the app buttons.</p></details>
   <details><summary>3. Approve the storyboard</summary><p>You get the scene list and the exact words first. Change anything you like; nothing is built until you say OK.</p></details>
   <details><summary>4. Get your files</summary><p>A wide and a vertical MP4 with captions and sound effects but no music, a captions file and a cover image. Lay your own music over the MP4 in any editor or in Instagram. Every video is checked for text that runs off the frame or overlaps before it is sent. Watch it once with sound before you post.</p></details>
@@ -293,14 +345,14 @@ body{background:var(--bg)}
   <details><summary>Add a voiceover</summary><p>Each scene's caption line is what gets spoken. You can send your own recording of each line, or ask for an AI voice (English or Hindi). The scenes are then lengthened to fit the voice and the captions follow it. This step is still being tested, so ask before relying on it.</p></details>
   <details><summary>Many videos from a spreadsheet</summary><p>For offers, units or personalised videos, send one row per video (name, price, code, phone and so on). One template then makes all of them in the same style.</p></details>
   <details><summary>Real estate</summary><p>Choose Real estate in the form and add the project's RERA number. It is printed on every scene, and phrases that promise returns are rejected. Rules differ by state, so check yours before posting.</p></details>
-</section>
+</div></div></section>
 </div></div>
 <div class="band b-plain"><div class="wrap">
-<section class="sec faq" id="faq">
+<section class="sec faq" id="faq"><div class="split"><div class="left">
   <div class="eyebrow">FAQ</div>
   <h2>Questions</h2>
   <p class="sub">The short answers.</p>
-  <details><summary>Can I add my own music?</summary><p>Yes. The download has captions and sound effects only, so your track goes straight on top in any editor or in Instagram. Versions with a music bed can be made if you prefer.</p></details>
+  </div><div class="right"><details><summary>Can I add my own music?</summary><p>Yes. The download has captions and sound effects only, so your track goes straight on top in any editor or in Instagram. Versions with a music bed can be made if you prefer.</p></details>
   <details><summary>Which languages work?</summary><p>English and Hindi on-screen text and captions. A voiceover step (an AI voice, or your own recording, with the video timed to it) is built and still being tested, so ask before relying on it.</p></details>
   <details><summary>Can it use my logo and colours?</summary><p>Yes. Send a name or logo and your colours, or let the studio pick colours from the logo. They apply to every style and every scene.</p></details>
   <details><summary>What do I get back?</summary><p>A wide 16:9 and a vertical 9:16 MP4, a captions file, a cover image, and a short preview GIF if you want one for email.</p></details>
@@ -308,26 +360,26 @@ body{background:var(--bg)}
   <details><summary>Do you handle real estate rules?</summary><p>The studio prints your RERA number on every scene and flags phrases such as assured returns. That helps, but the rules differ by state and the advertiser is responsible, so check yours before posting.</p></details>
   <details><summary>How is a video checked?</summary><p>Each plan is validated, then every scene is tested in the chosen style, wide and vertical, for text that runs off the frame or overlaps. A person then looks at the result before it is sent.</p></details>
   <details><summary>What does it cost?</summary><p>Pricing is being worked out while we test. Send a brief and you will get a quote before anything is built.</p></details>
-</section>
+</div></div></section>
 </div></div>
-<div class="band b-deep"><div class="wrap">
+<div class="band b-deep slant"><div class="wrap">
 <section class="brief" id="brief">
   <div><div class="eyebrow">Request a video</div><h2>Tell us what to make</h2><p class="sub">Give us the topic, the points to cover and a style. The brief below is what gets the video built. For now, copy it and paste it into the Claude chat for this project.</p></div>
   <form id="bf" onsubmit="return false">
-    <div class="f"><label for="b-topic">Topic</label><input id="b-topic" placeholder="e.g. Why is the sky blue?"></div>
-    <div class="f"><label for="b-brand">For</label><select id="b-brand"><option>iLogix</option><option>TripNido</option><option>Education channel</option><option>Real estate</option><option>Other</option></select></div>
-    <div class="f"><label for="b-len">Length</label><select id="b-len"><option>10 s</option><option selected>20 s</option><option>35 s</option><option>60 s</option></select></div>
-    <div class="f"><label for="b-asp">Shape</label><select id="b-asp"><option>9:16 vertical</option><option>16:9 wide</option><option>Both</option></select></div>
-    <div class="f"><label for="b-style">Style</label><select id="b-style"><option>Tech Glow</option><option>Glass UI</option><option>Isometric Pastel</option><option>Paper Cut</option><option>Whiteboard</option><option>Blueprint</option><option>Neo-brutalist</option></select></div>
-    <div class="f"><label for="b-audio">Audio</label><select id="b-audio"><option>Sound effects only (I will add music)</option><option>Sound effects plus music</option><option>Leave room for voiceover</option></select></div>
-    <div class="f"><label for="b-cap">Captions</label><select id="b-cap"><option>On (burned in, plus an .srt file)</option><option>Off</option></select></div>
-    <div class="f"><label for="b-rera">RERA number (real estate only)</label><input id="b-rera" placeholder="Project registration number"></div>
-    <div class="f"><label for="b-brandkit">Brand kit (optional)</label><input id="b-brandkit" placeholder="Name, logo file, brand colours"></div>
-    <div class="f wide"><label>Scenes to include (optional)</label><div class="chk" id="b-scenes"></div></div>
-    <div class="f wide"><label for="b-pts">Key points or script, one per line</label><textarea id="b-pts" placeholder="Hook&#10;Main point 1&#10;Main point 2&#10;Call to action"></textarea></div>
-    <div class="f wide"><label for="b-notes">Facts, sources, brand notes (optional)</label><textarea id="b-notes" placeholder="Links, numbers that must be correct, words to avoid"></textarea></div>
-    <div class="f wide"><label>Brief</label><pre id="out"></pre></div>
-    <div class="f wide"><div><button class="btn" id="copy" type="button">Copy brief</button><span class="note" id="cmsg" role="status"></span></div></div>
+    <div class="f c4"><label for="b-topic">Topic</label><input id="b-topic" placeholder="e.g. Why is the sky blue?"></div>
+    <div class="f c2"><label for="b-brand">For</label><select id="b-brand"><option>iLogix</option><option>TripNido</option><option>Education channel</option><option>Real estate</option><option>Other</option></select></div>
+    <div class="f c2"><label for="b-len">Length</label><select id="b-len"><option>10 s</option><option selected>20 s</option><option>35 s</option><option>60 s</option></select></div>
+    <div class="f c2"><label for="b-asp">Shape</label><select id="b-asp"><option>9:16 vertical</option><option>16:9 wide</option><option>Both</option></select></div>
+    <div class="f c2"><label for="b-style">Style</label><select id="b-style"><option>Tech Glow</option><option>Glass UI</option><option>Isometric Pastel</option><option>Paper Cut</option><option>Whiteboard</option><option>Blueprint</option><option>Neo-brutalist</option></select></div>
+    <div class="f c3"><label for="b-audio">Audio</label><select id="b-audio"><option>Sound effects only (I will add music)</option><option>Sound effects plus music</option><option>Leave room for voiceover</option></select></div>
+    <div class="f c3"><label for="b-cap">Captions</label><select id="b-cap"><option>On (burned in, plus an .srt file)</option><option>Off</option></select></div>
+    <div class="f c3"><label for="b-rera">RERA number (real estate only)</label><input id="b-rera" placeholder="Project registration number"></div>
+    <div class="f c3"><label for="b-brandkit">Brand kit (optional)</label><input id="b-brandkit" placeholder="Name, logo file, brand colours"></div>
+    <div class="f c12"><label>Scenes to include (optional)</label><div class="chk" id="b-scenes"></div></div>
+    <div class="f c4"><label for="b-pts">Key points or script, one per line</label><textarea id="b-pts" placeholder="Hook&#10;Main point 1&#10;Main point 2&#10;Call to action"></textarea></div>
+    <div class="f c4"><label for="b-notes">Facts, sources, brand notes (optional)</label><textarea id="b-notes" placeholder="Links, numbers that must be correct, words to avoid"></textarea></div>
+    <div class="f c4"><label>Brief (this is what you paste in the chat)</label><pre id="out"></pre></div>
+    <div class="f c12 act"><div><button class="btn" id="copy" type="button">Copy brief</button><span class="note" id="cmsg" role="status"></span></div></div>
   </form>
 </section>
 </div></div>
