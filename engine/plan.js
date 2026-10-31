@@ -21,7 +21,7 @@ const pickIcon = (n) => (n && ICONS()[n]) || undefined;
 const COLS = () => [S.pal.cyan, S.pal.violet, S.pal.pink, S.pal.green, S.pal.amber, S.pal.red];
 
 // geometry helper: fits a design area (720x1280 portrait, 1280x720 landscape) into the canvas
-function geo(W, Hh) { const P = Hh > W, bw = P ? 720 : 1280, bh = P ? 1280 : 720, k = Math.min(W / bw, Hh / bh); return { P, bw, bh, k, C: bw / 2, ox: (W - bw * k) / 2, oy: (Hh - bh * k) / 2 }; }
+function geo(W, Hh) { const P = Hh > W, bw = P ? 720 : 1280, bh = P ? 1280 : 720; let k = Math.min(W / bw, Hh / bh), oy = (Hh - bh * k) / 2; if (P && PLAN.safe) { k *= 0.77; oy = Hh * (180 / 1280) - 30 * k; } /* safe: keeps text inside the Reels/Shorts safe zone */ return { P, bw, bh, k, C: bw / 2, ox: (W - bw * k) / 2, oy }; }
 const wrap = (x, s, maxW) => { const w = String(s).split(' '), out = []; let line = ''; w.forEach((t) => { const test = line ? line + ' ' + t : t; if (x.measureText(test).width > maxW && line) { out.push(line); line = t; } else line = test; }); if (line) out.push(line); return out; };
 
 const SC = {
@@ -67,7 +67,7 @@ const SC = {
   },
   timeline(x, g, sc, lt) {
     const pal = S.pal, cols = COLS(), n = sc.points.length; if (sc.title) S.text(x, sc.title, g.C, g.P ? 190 : 100, g.P ? 48 : 44, pal.ink, { w: 800 });
-    const p = (i) => g.P ? [150, 320 + i * ((640) / Math.max(1, n - 1))] : [180 + i * (920 / Math.max(1, n - 1)), 330];
+    const p = (i) => g.P ? [150, 320 + i * ((n > 3 ? 560 : 640) / Math.max(1, n - 1))] : [180 + i * (920 / Math.max(1, n - 1)), 330];
     for (let i = 0; i < n - 1; i++) { const a = p(i), b = p(i + 1), u = seg(lt, 0.4 + i * 0.5, 0.9 + i * 0.5); if (u > 0) S.link(x, a[0], a[1], lerp(a[0], b[0], u), lerp(a[1], b[1], u), cols[i % cols.length], lt, { dots: 1 }); }
     sc.points.forEach((pt, i) => { const [cx, cy] = p(i), u = seg(lt, 0.2 + i * 0.5, 0.7 + i * 0.5), col = cols[i % cols.length]; popIn(x, cx, cy, u, () => { S.node(x, cx, cy, 36, col, lt, { ph: i }); S.text(x, String(i + 1), cx, cy, 30, pal.ink, { w: 800 }); if (g.P) { S.text(x, pt.label, cx + 70, cy - (pt.sub ? 12 : 0), 30, pal.ink, { align: 'left', w: 800 }); if (pt.sub) S.text(x, pt.sub, cx + 70, cy + 26, 22, pal.mute, { align: 'left', w: 600 }); } else { S.text(x, pt.label, cx, cy + 80, 26, pal.ink, { w: 800 }); if (pt.sub) S.text(x, pt.sub, cx, cy + 116, 20, pal.mute, { w: 600 }); } }); });
   },
@@ -78,12 +78,12 @@ const SC = {
     sc.nodes.forEach((nd, i) => { const [cx, cy] = p(i), u = seg(lt, 0.2 + i * 0.5, 0.7 + i * 0.5); popIn(x, cx, cy, u, () => { S.node(x, cx, cy, g.P ? (n > 3 ? 44 : 56) : 64, cols[i % cols.length], lt, { icon: pickIcon(nd.icon || 'bolt'), label: (g.P && n > 3) ? null : nd.label, ph: i, ring: i === n - 1 }); if (g.P && n > 3) S.text(x, nd.label, cx + 74, cy, 32, pal.ink, { align: 'left' }); }); });
   },
   cta(x, g, sc, lt) {
-    const pal = S.pal, ny = g.bh * (g.P ? 0.36 : 0.3); let y = ny;
-    if (sc.icon !== false) { popIn(x, g.C, ny, seg(lt, 0.1, 0.7), () => S.node(x, g.C, ny, 80, pal.cyan, lt, { icon: pickIcon(sc.icon || 'bolt'), ring: true })); y = ny + 160; } else y = g.bh * 0.34;
-    sc.lines.forEach((ln, i) => { const yy = y + i * 76; popIn(x, g.C, yy, seg(lt, 0.4 + i * 0.3, 0.9 + i * 0.3), () => S.text(x, ln, g.C, yy, g.P ? 62 : 58, i === sc.lines.length - 1 && sc.lines.length > 1 ? pal.cyan : pal.ink, { w: 800, glow: i === sc.lines.length - 1 && sc.lines.length > 1 ? pal.cyan : undefined })); });
-    const by = y + sc.lines.length * 76 + 40;
+    const pal = S.pal, ny = g.bh * (g.P ? 0.36 : 0.26); let y = ny;
+    if (sc.icon !== false) { popIn(x, g.C, ny, seg(lt, 0.1, 0.7), () => S.node(x, g.C, ny, 80, pal.cyan, lt, { icon: pickIcon(sc.icon || 'bolt'), ring: true })); y = ny + (g.P ? 160 : 135); } else y = g.bh * (g.P ? 0.34 : 0.3);
+    sc.lines.forEach((ln, i) => { const yy = y + i * (g.P ? 76 : 68); popIn(x, g.C, yy, seg(lt, 0.4 + i * 0.3, 0.9 + i * 0.3), () => S.text(x, ln, g.C, yy, g.P ? 62 : 58, i === sc.lines.length - 1 && sc.lines.length > 1 ? pal.cyan : pal.ink, { w: 800, glow: i === sc.lines.length - 1 && sc.lines.length > 1 ? pal.cyan : undefined })); });
+    const by = y + sc.lines.length * (g.P ? 76 : 68) + (g.P ? 40 : 28);
     if (sc.button) popIn(x, g.C, by, seg(lt, 1.1, 1.6), () => S.chip(x, g.C, by, sc.button, 32, { col: pal.violet, solid: true }));
-    if (sc.tag) popIn(x, g.C, by + 80, seg(lt, 1.4, 1.9), () => S.chip(x, g.C, by + 80, sc.tag, 24, { col: pal.cyan }));
+    if (sc.tag) popIn(x, g.C, by + (g.P ? 80 : 68), seg(lt, 1.4, 1.9), () => S.chip(x, g.C, by + (g.P ? 80 : 68), sc.tag, 24, { col: pal.cyan }));
   },
 };
 
@@ -109,7 +109,7 @@ function planDraw(x, W, Hh, t) {
     const lt = t - sc._t0; if (lt < 0 || lt > sc._d + 0.001) return; const last = i === PLAN.scenes.length - 1;
     x.save(); x.globalAlpha *= seg(lt, 0, 0.25) * (last ? 1 : 1 - seg(lt, sc._d - 0.3, sc._d)); SC[sc.type](x, g, sc, lt); x.restore();
   });
-  if (window.CAPTIONS_ON) drawCaptions(x, g, t);
+  if (window.CAPTIONS_ON) { window.__CAP = true; drawCaptions(x, g, t); window.__CAP = false; }
   x.restore();
   S.finish(x, t);
 }
@@ -130,6 +130,7 @@ function scoreSound(k) {
       case 'compare': k.play('pop', T0 + 0.25, { gain: 0.9, pan: -0.3 }); k.play('pop', T0 + 0.75, { gain: 0.9, pan: 0.3 }); k.play('ding', T0 + 1.4, { f: 'E6', gain: 0.6 }); break;
       case 'timeline': case 'flow': (sc.points || sc.nodes).forEach((_, j) => { k.play('pop', T0 + 0.25 + j * 0.5, { gain: 0.8 }); k.play('blip', T0 + 0.4 + j * 0.5, { f: notes[j % 6], dur: 0.1, gain: 0.5, minor: true }); }); break;
       case 'cta': k.play('impact', T0 + 0.12, { gain: 0.5 }); k.play('sparkle', T0 + 0.4, { gain: 0.7, n: 6 }); if (sc.button) k.play('success', T0 + 1.2, { gain: 0.9 }); break;
+      default: if (window.SCENE_SOUND && window.SCENE_SOUND[sc.type]) window.SCENE_SOUND[sc.type](k, sc, T0, d);
     }
   });
 }

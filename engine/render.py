@@ -2,6 +2,8 @@
 """Render a built player HTML to MP4.
 Usage: python3 engine/render.py <16x9|9x16> <outdir> [html_path] [name_prefix] [style]
 Defaults: dist/ilogix_voice_agents.html, prefix 'ilogix'.
+Env: CAPTIONS=0 (no burned-in captions)   MIXES=sfx-only (render only these audio mixes, comma separated; default all three)
+Also writes <prefix>_<aspect>_cover.jpg (a settled still for thumbnails) and <prefix>_<aspect>_preview.gif (first 6 s, small, for emails).
 Renders frames once (silent), renders both audio mixes offline, then muxes:
   ilogix_<aspect>_sound.mp4 (full effects + music pad)  and  voiceover-mix (quieter, no pad) and sfx-only (full effects, no music, for laying your own track)."""
 import asyncio, base64, subprocess, sys, os
@@ -14,6 +16,7 @@ PREFIX = sys.argv[4] if len(sys.argv) > 4 else 'ilogix'
 STYLE = sys.argv[5] if len(sys.argv) > 5 else None
 CAPS = os.environ.get('CAPTIONS', '1') != '0'
 FPS = 30
+MIXES = [m for m in os.environ.get('MIXES', 'sound,voiceover-mix,sfx-only').split(',') if m]
 HTML = 'file://' + HTML_PATH
 os.makedirs(OUT, exist_ok=True)
 SCALE = 'scale=1920:1080:flags=lanczos' if ASPECT == '16x9' else 'scale=1080:1920:flags=lanczos'
@@ -32,7 +35,7 @@ async def main():
         dur = await pg.evaluate('window.DURATION')
         n = round(dur * FPS)
         # audio first (offline render, both mixes)
-        for name, vo in (('sound', '{voiceover:false}'), ('voiceover-mix', '{voiceover:true}'), ('sfx-only', '{voiceover:false,nomusic:true}')):
+        for name, vo in [m for m in (('sound', '{voiceover:false}'), ('voiceover-mix', '{voiceover:true}'), ('sfx-only', '{voiceover:false,nomusic:true}')) if m[0] in MIXES]:
             js = f"""(async()=>{{const r=await SOUND.renderOffline(window.scoreSound,window.DURATION,48000,{vo});
               const by=new Uint8Array(r.inter.buffer);let s='';for(let i=0;i<by.length;i+=0x8000)s+=String.fromCharCode.apply(null,by.subarray(i,i+0x8000));
               return {{peak:r.peak,b64:btoa(s)}};}})()"""
@@ -47,8 +50,15 @@ async def main():
             ff.stdin.write(base64.b64decode(d))
             if i % 150 == 0: print('frame', i, '/', n, flush=True)
         ff.stdin.close(); ff.wait()
+        ct = await pg.evaluate('''(()=>{const P=window.PLAN&&PLAN.scenes;if(!P)return DURATION*0.35;const sc=P.find(s=>s.type!=='hook')||P[0];return sc._t0+Math.min(2.2,sc._d*0.75)})()''')
+        d = await pg.evaluate(f"(()=>{{seek({ct});return document.getElementById('cv').toDataURL('image/jpeg',0.93).split(',')[1]}})()")
+        open(os.path.join(OUT, f'{PREFIX}_{ASPECT}_cover.jpg'), 'wb').write(base64.b64decode(d))
         await b.close()
-    for name in ('sound', 'voiceover-mix', 'sfx-only'):
+    gw = 420 if ASPECT == '16x9' else 240
+    gif = os.path.join(OUT, f'{PREFIX}_{ASPECT}_preview.gif')
+    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-t', '6', '-i', silent, '-vf', f'fps=8,scale={gw}:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96[p];[b][p]paletteuse=dither=bayer:bayer_scale=4', gif], check=True)
+    print('wrote', gif, os.path.getsize(gif) // 1024, 'KB', flush=True)
+    for name in [m for m in ('sound', 'voiceover-mix', 'sfx-only') if m in MIXES]:
         out = os.path.join(OUT, f'{PREFIX}_{ASPECT}_{name}.mp4')
         subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', silent, '-f', 'f32le', '-ar', '48000', '-ac', '2', '-i', os.path.join(OUT, f'_audio_{name}.f32'),
                         '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', out], check=True)

@@ -1,0 +1,42 @@
+{
+  "title": "Sharma Sweets offer",
+  "style": "tech-glow",
+  "aspect": "9x16",
+  "brand": {
+    "name": "Sharma Sweets"
+  },
+  "safe": true,
+  "scenes": [
+    {
+      "type": "hook",
+      "dur": 2.6,
+      "lines": [
+        "Sharma Sweets",
+        "Diwali offer"
+      ],
+      "say": "Sharma Sweets has a Diwali offer."
+    },
+    {
+      "type": "offer",
+      "dur": 4.6,
+      "headline": "Kaju katli 500 g",
+      "was": "Rs 650",
+      "price": "Rs 499",
+      "code": "DIWALI10",
+      "deadline": "Ends 15 Nov",
+      "button": "Visit today",
+      "say": "Kaju katli 500 g, now Rs 499, until 15 Nov."
+    },
+    {
+      "type": "endcard",
+      "dur": 4,
+      "lines": [
+        "Visit Sharma Sweets"
+      ],
+      "phone": "+91 98000 00001",
+      "web": "sharmasweets.example",
+      "qr": "https://sharmasweets.example",
+      "say": "Visit Sharma Sweets today."
+    }
+  ]
+}

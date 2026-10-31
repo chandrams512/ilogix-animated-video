@@ -1,0 +1,42 @@
+{
+  "title": "Urban Threads offer",
+  "style": "tech-glow",
+  "aspect": "9x16",
+  "brand": {
+    "name": "Urban Threads"
+  },
+  "safe": true,
+  "scenes": [
+    {
+      "type": "hook",
+      "dur": 2.6,
+      "lines": [
+        "Urban Threads",
+        "Winter offer"
+      ],
+      "say": "Urban Threads has a Winter offer."
+    },
+    {
+      "type": "offer",
+      "dur": 4.6,
+      "headline": "Hoodies from",
+      "was": "Rs 1499",
+      "price": "Rs 999",
+      "code": "WARM20",
+      "deadline": "Ends 30 Nov",
+      "button": "Visit today",
+      "say": "Hoodies from, now Rs 999, until 30 Nov."
+    },
+    {
+      "type": "endcard",
+      "dur": 4,
+      "lines": [
+        "Visit Urban Threads"
+      ],
+      "phone": "+91 98000 00002",
+      "web": "urbanthreads.example",
+      "qr": "https://urbanthreads.example",
+      "say": "Visit Urban Threads today."
+    }
+  ]
+}

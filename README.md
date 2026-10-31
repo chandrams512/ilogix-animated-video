@@ -37,3 +37,10 @@ Skins reuse the line icons from `styles/tech-glow/style.js` and shared drawing h
 2. `python3 engine/gen_plan.py brief.txt plans/<name>/plan.json --style paper-cut --aspect 9x16` drafts the JSON with any OpenAI-compatible LLM (Groq, Gemini and OpenRouter have free tiers; set `LLM_API_KEY`, optional `LLM_BASE_URL`, `LLM_MODEL`). It validates and retries on its own.
 3. `python3 engine/build.py plans/<name>/plan.json`, check frames, then `python3 engine/render.py 9x16 out dist/<name>.html <prefix> <style>`.
 The `sfx-only` render has captions and sound effects but no music, ready for your own track.
+
+## More tools
+- `engine/qa_frames.py` automatic layout check (text outside the frame, caption overlap).
+- `engine/bulk.py` one template plus a CSV makes a video per row (also for personalised videos).
+- `engine/cutdown.py` makes a 15 s or 6 s version of a plan.
+- `engine/brand_colors.py` accent colours from a logo.
+- Scene types: hook, steps, stat, chart, compare, timeline, flow, cta, testimonial, offer, pricing, checklist, beforeafter, endcard, phone (see `docs/plan-format.md`).

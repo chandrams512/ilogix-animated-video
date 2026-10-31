@@ -6,4 +6,6 @@ cp dist/ilogix_voice_agents.html web/v/ilogix-voice-agents.html
 cp dist/tripnido_demo.html web/v/tripnido-demo.html
 cp dist/edu_sky.html web/v/edu-sky.html
 for p in sample-automation sample-water-cycle earth-water; do python3 engine/build.py plans/$p/plan.json >/dev/null; cp dist/$(echo $p | tr - _).html web/v/$p.html; done
+python3 engine/build.py plans/sample-showcase/plan.json >/dev/null; cp dist/sample_showcase.html web/v/sample-showcase.html
+python3 engine/build.py plans/bulk-offers/sharma-sweets/plan.json >/dev/null; cp dist/sharma_sweets.html web/v/offer-bulk.html
 echo synced

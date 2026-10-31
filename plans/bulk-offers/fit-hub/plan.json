@@ -1,0 +1,42 @@
+{
+  "title": "Fit Hub Gym offer",
+  "style": "tech-glow",
+  "aspect": "9x16",
+  "brand": {
+    "name": "Fit Hub Gym"
+  },
+  "safe": true,
+  "scenes": [
+    {
+      "type": "hook",
+      "dur": 2.6,
+      "lines": [
+        "Fit Hub Gym",
+        "New year offer"
+      ],
+      "say": "Fit Hub Gym has a New year offer."
+    },
+    {
+      "type": "offer",
+      "dur": 4.6,
+      "headline": "Annual membership",
+      "was": "Rs 12000",
+      "price": "Rs 8999",
+      "code": "FIT26",
+      "deadline": "Ends 10 Jan",
+      "button": "Visit today",
+      "say": "Annual membership, now Rs 8999, until 10 Jan."
+    },
+    {
+      "type": "endcard",
+      "dur": 4,
+      "lines": [
+        "Visit Fit Hub Gym"
+      ],
+      "phone": "+91 98000 00003",
+      "web": "fithub.example",
+      "qr": "https://fithub.example",
+      "say": "Visit Fit Hub Gym today."
+    }
+  ]
+}

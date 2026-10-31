@@ -13,13 +13,25 @@ if 'scenes' in src:  # a JSON plan: derive the manifest
     plan = src
     slug = os.path.basename(os.path.dirname(path))
     logo = (plan.get('brand') or {}).get('logo')
+    if logo and (plan.get('brand') or {}).get('colorsFromLogo') and not logo.startswith('data:'):
+        sys.path.insert(0, os.path.join(root, 'engine')); import brand_colors
+        auto = brand_colors.suggest(os.path.join(os.path.dirname(path), logo)); plan['brand']['colors'] = dict(auto, **(plan['brand'].get('colors') or {}))
+        print('brand colours from logo:', plan['brand']['colors'])
     if logo and not logo.startswith('data:'):
         lp = os.path.join(os.path.dirname(path), logo)
         plan['brand']['logo'] = 'data:%s;base64,%s' % (mimetypes.guess_type(lp)[0] or 'image/png', base64.b64encode(open(lp, 'rb').read()).decode())
+    for sc in plan['scenes']:
+        if sc.get('image') and not str(sc['image']).startswith('data:'):  # phone scene screenshot
+            ip = os.path.join(os.path.dirname(path), sc['image'])
+            sc['image'] = 'data:%s;base64,%s' % (mimetypes.guess_type(ip)[0] or 'image/png', base64.b64encode(open(ip, 'rb').read()).decode())
+        if sc.get('type') == 'endcard' and sc.get('qr') and not sc.get('qrMatrix'):  # QR code as a matrix of 0/1 rows
+            try: import segno
+            except ImportError: sys.exit('QR codes need the segno package: pip install segno')
+            sc['qrMatrix'] = [''.join('1' if bit else '0' for bit in row) for row in segno.make(sc['qr'], error='m', micro=False).matrix]
     skins = sorted(os.path.relpath(p, root) for p in glob.glob(os.path.join(root, 'styles', '*', 'skin.js')))
     m = {'title': plan.get('title', slug), 'out': slug.replace('-', '_') + '.html',
          'scripts': ['engine/harness.js', 'engine/styles.js', 'styles/flat-vector/style.js', 'styles/tech-glow/style.js'] + skins +
-                    ['styles/_sound/sound.js', 'inline:const PLAN = ' + json.dumps(plan, ensure_ascii=False) + ';', 'engine/plan.js',
+                    ['styles/_sound/sound.js', 'inline:const PLAN = ' + json.dumps(plan, ensure_ascii=False) + ';', 'engine/plan.js', 'engine/scenes_extra.js',
                      "inline:useStyle('%s');" % plan.get('style', 'tech-glow'), 'engine/player.js',
                      "inline:setAspect('%s');" % plan.get('aspect', '16x9')]}
 else:

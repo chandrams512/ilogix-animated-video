@@ -1,0 +1,42 @@
+{
+  "title": "{{shop}} offer",
+  "style": "tech-glow",
+  "aspect": "9x16",
+  "brand": {
+    "name": "{{shop}}"
+  },
+  "safe": true,
+  "scenes": [
+    {
+      "type": "hook",
+      "dur": 2.6,
+      "lines": [
+        "{{shop}}",
+        "{{season}} offer"
+      ],
+      "say": "{{shop}} has a {{season}} offer."
+    },
+    {
+      "type": "offer",
+      "dur": 4.6,
+      "headline": "{{item}}",
+      "was": "Rs {{was}}",
+      "price": "Rs {{price}}",
+      "code": "{{code}}",
+      "deadline": "Ends {{ends}}",
+      "button": "Visit today",
+      "say": "{{item}}, now Rs {{price}}, until {{ends}}."
+    },
+    {
+      "type": "endcard",
+      "dur": 4,
+      "lines": [
+        "Visit {{shop}}"
+      ],
+      "phone": "{{phone}}",
+      "web": "{{web}}",
+      "qr": "https://{{web}}",
+      "say": "Visit {{shop}} today."
+    }
+  ]
+}

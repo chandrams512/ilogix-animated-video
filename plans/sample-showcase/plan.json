@@ -1,0 +1,117 @@
+{
+  "title": "Showcase of scene types",
+  "style": "glass",
+  "aspect": "9x16",
+  "brand": {
+    "name": "iLogix Digital"
+  },
+  "scenes": [
+    {
+      "type": "testimonial",
+      "dur": 4.4,
+      "quote": "They turned our long product update into a clear 20 second video in a day.",
+      "name": "Sample customer",
+      "role": "Founder, Sample Co.",
+      "say": "Sample testimonial for layout only."
+    },
+    {
+      "type": "offer",
+      "dur": 4.6,
+      "headline": "Diwali launch offer",
+      "was": "Rs 999",
+      "price": "Rs 499",
+      "code": "DIWALI",
+      "deadline": "Ends 15 Nov",
+      "button": "Claim offer",
+      "say": "A limited time offer, with code and deadline."
+    },
+    {
+      "type": "pricing",
+      "dur": 5,
+      "title": "Pick a plan",
+      "plans": [
+        {
+          "name": "Starter",
+          "price": "Rs 7,999",
+          "per": "/month",
+          "items": [
+            "8 videos",
+            "1 brand",
+            "1 revision"
+          ]
+        },
+        {
+          "name": "Growth",
+          "price": "Rs 14,999",
+          "per": "/month",
+          "hot": true,
+          "items": [
+            "16 videos",
+            "2 styles",
+            "Captions"
+          ]
+        },
+        {
+          "name": "Agency",
+          "price": "Rs 29,999",
+          "per": "/month",
+          "items": [
+            "30 videos",
+            "Many brands",
+            "Approvals"
+          ]
+        }
+      ],
+      "say": "Plans from starter to agency. Sample prices only."
+    },
+    {
+      "type": "checklist",
+      "dur": 4.6,
+      "title": "What you get",
+      "items": [
+        "Captions on every video",
+        "Sound effects, no music",
+        "Wide and vertical",
+        "Your brand colours"
+      ],
+      "say": "Captions, sound effects, two shapes and your brand colours."
+    },
+    {
+      "type": "beforeafter",
+      "dur": 4.4,
+      "title": "Reply time",
+      "before": {
+        "label": "Before",
+        "value": "45 min",
+        "note": "Manual follow-ups"
+      },
+      "after": {
+        "label": "After",
+        "value": "1 min",
+        "note": "With an AI agent"
+      },
+      "say": "Sample numbers: from forty five minutes to one."
+    },
+    {
+      "type": "phone",
+      "dur": 4.2,
+      "title": "Your app, in motion",
+      "image": "screen.png",
+      "caption": "Sample screen, illustrative",
+      "say": "Show your app on a phone screen."
+    },
+    {
+      "type": "endcard",
+      "dur": 5,
+      "lines": [
+        "Let's make yours."
+      ],
+      "phone": "+91 00000 00000",
+      "email": "hello@example.com",
+      "web": "ilogixdigital.com",
+      "qr": "https://ilogixdigital.com",
+      "tagline": "Sample contact details",
+      "say": "Contact details and a QR code to finish."
+    }
+  ]
+}

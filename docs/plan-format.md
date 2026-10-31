@@ -32,10 +32,28 @@ Check it first with `python3 engine/validate_plan.py plans/<name>/plan.json` (th
 | `timeline` | `title`, `points[{label, sub}]` | 2 to 5 points |
 | `flow` | `title`, `nodes[{label, icon}]` | 2 to 5 nodes |
 | `cta` | `lines[]`, `button`, `tag`, `icon` (or `false`) | 1 to 3 lines |
+| `testimonial` | `quote`, `name`, `role`, `stars` (0 to 5, default 5) | quote up to 160 characters |
+| `offer` | `headline`, `was`, `price`, `code`, `deadline`, `button` | headline up to 70 characters |
+| `pricing` | `title`, `plans[{name, price, per, hot, items[]}]` | 2 to 3 plans, up to 3 short items each |
+| `checklist` | `title`, `items[]` (text, up to 30 characters) | 2 to 5 items |
+| `beforeafter` | `title`, `before{label, value, note}`, `after{...}` | value up to 9 characters |
+| `endcard` | `lines[]`, `phone`, `email`, `web`, `qr` (a URL, made into a QR code at build), `tagline` | needs at least one contact or qr |
+| `phone` | `image` (file next to the plan), `title`, `caption` | screenshot shown in a phone frame |
 
 Icons: phone, mail, chat, cal, person, doc, check, bolt, plan, shield, pin, plane, cross.
+
+## Extras
+- `"safe": true` (top level): shrinks vertical layouts into the Reels/Shorts safe zone, so text stays clear of the app's buttons and captions.
+- `"brand": { "logo": "logo.png", "colorsFromLogo": true }`: picks accent colours from the logo (colours you set by hand win). Check with `python3 engine/brand_colors.py logo.png`.
+- `"short": true` on a scene marks it for the short cut: `python3 engine/cutdown.py plans/<name>/plan.json --max 15` writes `plans/<name>-15s/`.
+- Bulk and personalised videos: `python3 engine/bulk.py plans/<template>/plan.json data.csv --name <batch> [--render 9x16 --out out/]`. Use `{{column}}` in any text of the template. See `plans/bulk-template/`.
+- QR codes need `pip install segno`.
+
+## Checks
+- `python3 engine/validate_plan.py plan.json` checks the plan.
+- `python3 engine/qa_frames.py dist/<name>.html` draws every scene in every style and shape and lists any text that leaves the frame, hits the caption bar or overlaps other text.
 
 ## Outputs
 Build writes `dist/<name>.html` (player), `dist/<name>.srt` (captions) and `dist/<name>_script.md` (voiceover lines).
 Render: `python3 engine/render.py 9x16 out dist/<name>.html <prefix> <style>`; set `CAPTIONS=0` for a render without burned-in captions.
-Each render writes three audio versions: full (with music), voiceover-mix, and `sfx-only` (no music).
+Each render writes three audio versions: full (with music), voiceover-mix, and `sfx-only` (no music); set `MIXES=sfx-only` to render just one. It also writes `<prefix>_<aspect>_cover.jpg` and a small `_preview.gif` (first 6 s) for emails.
