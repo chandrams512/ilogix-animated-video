@@ -171,6 +171,8 @@ body{background:var(--w-bg)}
 .live{background:var(--panel);border:1px solid var(--line);border-radius:28px;padding:26px;box-shadow:0 30px 70px -30px rgba(60,60,140,.35);margin:0}
 .seg button[aria-pressed=true],.filters button[aria-pressed=true]{background:var(--sel);color:var(--sel-ink);border-color:var(--sel)}
 .styles button[aria-pressed=true]{color:var(--ink);border-left-color:var(--sel);background:color-mix(in srgb,var(--sel) 9%,transparent)}
+.styles{max-height:min(620px,72vh);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:6px}
+@media (max-width:900px){.styles{max-height:none;overflow-y:visible;padding-right:0}}
 .proof{margin:30px 0 0;padding:0;border:0;gap:16px}
 .proof>div{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px 22px;border-top:5px solid var(--indigo)}
 .proof>div:nth-child(2){border-top-color:var(--coral)}.proof>div:nth-child(3){border-top-color:var(--mint)}.proof>div:nth-child(4){border-top-color:var(--sun)}
