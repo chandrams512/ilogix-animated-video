@@ -2,7 +2,7 @@
 """Render a built player HTML to MP4.
 Usage: python3 engine/render.py <16x9|9x16> <outdir> [html_path] [name_prefix] [style]
 Defaults: dist/ilogix_voice_agents.html, prefix 'ilogix'.
-Env: CAPTIONS=0 (no burned-in captions)   MIXES=sfx-only (render only these audio mixes, comma separated; default all three)
+Env: FPS=60 (default 30)   MBLUR=4 (motion blur, sub-frames per frame; default off)   CAPTIONS=0 (no burned-in captions)   MIXES=sfx-only (render only these audio mixes, comma separated; default all three)
 With a voiceover (see engine/tts.py) it also writes <prefix>_<aspect>_voiceover.mp4: the quiet effects mix plus the voice.
 Also writes <prefix>_<aspect>_cover.jpg (a settled still for thumbnails) and <prefix>_<aspect>_preview.gif (first 6 s, small, for emails).
 Renders frames once (silent), renders both audio mixes offline, then muxes:
@@ -16,7 +16,8 @@ HTML_PATH = os.path.abspath(sys.argv[3]) if len(sys.argv) > 3 else os.path.join(
 PREFIX = sys.argv[4] if len(sys.argv) > 4 else 'ilogix'
 STYLE = sys.argv[5] if len(sys.argv) > 5 else None
 CAPS = os.environ.get('CAPTIONS', '1') != '0'
-FPS = 30
+FPS = int(os.environ.get('FPS', '30'))
+MBLUR = int(os.environ.get('MBLUR', '0'))   # sub-frames per frame for real motion blur (0 = off, 4 is a good start); slower to render
 MIXES = [m for m in os.environ.get('MIXES', 'sound,voiceover-mix,sfx-only').split(',') if m]
 HTML = 'file://' + HTML_PATH
 os.makedirs(OUT, exist_ok=True)
@@ -47,7 +48,7 @@ async def main():
                                '-vf', SCALE, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '20', '-preset', 'medium', '-movflags', '+faststart', silent],
                               stdin=subprocess.PIPE)
         for i in range(n):
-            d = await pg.evaluate(f"(()=>{{seek({i / FPS});return document.getElementById('cv').toDataURL('image/jpeg',0.97).split(',')[1]}})()")
+            d = await pg.evaluate(f"(()=>{{{('seekBlur(%s,%d,%s)' % (i / FPS, MBLUR, 0.5 / FPS)) if MBLUR > 1 else 'seek(%s)' % (i / FPS)};return document.getElementById('cv').toDataURL('image/jpeg',0.97).split(',')[1]}})()")
             ff.stdin.write(base64.b64decode(d))
             if i % 150 == 0: print('frame', i, '/', n, flush=True)
         ff.stdin.close(); ff.wait()

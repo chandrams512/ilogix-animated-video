@@ -65,3 +65,10 @@ Icons: phone, mail, chat, cal, person, doc, check, bolt, plan, shield, pin, plan
 Build writes `dist/<name>.html` (player), `dist/<name>.srt` (captions) and `dist/<name>_script.md` (voiceover lines).
 Render: `python3 engine/render.py 9x16 out dist/<name>.html <prefix> <style>`; set `CAPTIONS=0` for a render without burned-in captions.
 Each render writes three audio versions: full (with music), voiceover-mix, and `sfx-only` (no music); set `MIXES=sfx-only` to render just one. It also writes `<prefix>_<aspect>_cover.jpg` and a small `_preview.gif` (first 6 s) for emails.
+
+
+## Motion (optional)
+Off by default, so existing plans look the same. Add `"motion": "auto"` to the plan and every scene gets a transition that suits the style (zoom, slide, push or wipe) plus a slow camera drift. Or set them yourself:
+- `"transition"`: `fade` (default), `slide`, `push`, `zoom`, `wipe`, or `auto` (pick by style). A scene can set its own `"transition"`.
+- `"camera"`: `none` (default) or `drift` (a slow push-in with a small pan). A scene can set its own `"camera"`.
+Motion blur is a render setting, not a plan key: `MBLUR=4 python3 engine/render.py ...` blends 4 sub-frames per frame (about 4 times slower), and `FPS=60` renders at 60 frames per second.

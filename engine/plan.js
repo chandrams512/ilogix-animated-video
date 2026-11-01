@@ -111,14 +111,33 @@ function drawFooter(x, g, t) {
   x.restore();
 }
 
+
+// ===== Scene motion: transitions, camera drift (plan keys: motion "auto"|"off", transition, camera "drift"|"none"; a scene can set its own transition / camera) =====
+const AUTO_TR = { 'tech-glow': 'zoom', glass: 'zoom', isometric: 'slide', 'paper-cut': 'slide', whiteboard: 'wipe', blueprint: 'wipe', 'neo-brutal': 'push', kinetic: 'push', neon: 'zoom', bauhaus: 'slide', pixel: 'wipe', deco: 'zoom', mesh: 'slide' };
+function trOf(sc) { if (sc.transition) return sc.transition; if (PLAN.transition && PLAN.transition !== 'auto') return PLAN.transition; return (PLAN.motion === 'auto' || PLAN.transition === 'auto') ? (AUTO_TR[ACTIVE_STYLE] || 'slide') : 'fade'; }
+function camOf(sc) { const c = sc.camera || PLAN.camera || (PLAN.motion === 'auto' ? 'drift' : 'none'); return c === 'drift'; }
+function motionIn(x, g, tr, pin, pout) {
+  const ei = eo(pin), eout = pout * pout, a = Math.min(1, pin * 2.2) * (1 - Math.min(1, pout * 1.4)), W = g.bw, Hh = g.bh;
+  if (tr === 'wipe') { x.beginPath(); x.rect(W * eout, 0, W - W * eout, Hh); x.clip(); x.beginPath(); x.rect(0, 0, W * ei + 1, Hh); x.clip(); return; }
+  x.globalAlpha *= a;
+  if (tr === 'slide') x.translate((1 - ei) * 0.11 * W - eout * 0.11 * W, 0);
+  else if (tr === 'push') x.translate(0, (1 - ei) * 0.12 * Hh - eout * 0.12 * Hh);
+  else if (tr === 'zoom') { const s = (0.9 + 0.1 * ei) * (1 + 0.1 * eout); x.translate(W / 2, Hh / 2); x.scale(s, s); x.translate(-W / 2, -Hh / 2); }
+  const bl = ((1 - ei) + eout) * 5; if (bl > 0.4 && tr !== 'wipe') x.filter = 'blur(' + bl.toFixed(1) + 'px)';
+}
+
 function planDraw(x, W, Hh, t) {
   S.bg(x, t); const g = geo(W, Hh), pal = S.pal;
   x.save(); x.translate(g.ox, g.oy); x.scale(g.k, g.k);
   // brand mark
   x.save(); x.globalAlpha *= seg(t, 0.1, 0.5); if (LOGO_IMG && LOGO_IMG.complete && LOGO_IMG.naturalWidth) { const h = 44, w = LOGO_IMG.naturalWidth / LOGO_IMG.naturalHeight * h; x.drawImage(LOGO_IMG, 40, 34, w, h); } else if (BRAND.logoText || BRAND.name) { x.fillStyle = pal.cyan; rr(x, 40, 40, 26, 26, 8); x.fill(); S.text(x, BRAND.logoText || BRAND.name, 78, 53, 26, pal.ink, { align: 'left', w: 800 }); } x.restore();
   PLAN.scenes.forEach((sc, i) => {
-    const lt = t - sc._t0; if (lt < 0 || lt > sc._d + 0.001) return; const last = i === PLAN.scenes.length - 1;
-    x.save(); x.globalAlpha *= seg(lt, 0, 0.25) * (last ? 1 : 1 - seg(lt, sc._d - 0.3, sc._d)); SC[sc.type](x, g, sc, lt); x.restore();
+    const tr = trOf(sc), lt0 = t - sc._t0, lt = Math.max(0, lt0), OV = tr === 'fade' ? 0 : 0.3; if (lt0 < -OV || lt0 > sc._d + 0.001) return; const last = i === PLAN.scenes.length - 1;
+    x.save();
+    if (tr === 'fade') x.globalAlpha *= seg(lt, 0, 0.25) * (last ? 1 : 1 - seg(lt, sc._d - 0.3, sc._d));
+    else motionIn(x, g, tr, seg(lt0, -OV, 0.25), last ? 0 : seg(lt0, sc._d - 0.3, sc._d));
+    if (camOf(sc)) { const u = lt / sc._d, z = 1 + 0.035 * u, dir = i % 2 ? -1 : 1; x.translate(g.bw / 2 + dir * (u - 0.5) * 0.02 * g.bw, g.bh / 2); x.scale(z, z); x.translate(-g.bw / 2, -g.bh / 2); }
+    SC[sc.type](x, g, sc, lt); x.restore(); x.filter = 'none';
   });
   if (window.CAPTIONS_ON) { window.__CAP = true; drawCaptions(x, g, t); window.__CAP = false; }
   drawFooter(x, g, t);

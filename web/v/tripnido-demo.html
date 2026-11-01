@@ -1038,6 +1038,8 @@ useStyle('tech-glow');
     sel.value = ACTIVE_STYLE; sel.onchange = () => window.setStyle(sel.value);
     try { const q = new URLSearchParams(location.search).get('style'); if (q && STYLES[q]) { useStyle(q); sel.value = q; } } catch (e) { /* default style */ }
   })();
+  // seekBlur: average n sub-frames across a shutter window, for real motion blur when rendering
+  let acc = null; window.seekBlur = (t, n, sh) => { if (!acc || acc.width !== cv.width || acc.height !== cv.height) { acc = document.createElement('canvas'); acc.width = cv.width; acc.height = cv.height; } const a = acc.getContext('2d'); a.setTransform(1, 0, 0, 1, 0, 0); a.clearRect(0, 0, acc.width, acc.height); for (let j = 0; j < n; j++) { draw(Math.max(0, Math.min(DURATION, t + ((j + 0.5) / n - 0.5) * sh))); a.globalAlpha = 1 / (j + 1); a.drawImage(cv, 0, 0); } ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(acc, 0, 0); cur = t; };
   window.seek = (t) => draw(Math.max(0, Math.min(DURATION, t)));
   function stopSnd() { if (stopSound) { stopSound(); stopSound = null; } }
   function startSnd() { syncVoice(); stopSnd(); if (soundOn && playing) { try { stopSound = SOUND.live(scoreSound, cur, { voiceover: vo, nomusic: !music }); } catch (e) { stopSound = null; } } }

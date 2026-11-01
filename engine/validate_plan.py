@@ -14,6 +14,13 @@ try: plan = json.load(open(sys.argv[1], encoding='utf-8'))
 except Exception as e: print('Not valid JSON:', e); sys.exit(1)
 if plan.get('style', 'tech-glow') not in STYLES: errs.append('style must be one of %s' % sorted(STYLES))
 if plan.get('aspect', '16x9') not in ('16x9', '9x16'): errs.append("aspect must be '16x9' or '9x16'")
+TRS = ('fade', 'slide', 'push', 'zoom', 'wipe')
+if plan.get('motion', 'off') not in ('off', 'auto'): errs.append("motion must be 'off' or 'auto'")
+if plan.get('transition', 'fade') not in TRS + ('auto',): errs.append('transition must be one of %s or auto' % list(TRS))
+if plan.get('camera', 'none') not in ('none', 'drift'): errs.append("camera must be 'none' or 'drift'")
+for _i, _sc in enumerate(plan.get('scenes') or [], 1):
+        if isinstance(_sc, dict) and _sc.get('transition') not in (None,) + TRS: errs.append('scene %d: transition must be one of %s' % (_i, list(TRS)))
+        if isinstance(_sc, dict) and _sc.get('camera') not in (None, 'none', 'drift'): errs.append("scene %d: camera must be 'none' or 'drift'" % _i)
 sc = plan.get('scenes')
 if not isinstance(sc, list) or not sc: errs.append('scenes must be a non-empty list')
 else:
