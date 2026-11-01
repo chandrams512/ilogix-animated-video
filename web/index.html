@@ -245,6 +245,17 @@ body{background:var(--w-bg)}
  .split{grid-template-columns:minmax(0,1fr);gap:26px}.split .left{position:static}.c2,.c3,.c4{grid-column:1/-1}.b-deep form{padding:20px}.deco .d1,.deco .d2,.deco .d3,.deco .d4{display:none}.b-warm{padding-bottom:calc(120px + var(--sl))}}
 @media (max-width:760px){.nav .top{padding:12px 16px}}
 @media (prefers-reduced-motion:reduce){.deco i{animation:none!important}}
+
+/* uniform section rhythm: same space above and below every band */
+:root{--bp:64px}
+.band{padding:var(--bp) 0}
+.slant{padding-top:calc(var(--bp) + var(--sl));padding-bottom:calc(var(--bp) + var(--sl))}
+.slant.b-deep{padding-bottom:var(--bp)}
+.b-hero{padding:56px 0 var(--bp)}
+.live{padding:26px}
+.b-warm{padding-bottom:calc(150px + var(--sl))}
+.proof b{font-variant-numeric:tabular-nums}
+@media (max-width:900px){:root{--bp:52px}.b-hero{padding:34px 0 var(--bp)}.live{padding:16px}}
 </style>
 </head>
 <body>
@@ -445,7 +456,7 @@ function set(t){if(t==='dark')r.setAttribute('data-theme','dark');else r.removeA
 var t='light';try{t=localStorage.getItem('theme')||'light'}catch(e){}
 set(t);b.onclick=function(){var n=r.getAttribute('data-theme')==='dark'?'light':'dark';set(n);try{localStorage.setItem('theme',n)}catch(e){}}})();
 // proof strip
-(function(){var d=[[18,'original styles'],[15,'scene types'],[VIDEOS.length,'finished videos on this page'],[2,'shapes from one script']];document.getElementById('proof').innerHTML=d.map(function(x){return '<div><b>'+x[0]+'</b><span>'+x[1]+'</span></div>'}).join('')})();
+(function(){var d=[[18,'original styles'],[15,'scene types'],[VIDEOS.length,'finished videos on this page'],[2,'shapes from one script']];document.getElementById('proof').innerHTML=d.map(function(x){return '<div><b data-n="'+x[0]+'">'+x[0]+'</b><span>'+x[1]+'</span></div>'}).join('');(function(){var els=document.querySelectorAll('#proof b[data-n]');if(!els.length||window.matchMedia('(prefers-reduced-motion: reduce)').matches||!('IntersectionObserver' in window))return;Array.prototype.forEach.call(els,function(e){e.textContent='0'});var io=new IntersectionObserver(function(en){en.forEach(function(x){if(!x.isIntersecting)return;io.unobserve(x.target);var el=x.target,to=+el.dataset.n,t0=null,dur=1300;function f(t){if(t0===null)t0=t;var u=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-u,3);el.textContent=Math.round(to*e);if(u<1)requestAnimationFrame(f)}requestAnimationFrame(f)})},{threshold:.4});Array.prototype.forEach.call(els,function(e){io.observe(e)})})()})();
 // live stage
 var STY=[['tech-glow','Tech Glow','Dark neon glow. AI, SaaS.'],['glass','Glass UI','Frosted panels. Apps, demos.'],['isometric','Isometric Pastel','Soft slabs. Travel, lifestyle.'],['paper-cut','Paper Cut','Layered paper. Education.'],['whiteboard','Whiteboard','Hand-drawn marker. Teaching.'],['blueprint','Blueprint','Line-work on blue. Technical.'],['neo-brutal','Neo-brutalist','Thick outlines. Social reels.'],['kinetic','Kinetic Type','Huge type, one red accent. Quotes, stats.'],['neon','Neon Tubes','Glowing tubes on brick. Events, nightlife.'],['bauhaus','Bauhaus','Flat shapes on a grid. Charts, design.'],['pixel','Pixel Arcade','8-bit game look. Milestones, gaming.'],['deco','Art Deco','Black and gold. Invitations, luxury.'],['mesh','Soft Mesh','Calm pastel gradients. Apps, podcasts.'],['particles','Particles','Glowing dots form words. Tech, space.'],['vhs','Retro VHS','80s sunset grid, tape noise. Ads, throwbacks.'],['halftone','Halftone','Printed magazine dots. History, editorial.'],['splitflap','Split-flap','Departures-board letters. Stats, year in review.'],['liquid','Liquid Glass','Glass lenses that bend what is behind them. Apps, premium.']];
 var cur={style:'tech-glow',asp:'16x9'},sf=document.getElementById('sf'),sl=document.getElementById('slist'),stg=document.getElementById('stage');
