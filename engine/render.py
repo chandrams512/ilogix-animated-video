@@ -31,6 +31,7 @@ async def main():
         await pg.goto(HTML)
         await pg.wait_for_function('typeof window.seek === "function" && typeof window.DURATION === "number"')
         await pg.wait_for_timeout(3000)  # let fonts settle
+        await pg.evaluate('Promise.all(window.PRELOAD || [])')  # images, clip frames and library sounds decoded
         if not CAPS: await pg.evaluate('setCaptions && setCaptions(false)')
         if STYLE: await pg.evaluate(f"setStyle('{STYLE}')")
         await pg.evaluate(f"setAspect('{ASPECT}')")

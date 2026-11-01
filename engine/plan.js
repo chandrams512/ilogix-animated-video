@@ -148,19 +148,22 @@ const explainerL = planDraw, explainerP = planDraw;
 window.setCaptions = (on) => { window.CAPTIONS_ON = !!on; };
 
 function scoreSound(k) {
-  if (PLAN.music !== false) k.music('pad', 0, DURATION, { bpm: PLAN.bpm || 80, gain: 0.35, chords: PLAN.chords || [['C4', 'E4', 'G4', 'B4'], ['A3', 'C4', 'E4', 'G4'], ['F3', 'A3', 'C4', 'E4'], ['G3', 'B3', 'D4', 'F4']] });
+  const SM = window.SFX_MAP || {}, st = ACTIVE_STYLE, have = window.SFX_BUF && Object.keys(window.SFX_BUF).length > 0;
+  window.SYNTH_ALIAS = (SM.synthAlias || {})[st] || {}; window.ROLE_CUE = have ? SM.roleCue : null; window.CUE_FALLBACK = SM.cueFallback || {};
+  const mus = PLAN.music === false ? false : (PLAN.music && PLAN.music !== 'auto' && PLAN.music !== true ? PLAN.music : ((SM.musicByStyle || {})[st] || 'pad')), cue = (n) => 'cue:' + n;
+  if (mus) k.music(mus, 0, DURATION, { bpm: PLAN.bpm || (mus === 'pad' ? 80 : undefined), gain: mus === 'pad' ? 0.35 : 1, chords: PLAN.chords || [['C4', 'E4', 'G4', 'B4'], ['A3', 'C4', 'E4', 'G4'], ['F3', 'A3', 'C4', 'E4'], ['G3', 'B3', 'D4', 'F4']] });
   PLAN.scenes.forEach((sc, i) => {
-    const T0 = sc._t0, d = sc._d, notes = ['E6', 'G6', 'C7', 'A6', 'D7', 'B6'];
-    if (i > 0) k.play('riser', T0 - 0.35, { dur: 0.5, gain: 0.45 });
+    const T0 = sc._t0, d = sc._d, notes = ['E6', 'G6', 'C7', 'A6', 'D7', 'B6'], tr = trOf(sc);
+    if (i > 0) { if (tr === 'fade') k.play('riser', T0 - 0.35, { dur: 0.5, gain: 0.45 }); else k.play(tr === 'zoom' ? 'whoosh' : 'swipe', T0 - 0.32, { dur: 0.45, gain: tr === 'zoom' ? 0.5 : 0.8 }); }
     const n = (sc.items || sc.bars || sc.points || sc.nodes || sc.lines || []).length;
     switch (sc.type) {
       case 'hook': sc.lines.forEach((_, j) => k.play('pop', T0 + 0.15 + j * 0.35, { gain: 0.9 })); break;
       case 'steps': sc.items.forEach((_, j) => { k.play('pop', T0 + 0.4 + j * 0.5, { gain: 0.9, pan: (j - (n - 1) / 2) * 0.25 }); k.play('ding', T0 + 0.55 + j * 0.5, { f: notes[j % 6], gain: 0.6 }); }); break;
-      case 'stat': k.play('riser', T0 + 0.3, { dur: 1.2, gain: 0.6 }); k.play('success', T0 + 1.5, { gain: 0.9 }); break;
+      case 'stat': k.play('riser', T0 + 0.3, { dur: 1.2, gain: 0.6 }); k.play(cue('level-up'), T0 + 1.5, { gain: 0.9 }); break;
       case 'chart': sc.bars.forEach((_, j) => k.play('tick', T0 + 0.35 + j * 0.3, { gain: 0.7 })); k.play('success', T0 + 0.9 + n * 0.3, { gain: 0.7 }); break;
-      case 'compare': k.play('pop', T0 + 0.25, { gain: 0.9, pan: -0.3 }); k.play('pop', T0 + 0.75, { gain: 0.9, pan: 0.3 }); k.play('ding', T0 + 1.4, { f: 'E6', gain: 0.6 }); break;
+      case 'compare': k.play('pop', T0 + 0.25, { gain: 0.9, pan: -0.3 }); k.play(cue('toggle-on'), T0 + 0.75, { gain: 0.9, pan: 0.3 }); k.play('ding', T0 + 1.4, { f: 'E6', gain: 0.6 }); break;
       case 'timeline': case 'flow': (sc.points || sc.nodes).forEach((_, j) => { k.play('pop', T0 + 0.25 + j * 0.5, { gain: 0.8 }); k.play('blip', T0 + 0.4 + j * 0.5, { f: notes[j % 6], dur: 0.1, gain: 0.5, minor: true }); }); break;
-      case 'cta': k.play('impact', T0 + 0.12, { gain: 0.5 }); k.play('sparkle', T0 + 0.4, { gain: 0.7, n: 6 }); if (sc.button) k.play('success', T0 + 1.2, { gain: 0.9 }); break;
+      case 'cta': k.play('impact', T0 + 0.12, { gain: 0.5 }); k.play('sparkle', T0 + 0.4, { gain: 0.7, n: 6 }); if (sc.button) k.play(cue('send'), T0 + 1.2, { gain: 0.9 }); break;
       default: if (window.SCENE_SOUND && window.SCENE_SOUND[sc.type]) window.SCENE_SOUND[sc.type](k, sc, T0, d);
     }
   });

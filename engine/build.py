@@ -66,10 +66,22 @@ if 'scenes' in src:  # a JSON plan: derive the manifest
         if not V.get('placeholder'):
             mp3 = wav[:-4] + '.mp3'; subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', wav, '-ac', '1', '-c:a', 'libmp3lame', '-b:a', '64k', mp3], check=True)
             voice_src = 'data:audio/mpeg;base64,' + base64.b64encode(open(mp3, 'rb').read()).decode()
+    # sound: effect map always; library pack (plan "sfx": auto | synth | <pack>) embedded only for the cues this plan can use
+    smap = json.load(open(os.path.join(root, 'engine', 'sfx_map.json'))); mode = plan.get('sfx', 'auto'); sfx_js = 'window.SFX_MAP = ' + json.dumps(smap) + ';'
+    if mode != 'synth':
+        pack = mode.split(':')[-1] if mode != 'auto' else smap['packByStyle'].get(plan.get('style', 'tech-glow'), 'minimal'); pdir = os.path.join(root, 'sounds', 'uisfx', pack)
+        cues = set(smap['roleCue'].values()) | set(smap['always'])
+        for sc in plan['scenes']: cues |= set(smap['sceneCues'].get(sc['type'], []))
+        vols = json.load(open(os.path.join(root, 'sounds', 'uisfx', 'cues.json'))); packd = {}
+        for c in sorted(cues):
+            f = os.path.join(pdir, c + '.mp3')
+            if os.path.exists(f): packd[c] = 'data:audio/mpeg;base64,' + base64.b64encode(open(f, 'rb').read()).decode()
+        if packd: sfx_js += 'window.SFX_VOL = ' + json.dumps(vols) + ';window.SFX_PACK = ' + json.dumps(packd) + ';'; print('sound library:', pack, len(packd), 'cues,', sum(len(v) for v in packd.values()) // 1024, 'KB')
+        else: print('warning: no sound files found for pack', mode)
     skins = sorted(os.path.relpath(p, root) for p in glob.glob(os.path.join(root, 'styles', '*', 'skin.js')))
     m = {'title': plan.get('title', slug), 'out': slug.replace('-', '_') + '.html',
          'scripts': ['engine/harness.js', 'engine/styles.js', 'styles/flat-vector/style.js', 'styles/tech-glow/style.js'] + skins +
-                    ['styles/_sound/sound.js', 'inline:const PLAN = ' + json.dumps(plan, ensure_ascii=False) + ';' + ('window.HINDI = true;' if HINDI else ''), 'engine/plan.js', 'engine/scenes_extra.js',
+                    ['styles/_sound/sound.js', 'inline:const PLAN = ' + json.dumps(plan, ensure_ascii=False) + ';' + ('window.HINDI = true;' if HINDI else ''), 'inline:' + sfx_js, 'engine/plan.js', 'engine/scenes_extra.js',
                      "inline:useStyle('%s');" % plan.get('style', 'tech-glow')] + (['inline:window.VOICE_SRC = ' + json.dumps(voice_src) + ';'] if voice_src else []) + ['engine/player.js',
                      "inline:setAspect('%s');" % plan.get('aspect', '16x9')]}
 else:

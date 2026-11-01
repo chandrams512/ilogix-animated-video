@@ -105,18 +105,20 @@
     },
   });
   window.PRELOAD = window.PRELOAD || [];
+  // library sounds (plan "sfx"): decode the embedded pack once; AudioBuffers can be used by any audio context
+  if (window.SFX_PACK) { window.SFX_BUF = {}; const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext; Object.keys(window.SFX_PACK).forEach((c) => { try { const bin = atob(window.SFX_PACK[c].split(',')[1]), u8 = new Uint8Array(bin.length); for (let q = 0; q < bin.length; q++) u8[q] = bin.charCodeAt(q); window.PRELOAD.push(new AC(1, 1, 44100).decodeAudioData(u8.buffer).then((b) => { window.SFX_BUF[c] = b; }).catch(() => {})); } catch (e) { /* missing cue: synthesized fallback plays */ } }); }
   const load = (src) => { const im = new Image(); im.src = src; window.PRELOAD.push(im.decode ? im.decode().catch(() => {}) : Promise.resolve()); return im; };
   PLAN.scenes.forEach((sc) => { if ((sc.type === 'phone' || sc.type === 'image') && sc.image) sc._img = load(sc.image); if (sc.type === 'clip' && sc.frames) sc._fr = sc.frames.map(load); });
   const SND = {
-    testimonial: (k, sc, T0) => { k.play('pop', T0 + 0.2, { gain: 0.8 }); k.play('sparkle', T0 + 0.6, { gain: 0.6, n: 5 }); },
-    offer: (k, sc, T0) => { k.play('impact', T0 + 0.15, { gain: 0.5 }); k.play('riser', T0 + 0.5, { dur: 0.8, gain: 0.5 }); k.play('success', T0 + 1.3, { gain: 0.9 }); if (sc.button) k.play('ding', T0 + 1.9, { f: 'E6', gain: 0.6 }); },
+    testimonial: (k, sc, T0) => { k.play('cue:receive', T0 + 0.2, { gain: 0.8 }); k.play('sparkle', T0 + 0.6, { gain: 0.6, n: 5 }); },
+    offer: (k, sc, T0) => { k.play('impact', T0 + 0.15, { gain: 0.5 }); k.play('riser', T0 + 0.5, { dur: 0.8, gain: 0.5 }); k.play('cue:coupon', T0 + 1.3, { gain: 0.9 }); if (sc.button) k.play('ding', T0 + 1.9, { f: 'E6', gain: 0.6 }); },
     pricing: (k, sc, T0) => sc.plans.forEach((_, j) => { k.play('pop', T0 + 0.35 + j * 0.35, { gain: 0.9, pan: (j - (sc.plans.length - 1) / 2) * 0.3 }); k.play('ding', T0 + 0.5 + j * 0.35, { f: ['E6', 'G6', 'C7'][j % 3], gain: 0.55 }); }),
-    checklist: (k, sc, T0) => { sc.items.forEach((_, j) => k.play('tick', T0 + 0.55 + j * 0.4, { gain: 0.8 })); k.play('success', T0 + 0.9 + sc.items.length * 0.4, { gain: 0.8 }); },
-    beforeafter: (k, sc, T0) => { k.play('pop', T0 + 0.25, { gain: 0.8 }); k.play('riser', T0 + 0.6, { dur: 0.6, gain: 0.45 }); k.play('pop', T0 + 0.95, { gain: 0.9 }); k.play('success', T0 + 1.5, { gain: 0.8 }); },
-    endcard: (k, sc, T0) => { k.play('impact', T0 + 0.12, { gain: 0.5 }); k.play('sparkle', T0 + 0.5, { gain: 0.7, n: 6 }); k.play('success', T0 + 1.3, { gain: 0.8 }); },
+    checklist: (k, sc, T0) => { sc.items.forEach((_, j) => k.play('cue:check', T0 + 0.55 + j * 0.4, { gain: 0.8 })); k.play('success', T0 + 0.9 + sc.items.length * 0.4, { gain: 0.8 }); },
+    beforeafter: (k, sc, T0) => { k.play('pop', T0 + 0.25, { gain: 0.8 }); k.play('riser', T0 + 0.6, { dur: 0.6, gain: 0.45 }); k.play('cue:undo', T0 + 0.95, { gain: 0.9 }); k.play('success', T0 + 1.5, { gain: 0.8 }); },
+    endcard: (k, sc, T0) => { k.play('impact', T0 + 0.12, { gain: 0.5 }); k.play('sparkle', T0 + 0.5, { gain: 0.7, n: 6 }); k.play('cue:achievement', T0 + 1.3, { gain: 0.8 }); },
     clip: (k, sc, T0) => { k.play('pop', T0 + 0.15, { gain: 0.8 }); k.play('sparkle', T0 + 0.5, { gain: 0.5, n: 4 }); },
     image: (k, sc, T0) => { k.play('pop', T0 + 0.15, { gain: 0.8 }); },
-    phone: (k, sc, T0) => { k.play('pop', T0 + 0.2, { gain: 0.9 }); k.play('blip', T0 + 0.8, { f: 'E6', dur: 0.1, gain: 0.5 }); },
+    phone: (k, sc, T0) => { k.play('cue:open', T0 + 0.2, { gain: 0.9 }); k.play('blip', T0 + 0.8, { f: 'E6', dur: 0.1, gain: 0.5 }); },
   };
   window.SCENE_SOUND = SND;
 })();

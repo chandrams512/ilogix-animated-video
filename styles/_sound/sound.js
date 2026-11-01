@@ -5,6 +5,8 @@
 //                                   pan, verb, filter ('lowpass'|'highpass'|'bandpass'), f2 (cutoff), q, minor
 //   k.noise(t, o)                   filtered noise: color ('white'|'pink'|'brown'), filter, f (Hz | glide), q, dur, gain, a, pan, verb, minor
 //   k.play(name, t, o)              presets: tick tock click pop blip ding success impact thud stamp sparkle typing riser
+//   k.sample(t, cue, o)             play a library sound (window.SFX_BUF[cue]); k.play("cue:NAME") falls back to a preset
+//   k.music("pulse"|"chip"|"wave", ...) rhythmic beds as well as the "pad"
 //   k.bed('room', t0, t1, o)        quiet room tone (dropped in voiceover mode)
 //   k.music('pad', t0, t1, o)       slow chord pad: bpm, gain, chords (dropped in voiceover mode)
 //   k.withMinor(fn)                 everything scheduled inside fn counts as minor
@@ -81,6 +83,29 @@
       g.gain.exponentialRampToValueAtTime(0.0001, s + dur);
     }
 
+
+    // Rhythmic beds: pulse (soft kick, hat and bass), chip (square arpeggio), wave (saw bass and arpeggio). All quiet; dropped in voiceover mode.
+    function music2(name, t0, t1, o) {
+      const bpm = o.bpm || (name === 'chip' ? 120 : name === 'wave' ? 96 : 100), beat = 60 / bpm, g0 = (o.gain == null ? 1 : o.gain), chords = o.chords || [['C4', 'E4', 'G4', 'B4'], ['A3', 'C4', 'E4', 'G4'], ['F3', 'A3', 'C4', 'E4'], ['G3', 'B3', 'D4', 'F4']];
+      const bar = beat * 4; let step = 0;
+      for (let t = t0; t < t1 - 0.05; t += beat / 2, step++) {
+        if (t + beat < from) continue; const ch = chords[Math.floor(t / bar) % chords.length], b8 = step % 8, rt = ch[0];
+        if (name === 'pulse') {
+          if (b8 % 2 === 0 && (b8 === 0 || b8 === 4 || b8 === 2 && step % 16 === 10)) k.tone(t, { f: [[0, 110], [0.12, 46]], dur: 0.2, gain: 0.2 * g0, a: 0.002, minor: true });
+          if (b8 % 2 === 1) k.noise(t, { dur: 0.04, filter: 'highpass', f: 7000, gain: 0.05 * g0, a: 0.001, minor: true });
+          if (b8 === 0 || b8 === 3 || b8 === 6) k.tone(t, { f: hz(rt) / 2, type: 'triangle', dur: beat * 0.9, gain: 0.07 * g0, a: 0.01, minor: true });
+        } else if (name === 'chip') {
+          k.tone(t, { f: ch[b8 % ch.length], type: 'square', dur: beat * 0.45, gain: 0.025 * g0, a: 0.003, filter: 'lowpass', f2: 3200, minor: true });
+          if (b8 === 0 || b8 === 4) k.tone(t, { f: hz(rt) / 2, type: 'triangle', dur: beat * 1.6, gain: 0.06 * g0, a: 0.005, minor: true });
+          if (b8 === 2 || b8 === 6) k.noise(t, { dur: 0.03, filter: 'highpass', f: 6000, gain: 0.04 * g0, a: 0.001, minor: true });
+        } else {
+          k.tone(t, { f: ch[(b8 >> 1) % ch.length], type: 'sawtooth', dur: beat * 0.9, gain: 0.022 * g0, a: 0.01, filter: 'lowpass', f2: 1700, verb: 0.15, minor: true });
+          if (b8 === 0 || b8 === 3 || b8 === 4 || b8 === 7) k.tone(t, { f: hz(rt) / 2, type: 'sawtooth', dur: beat * 0.7, gain: 0.05 * g0, a: 0.01, filter: 'lowpass', f2: 380, minor: true });
+          if (b8 === 0) k.tone(t, { f: [[0, 100], [0.14, 44]], dur: 0.22, gain: 0.16 * g0, a: 0.002, minor: true });
+        }
+      }
+    }
+
     const k = {
       vo, hz, nodes,
       withMinor(fn) { minorDepth++; try { fn(); } finally { minorDepth--; } },
@@ -124,6 +149,7 @@
       },
       music(name, t0, t1, o) {
         if (nomusic || t1 <= from) return; o = o || {};
+        if (name === 'pulse' || name === 'chip' || name === 'wave') { music2(name, t0, t1, o); return; }
         const bpm = o.bpm || 70, bar = (60 / bpm) * 4, chords = o.chords || [['A3', 'C4', 'E4', 'G4']], gain = (o.gain == null ? 1 : o.gain) * 0.028;
         for (let i = 0, t = t0; t < t1; i++, t += bar) {
           const len = Math.min(bar * 1.25, t1 - t); if (t + len <= from) continue;
@@ -139,8 +165,21 @@
           });
         }
       },
+      // sample(t, cue, o): play a decoded library sound (window.SFX_BUF[cue]); returns false if that cue is not loaded
+      sample(t, cue, o) {
+        o = o || {}; const B = window.SFX_BUF && window.SFX_BUF[cue]; if (!B) return false;
+        const dur = B.duration / (o.rate || 1); if (!live(t, dur)) return true;
+        const s = abs(t), src = ctx.createBufferSource(); src.buffer = B; if (o.rate) src.playbackRate.value = o.rate;
+        const vol = (window.SFX_VOL && window.SFX_VOL[cue]) || 0.2, g = ctx.createGain(); window.SFX_NORM = window.SFX_NORM || {};
+        if (window.SFX_NORM[cue] == null) { let pk = 0.0001; for (let c = 0; c < B.numberOfChannels; c++) { const d = B.getChannelData(c); for (let i = 0; i < d.length; i++) { const v = d[i] < 0 ? -d[i] : d[i]; if (v > pk) pk = v; } } window.SFX_NORM[cue] = 0.3 / pk; }   // every library sound is levelled to the same peak, then scaled by its own recommended volume
+        g.gain.value = (o.gain == null ? 1 : o.gain) * (vol / 0.2) * window.SFX_NORM[cue] * level(o);
+        src.connect(g); out(g, o, t); src.start(s); nodes.push(src, g); return true;
+      },
       play(name, t, o) {
         o = o || {}; const gn = o.gain == null ? 1 : o.gain, m = !!o.minor, mk = (x) => Object.assign({ minor: m }, x);
+        if (name.indexOf('cue:') === 0) { const c = name.slice(4); if (k.sample(t, c, o)) return; name = (window.CUE_FALLBACK && window.CUE_FALLBACK[c]) || 'pop'; }
+        else if (!o.synth) { const cue = window.ROLE_CUE && window.ROLE_CUE[name]; if (cue && window.SFX_BUF && window.SFX_BUF[cue]) { k.sample(t, cue, o); if (!(window.ROLE_LAYER && window.ROLE_LAYER[name])) return; o = Object.assign({}, o, { gain: gn * 0.6 }); } }
+        if (window.SYNTH_ALIAS && window.SYNTH_ALIAS[name] && !o.noalias) name = window.SYNTH_ALIAS[name];
         switch (name) {
           case 'tick': k.noise(t, mk({ dur: 0.03, filter: 'highpass', f: 4000, gain: 0.16 * gn, a: 0.001, pan: o.pan })); k.tone(t, mk({ f: 2600, dur: 0.025, gain: 0.05 * gn, a: 0.001, pan: o.pan })); break;
           case 'tock': k.tone(t, mk({ f: [[0, (o.f || 700) * 1.2], [0.04, o.f || 700]], dur: 0.07, gain: 0.14 * gn, a: 0.002, pan: o.pan })); break;
@@ -155,6 +194,29 @@
           case 'sparkle': { const n = o.n || 5, r = rng(seedOf('sp', t)); for (let i = 0; i < n; i++) k.tone(t + i * 0.05 + r() * 0.02, mk({ f: 2200 + r() * 3600, dur: 0.22, gain: 0.07 * gn, a: 0.002, verb: 0.4, pan: (r() - 0.5) * 0.8 })); break; }
           case 'typing': { const n = o.n || 8, rate = o.rate || 0.06, r = rng(seedOf('ty', t)); for (let i = 0; i < n; i++) { const tt = t + i * rate + r() * 0.012; k.noise(tt, mk({ dur: 0.025, filter: 'highpass', f: 2500 + r() * 1500, gain: 0.13 * gn, a: 0.001 })); k.tone(tt, mk({ f: 1100 + r() * 500, dur: 0.02, gain: 0.04 * gn, a: 0.001 })); } break; }
           case 'riser': { const d = o.dur || 0.8; k.noise(t, mk({ dur: d, color: 'pink', filter: 'bandpass', f: [[0, 300], [d, 4200]], q: 0.8, gain: 0.3 * gn, a: d * 0.85, pan: o.pan, verb: 0.2 })); k.tone(t, mk({ f: [[0, 160], [d, 640]], type: 'triangle', dur: d, gain: 0.07 * gn, a: d * 0.85 })); break; }
+          case 'whoosh': { const d = o.dur || 0.5; k.noise(t, mk({ dur: d, color: 'pink', filter: 'bandpass', f: [[0, 400], [d * 0.45, 3800], [d, 700]], q: 0.9, gain: 0.34 * gn, a: d * 0.4, pan: o.pan, verb: 0.15 })); k.tone(t, mk({ f: [[0, 220], [d, 90]], dur: d, gain: 0.05 * gn, a: d * 0.4, pan: o.pan })); break; }
+          case 'swipe': k.noise(t, mk({ dur: 0.22, filter: 'bandpass', f: [[0, 1200], [0.2, 4200]], q: 0.8, gain: 0.26 * gn, a: 0.05, pan: o.pan })); break;
+          case 'snap': k.noise(t, mk({ dur: 0.03, filter: 'highpass', f: 2500, gain: 0.3 * gn, a: 0.001, pan: o.pan })); k.tone(t, mk({ f: [[0, 1300], [0.05, 650]], dur: 0.06, gain: 0.14 * gn, a: 0.001, pan: o.pan })); break;
+          case 'clack': k.noise(t, mk({ dur: 0.035, filter: 'bandpass', f: 2600, q: 1.2, gain: 0.3 * gn, a: 0.001, pan: o.pan })); k.tone(t, mk({ f: [[0, 260], [0.05, 150]], dur: 0.07, gain: 0.16 * gn, a: 0.001, pan: o.pan })); break;
+          case 'flap': { const n = o.n || 5, r = rng(seedOf('fl', t)); for (let i = 0; i < n; i++) k.play('clack', t + i * 0.045 + r() * 0.012, { gain: (0.5 + 0.4 * r()) * gn, pan: o.pan, minor: m, noalias: true }); break; }
+          case 'thock': k.tone(t, mk({ f: [[0, 190], [0.06, 95]], dur: 0.1, gain: 0.26 * gn, a: 0.001, pan: o.pan })); k.noise(t, mk({ dur: 0.04, filter: 'lowpass', f: 900, gain: 0.2 * gn, a: 0.001, pan: o.pan })); break;
+          case 'bubble': k.tone(t, mk({ f: [[0, 320], [0.1, 980]], dur: 0.14, gain: 0.2 * gn, a: 0.004, pan: o.pan, verb: 0.2 })); k.tone(t + 0.07, mk({ f: [[0, 520], [0.08, 1400]], dur: 0.1, gain: 0.1 * gn, a: 0.003, pan: o.pan, verb: 0.2 })); break;
+          case 'drip': k.tone(t, mk({ f: [[0, 1500], [0.09, 520]], dur: 0.16, gain: 0.2 * gn, a: 0.002, pan: o.pan, verb: 0.35 })); break;
+          case 'zap': k.tone(t, mk({ f: [[0, 2000], [0.15, 180]], type: 'sawtooth', dur: 0.17, gain: 0.12 * gn, a: 0.002, filter: 'lowpass', f2: 3500, pan: o.pan })); k.noise(t, mk({ dur: 0.05, filter: 'highpass', f: 5000, gain: 0.12 * gn, a: 0.001, pan: o.pan })); break;
+          case 'laser': k.tone(t, mk({ f: [[0, 2600], [0.22, 380]], type: 'square', dur: 0.24, gain: 0.14 * gn, a: 0.002, filter: 'lowpass', f2: 4000, pan: o.pan, verb: 0.1 })); break;
+          case 'coin': k.tone(t, mk({ f: 'B5', type: 'square', dur: 0.07, gain: 0.14 * gn, a: 0.002, pan: o.pan })); k.tone(t + 0.07, mk({ f: 'E6', type: 'square', dur: 0.3, gain: 0.14 * gn, a: 0.002, pan: o.pan })); break;
+          case 'jump': k.tone(t, mk({ f: [[0, 230], [0.16, 760]], type: 'square', dur: 0.18, gain: 0.14 * gn, a: 0.002, filter: 'lowpass', f2: 3000, pan: o.pan })); break;
+          case 'powerup': ['C5', 'E5', 'G5', 'C6', 'E6', 'G6'].forEach((nn, i) => k.tone(t + i * 0.055, mk({ f: nn, type: 'square', dur: 0.1, gain: 0.12 * gn, a: 0.002, pan: o.pan }))); break;
+          case 'glitch': { const r = rng(seedOf('gl', t)); for (let i = 0; i < 6; i++) { const tt = t + i * 0.03 + r() * 0.015; k.noise(tt, mk({ dur: 0.03, filter: 'bandpass', f: 800 + r() * 4000, q: 4, gain: 0.4 * gn, a: 0.001, pan: (r() - 0.5) * 0.8 })); if (i % 2) k.tone(tt, mk({ f: 300 + r() * 1500, type: 'square', dur: 0.025, gain: 0.1 * gn, a: 0.001 })); } break; }
+          case 'tapestop': k.tone(t, mk({ f: [[0, 520], [o.dur || 0.5, 38]], type: 'sawtooth', dur: o.dur || 0.5, gain: 0.1 * gn, a: 0.01, filter: 'lowpass', f2: 1800, pan: o.pan })); k.noise(t, mk({ dur: o.dur || 0.5, color: 'pink', filter: 'lowpass', f: [[0, 3000], [o.dur || 0.5, 200]], gain: 0.08 * gn, a: 0.01 })); break;
+          case 'shutter': k.noise(t, mk({ dur: 0.025, filter: 'highpass', f: 3500, gain: 0.3 * gn, a: 0.001, pan: o.pan })); k.noise(t + 0.07, mk({ dur: 0.03, filter: 'highpass', f: 2500, gain: 0.26 * gn, a: 0.001, pan: o.pan })); k.tone(t, mk({ f: 160, dur: 0.05, gain: 0.1 * gn, a: 0.001 })); break;
+          case 'paper': k.noise(t, mk({ dur: o.dur || 0.22, color: 'pink', filter: 'bandpass', f: [[0, 3200], [o.dur || 0.22, 1400]], q: 0.6, gain: 0.2 * gn, a: 0.02, pan: o.pan })); break;
+          case 'scribble': { const n = o.n || 4; for (let i = 0; i < n; i++) k.noise(t + i * 0.07, mk({ dur: 0.08, filter: 'highpass', f: [[0, 2200 + (i % 2) * 1200], [0.08, 3800 - (i % 2) * 900]], gain: 0.14 * gn, a: 0.01, pan: o.pan })); break; }
+          case 'kaching': k.play('click', t, { gain: 0.6 * gn, minor: m }); k.play('ding', t + 0.05, { f: 'E6', gain: 0.8 * gn, minor: m, noalias: true }); k.play('ding', t + 0.16, { f: 'A6', gain: 0.9 * gn, minor: m, noalias: true }); break;
+          case 'bell': { const f = hz(o.f || 'A5'); [1, 2.4, 3.1, 5.2].forEach((pp, i) => k.tone(t, mk({ f: f * pp, dur: 1.6 / (1 + i * 0.6), gain: 0.12 * gn / (1 + i), a: 0.002, pan: o.pan, verb: 0.4 }))); break; }
+          case 'boom': k.tone(t, mk({ f: [[0, 80], [1.0, 26]], dur: 1.3, gain: 0.55 * gn, a: 0.005, pan: o.pan, verb: 0.3 })); k.noise(t, mk({ dur: 0.7, color: 'brown', filter: 'lowpass', f: [[0, 1800], [0.6, 120]], gain: 0.35 * gn, a: 0.004 })); break;
+          case 'chime': ['C6', 'E6', 'G6'].forEach((nn, i) => k.tone(t + i * 0.09, mk({ f: nn, dur: 0.8, gain: 0.1 * gn, a: 0.002, pan: o.pan, verb: 0.4 }))); break;
+          case 'error': k.tone(t, mk({ f: 'A3', type: 'square', dur: 0.12, gain: 0.07 * gn, a: 0.003, filter: 'lowpass', f2: 1800 })); k.tone(t + 0.13, mk({ f: 'E3', type: 'square', dur: 0.2, gain: 0.07 * gn, a: 0.003, filter: 'lowpass', f2: 1500 })); break;
         }
       },
     };

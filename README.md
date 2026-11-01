@@ -7,7 +7,7 @@ preview and the MP4 render match. Sound is synthesized (no audio files). Private
 
 ## Layout
 - `engine/` harness, player page, build and render scripts
-- `styles/` one folder per look (`tech-glow`, `isometric`, `paper-cut`, `whiteboard`, `blueprint`, `neo-brutal`, `glass`, `kinetic`, `neon`, `bauhaus`, `pixel`, `deco`, `mesh`, `particles`, `vhs`, `halftone`, `splitflap`); `_sound/` is the sound kit (original kit, see its README)
+- `styles/` one folder per look (`tech-glow`, `isometric`, `paper-cut`, `whiteboard`, `blueprint`, `neo-brutal`, `glass`, `kinetic`, `neon`, `bauhaus`, `pixel`, `deco`, `mesh`, `particles`, `vhs`, `halftone`, `splitflap`); `_sound/` is the sound kit (original kit, see its README); `sounds/uisfx/` is the CC0 sound library (see docs/sound.md)
 - `plans/<name>/` one folder per video: `manifest.json` (script order), scene code, storyboard
 - `archive/earth-water/` the first video, kept as built
 - `docs/` guides (start with `HOW-TO.md`)

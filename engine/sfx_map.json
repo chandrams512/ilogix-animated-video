@@ -1,0 +1,26 @@
+{
+  "packByStyle": {"tech-glow": "scifi", "glass": "glass", "isometric": "soft", "paper-cut": "organic", "whiteboard": "organic", "blueprint": "mechanical", "neo-brutal": "rubber", "kinetic": "minimal", "neon": "scifi", "bauhaus": "studio", "pixel": "arcade", "deco": "cinematic", "mesh": "dreamy", "particles": "zen", "vhs": "arcade", "halftone": "mechanical", "splitflap": "mechanical"},
+  "musicByStyle": {"pixel": "chip", "vhs": "wave", "neon": "wave", "kinetic": "pulse", "neo-brutal": "pulse", "halftone": "pulse", "splitflap": "pulse", "bauhaus": "pulse"},
+  "roleCue": {"tick": "progress-step", "tock": "toggle-on", "click": "press", "pop": "select", "success": "success", "thud": "drop", "stamp": "snap", "sparkle": "reward", "typing": "typing", "swipe": "swipe"},
+  "sceneCues": {"stat": ["level-up"], "cta": ["send"], "compare": ["toggle-on"], "flow": ["progress-step"], "timeline": ["progress-step"], "testimonial": ["receive"], "offer": ["coupon"], "pricing": ["add-to-cart"], "checklist": ["check"], "beforeafter": ["undo"], "endcard": ["achievement"], "phone": ["open"], "clip": ["open"], "image": ["open"]},
+  "always": ["swipe"],
+  "cueFallback": {"level-up": "success", "send": "pop", "toggle-on": "pop", "progress-step": "tick", "receive": "pop", "coupon": "success", "add-to-cart": "pop", "check": "tick", "undo": "pop", "achievement": "success", "open": "pop", "swipe": "whoosh"},
+  "synthAlias": {
+    "pixel": {"pop": "jump", "tick": "coin", "success": "powerup", "sparkle": "powerup", "riser": "powerup"},
+    "splitflap": {"pop": "flap", "tick": "clack", "click": "clack", "stamp": "clack", "riser": "flap"},
+    "kinetic": {"pop": "snap", "tick": "thock", "stamp": "thud"},
+    "neon": {"pop": "zap", "sparkle": "laser"},
+    "vhs": {"pop": "glitch", "riser": "tapestop"},
+    "halftone": {"pop": "snap", "tick": "clack"},
+    "bauhaus": {"pop": "thock", "tick": "click"},
+    "paper-cut": {"pop": "paper"},
+    "whiteboard": {"pop": "scribble", "riser": "paper"},
+    "blueprint": {"pop": "clack"},
+    "neo-brutal": {"pop": "snap"},
+    "glass": {"pop": "bubble", "tick": "drip"},
+    "mesh": {"pop": "bubble", "sparkle": "chime"},
+    "particles": {"pop": "drip", "sparkle": "chime"},
+    "deco": {"pop": "bell", "sparkle": "chime"},
+    "isometric": {"pop": "bubble"}
+  }
+}
