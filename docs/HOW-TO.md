@@ -16,7 +16,7 @@ Read this first. It covers everything in plain steps. Details for each topic are
 ## Choosing the options
 | You want | Say or set |
 |---|---|
-| A look | one of: Tech Glow, Glass UI, Isometric Pastel, Paper Cut, Whiteboard, Blueprint, Neo-brutalist (`"style"` in the plan) |
+| A look | one of: Tech Glow, Glass UI, Isometric Pastel, Paper Cut, Whiteboard, Blueprint, Neo-brutalist, Kinetic Type, Neon Tubes, Bauhaus, Pixel Arcade, Art Deco, Soft Mesh (`"style"` in the plan) |
 | Reels or Shorts | 9:16 vertical, and `"safe": true` keeps text clear of the app buttons |
 | YouTube | 16:9 wide |
 | Your brand | `"brand": { "name": ..., "logo": "logo.png", "colorsFromLogo": true }` |
@@ -67,4 +67,4 @@ Set `"industry": "real-estate"` and `"brand": { "rera": "<registration number>" 
 | A voice line makes a scene longer than 12 s | Shorten the `say` line |
 
 ## Where things are
-`engine/` the tools · `styles/` the seven looks · `plans/` one folder per video · `web/` the studio site (Vercel serves this) · `dist/` built players (not committed) · `docs/` these guides.
+`engine/` the tools · `styles/` the thirteen looks · `plans/` one folder per video · `web/` the studio site (Vercel serves this) · `dist/` built players (not committed) · `docs/` these guides.
