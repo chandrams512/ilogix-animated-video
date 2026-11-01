@@ -75,7 +75,7 @@ if 'scenes' in src:  # a JSON plan: derive the manifest
 else:
     m = src
 js = '\n'.join(p[7:] if p.startswith('inline:') else rd(p) for p in m['scripts'])
-FONTS = [('Caveat', 600), ('Caveat', 700), ('Nunito', 700), ('Nunito', 800), ('Nunito', 900), ('Sora', 500), ('Sora', 600), ('Sora', 700), ('Sora', 800), ('IBM Plex Mono', 500), ('IBM Plex Mono', 600), ('Anton', 400), ('Press Start 2P', 400), ('Poiret One', 400), ('Jost', 500), ('Jost', 700)]
+FONTS = [('Caveat', 600), ('Caveat', 700), ('Nunito', 700), ('Nunito', 800), ('Nunito', 900), ('Sora', 500), ('Sora', 600), ('Sora', 700), ('Sora', 800), ('IBM Plex Mono', 500), ('IBM Plex Mono', 600), ('Anton', 400), ('Press Start 2P', 400), ('Poiret One', 400), ('Jost', 500), ('Jost', 700), ('Archivo Black', 400)]
 if HINDI: FONTS += [('Noto Sans Devanagari', 600), ('Noto Sans Devanagari', 700), ('Noto Sans Devanagari', 800)]
 def font_css():
     out = ''

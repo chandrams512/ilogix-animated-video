@@ -14,7 +14,7 @@ Check it first with `python3 engine/validate_plan.py plans/<name>/plan.json` (th
 }
 ```
 
-- **style**: `tech-glow`, `glass`, `isometric`, `paper-cut`, `whiteboard`, `blueprint`, `neo-brutal`, `kinetic`, `neon`, `bauhaus`, `pixel`, `deco`, `mesh`.
+- **style**: `tech-glow`, `glass`, `isometric`, `paper-cut`, `whiteboard`, `blueprint`, `neo-brutal`, `kinetic`, `neon`, `bauhaus`, `pixel`, `deco`, `mesh`, `particles`, `vhs`, `halftone`, `splitflap`.
 - **aspect**: the shape the player opens in (`9x16` or `16x9`); every plan renders in both.
 - **brand**: `name` (or `logoText`) shows top-left; `logo` is an image file next to the plan (inlined at build); `colors` overrides accent colours (cyan, violet, pink, green, amber, red) in every style.
 - **music**: `false` removes the pad from the full mix. The no-music render always drops it.

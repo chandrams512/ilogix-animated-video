@@ -113,7 +113,7 @@ function drawFooter(x, g, t) {
 
 
 // ===== Scene motion: transitions, camera drift (plan keys: motion "auto"|"off", transition, camera "drift"|"none"; a scene can set its own transition / camera) =====
-const AUTO_TR = { 'tech-glow': 'zoom', glass: 'zoom', isometric: 'slide', 'paper-cut': 'slide', whiteboard: 'wipe', blueprint: 'wipe', 'neo-brutal': 'push', kinetic: 'push', neon: 'zoom', bauhaus: 'slide', pixel: 'wipe', deco: 'zoom', mesh: 'slide' };
+const AUTO_TR = { 'tech-glow': 'zoom', glass: 'zoom', isometric: 'slide', 'paper-cut': 'slide', whiteboard: 'wipe', blueprint: 'wipe', 'neo-brutal': 'push', kinetic: 'push', neon: 'zoom', bauhaus: 'slide', pixel: 'wipe', deco: 'zoom', mesh: 'slide', particles: 'zoom', vhs: 'push', halftone: 'push', splitflap: 'slide' };
 function trOf(sc) { if (sc.transition) return sc.transition; if (PLAN.transition && PLAN.transition !== 'auto') return PLAN.transition; return (PLAN.motion === 'auto' || PLAN.transition === 'auto') ? (AUTO_TR[ACTIVE_STYLE] || 'slide') : 'fade'; }
 function camOf(sc) { const c = sc.camera || PLAN.camera || (PLAN.motion === 'auto' ? 'drift' : 'none'); return c === 'drift'; }
 function motionIn(x, g, tr, pin, pout) {

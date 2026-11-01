@@ -15,7 +15,7 @@
   }
   function fin(x, t) { const W = x.canvas.width, Hh = x.canvas.height; finish(x, W, Hh, t); x.fillStyle = 'rgba(0,0,0,0.10)'; for (let Y = 0; Y < Hh; Y += 4) x.fillRect(0, Y, W, 1); }
   function text(x, s, cx, cy, px, col, o = {}) {
-    x.save(); let fp = Math.round(px * 0.56); x.font = o.mono ? `600 ${px}px ${FM}` : `400 ${fp}px ${FP}`; if (!o.mono) { const mw = x.measureText(s).width, lim = x.canvas.width - 60; if (mw > lim) { fp = Math.max(8, Math.floor(fp * lim / mw)); x.font = `400 ${fp}px ${FP}`; } } x.textAlign = o.align || 'center'; x.textBaseline = 'middle'; x.globalAlpha *= o.a == null ? 1 : o.a;
+    x.save(); let fp = Math.round(px * 0.56); x.font = o.mono ? `600 ${px}px ${FM}` : `400 ${fp}px ${FP}`; if (!o.mono) { const mw = x.measureText(s).width, lim = x.canvas.width / x.getTransform().a - 60; if (mw > lim) { fp = Math.max(8, Math.floor(fp * lim / mw)); x.font = `400 ${fp}px ${FP}`; } } x.textAlign = o.align || 'center'; x.textBaseline = 'middle'; x.globalAlpha *= o.a == null ? 1 : o.a;
     if (!o.mono) { x.fillStyle = 'rgba(0,0,0,0.55)'; x.fillText(s, cx + 3, cy + 3); } x.fillStyle = col; x.fillText(s, cx, cy); x.restore();
   }
   function chip(x, cx, cy, s, px, o = {}) {

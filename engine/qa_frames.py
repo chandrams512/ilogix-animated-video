@@ -9,7 +9,7 @@ HOOK = """
 window.__REC = false; window.__T = [];
 const ft = CanvasRenderingContext2D.prototype.fillText;
 CanvasRenderingContext2D.prototype.fillText = function (t, x, y) {
-  if (window.__REC) {
+  if (window.__REC && this.canvas && this.canvas.id === 'cv') {
     const s = String(t), m = this.measureText(s), tr = this.getTransform(), al = this.textAlign;
     const x0 = al === 'center' ? x - m.width / 2 : al === 'right' ? x - m.width : x, asc = m.actualBoundingBoxAscent || 0, desc = m.actualBoundingBoxDescent || 0;
     const P = [[x0, y - asc], [x0 + m.width, y + desc]].map(([a, b]) => [tr.a * a + tr.c * b + tr.e, tr.b * a + tr.d * b + tr.f]);

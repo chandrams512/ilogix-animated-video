@@ -250,7 +250,7 @@ body{background:var(--w-bg)}
 <div class="band b-hero"><div class="wrap">
 <div class="deco" aria-hidden="true"><i class="d1"></i><i class="d2"></i><i class="d3"></i><i class="d4"></i></div>
 <section class="hero">
-  <h1>One script.<br><em>Thirteen looks.</em></h1>
+  <h1>One script.<br><em>Seventeen looks.</em></h1>
   <div><p>Short animated explainers with captions and sound effects, built to take your own music. Change the style below and the same video redraws.</p>
   <div class="cta"><a class="btn" href="#brief">Request a video</a><a class="link" href="#videos">See finished videos</a></div>
   <ul class="reassure"><li>Captions included</li><li>Sound effects only: bring your own music</li><li>Wide and vertical from one script</li></ul></div>
@@ -286,7 +286,7 @@ body{background:var(--w-bg)}
   <div class="tiers">
     <div class="tier"><span class="tag">Available now</span><h3>Explainer videos</h3>
       <p>Animated scenes built from your script: prices, offers, steps, charts, checklists and end cards. Drawn by code, so every video matches your brand and costs little to make.</p>
-      <ul><li>Thirteen styles, fifteen scene types</li><li>Captions and sound effects included</li><li>Hundreds of variants from one spreadsheet</li></ul></div>
+      <ul><li>Seventeen styles, fifteen scene types</li><li>Captions and sound effects included</li><li>Hundreds of variants from one spreadsheet</li></ul></div>
     <div class="tier soon"><span class="tag">In testing</span><h3>AI clips</h3>
       <p>Generated footage for moments an animation cannot show: text to video, a photo brought to life, a brand reel from your link. Each clip costs real compute, so it is a separate tier with its own price.</p>
       <ul><li>Always labelled as AI-generated</li><li>Clip and still-image scenes already work in the engine; the model providers are still being chosen</li><li>Not part of the explainer price</li></ul></div>
@@ -370,7 +370,7 @@ body{background:var(--w-bg)}
     <div class="f c2"><label for="b-brand">For</label><select id="b-brand"><option>iLogix</option><option>TripNido</option><option>Education channel</option><option>Real estate</option><option>Other</option></select></div>
     <div class="f c2"><label for="b-len">Length</label><select id="b-len"><option>10 s</option><option selected>20 s</option><option>35 s</option><option>60 s</option></select></div>
     <div class="f c2"><label for="b-asp">Shape</label><select id="b-asp"><option>9:16 vertical</option><option>16:9 wide</option><option>Both</option></select></div>
-    <div class="f c2"><label for="b-style">Style</label><select id="b-style"><option>Tech Glow</option><option>Glass UI</option><option>Isometric Pastel</option><option>Paper Cut</option><option>Whiteboard</option><option>Blueprint</option><option>Neo-brutalist</option><option>Kinetic Type</option><option>Neon Tubes</option><option>Bauhaus</option><option>Pixel Arcade</option><option>Art Deco</option><option>Soft Mesh</option></select></div>
+    <div class="f c2"><label for="b-style">Style</label><select id="b-style"><option>Tech Glow</option><option>Glass UI</option><option>Isometric Pastel</option><option>Paper Cut</option><option>Whiteboard</option><option>Blueprint</option><option>Neo-brutalist</option><option>Kinetic Type</option><option>Neon Tubes</option><option>Bauhaus</option><option>Pixel Arcade</option><option>Art Deco</option><option>Soft Mesh</option><option>Particles</option><option>Retro VHS</option><option>Halftone</option><option>Split-flap</option></select></div>
     <div class="f c3"><label for="b-audio">Audio</label><select id="b-audio"><option>Sound effects only (I will add music)</option><option>Sound effects plus music</option><option>Leave room for voiceover</option></select></div>
     <div class="f c3"><label for="b-cap">Captions</label><select id="b-cap"><option>On (burned in, plus an .srt file)</option><option>Off</option></select></div>
     <div class="f c3"><label for="b-rera">RERA number (real estate only)</label><input id="b-rera" placeholder="Project registration number"></div>
@@ -442,9 +442,9 @@ function set(t){if(t==='dark')r.setAttribute('data-theme','dark');else r.removeA
 var t='light';try{t=localStorage.getItem('theme')||'light'}catch(e){}
 set(t);b.onclick=function(){var n=r.getAttribute('data-theme')==='dark'?'light':'dark';set(n);try{localStorage.setItem('theme',n)}catch(e){}}})();
 // proof strip
-(function(){var d=[[13,'original styles'],[15,'scene types'],[VIDEOS.length,'finished videos on this page'],[2,'shapes from one script']];document.getElementById('proof').innerHTML=d.map(function(x){return '<div><b>'+x[0]+'</b><span>'+x[1]+'</span></div>'}).join('')})();
+(function(){var d=[[17,'original styles'],[15,'scene types'],[VIDEOS.length,'finished videos on this page'],[2,'shapes from one script']];document.getElementById('proof').innerHTML=d.map(function(x){return '<div><b>'+x[0]+'</b><span>'+x[1]+'</span></div>'}).join('')})();
 // live stage
-var STY=[['tech-glow','Tech Glow','Dark neon glow. AI, SaaS.'],['glass','Glass UI','Frosted panels. Apps, demos.'],['isometric','Isometric Pastel','Soft slabs. Travel, lifestyle.'],['paper-cut','Paper Cut','Layered paper. Education.'],['whiteboard','Whiteboard','Hand-drawn marker. Teaching.'],['blueprint','Blueprint','Line-work on blue. Technical.'],['neo-brutal','Neo-brutalist','Thick outlines. Social reels.'],['kinetic','Kinetic Type','Huge type, one red accent. Quotes, stats.'],['neon','Neon Tubes','Glowing tubes on brick. Events, nightlife.'],['bauhaus','Bauhaus','Flat shapes on a grid. Charts, design.'],['pixel','Pixel Arcade','8-bit game look. Milestones, gaming.'],['deco','Art Deco','Black and gold. Invitations, luxury.'],['mesh','Soft Mesh','Calm pastel gradients. Apps, podcasts.']];
+var STY=[['tech-glow','Tech Glow','Dark neon glow. AI, SaaS.'],['glass','Glass UI','Frosted panels. Apps, demos.'],['isometric','Isometric Pastel','Soft slabs. Travel, lifestyle.'],['paper-cut','Paper Cut','Layered paper. Education.'],['whiteboard','Whiteboard','Hand-drawn marker. Teaching.'],['blueprint','Blueprint','Line-work on blue. Technical.'],['neo-brutal','Neo-brutalist','Thick outlines. Social reels.'],['kinetic','Kinetic Type','Huge type, one red accent. Quotes, stats.'],['neon','Neon Tubes','Glowing tubes on brick. Events, nightlife.'],['bauhaus','Bauhaus','Flat shapes on a grid. Charts, design.'],['pixel','Pixel Arcade','8-bit game look. Milestones, gaming.'],['deco','Art Deco','Black and gold. Invitations, luxury.'],['mesh','Soft Mesh','Calm pastel gradients. Apps, podcasts.'],['particles','Particles','Glowing dots form words. Tech, space.'],['vhs','Retro VHS','80s sunset grid, tape noise. Ads, throwbacks.'],['halftone','Halftone','Printed magazine dots. History, editorial.'],['splitflap','Split-flap','Departures-board letters. Stats, year in review.']];
 var cur={style:'tech-glow',asp:'16x9'},sf=document.getElementById('sf'),sl=document.getElementById('slist'),stg=document.getElementById('stage');
 function applyStage(){
   try{var w=sf.contentWindow;if(w&&w.setStyle){w.setStyle(cur.style);w.setAspect(cur.asp)}}catch(e){}

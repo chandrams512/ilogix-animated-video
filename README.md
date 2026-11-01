@@ -7,7 +7,7 @@ preview and the MP4 render match. Sound is synthesized (no audio files). Private
 
 ## Layout
 - `engine/` harness, player page, build and render scripts
-- `styles/` one folder per look (`tech-glow`, `isometric`, `paper-cut`, `whiteboard`, `blueprint`, `neo-brutal`, `glass`, `kinetic`, `neon`, `bauhaus`, `pixel`, `deco`, `mesh`); `_sound/` is the sound kit (original kit, see its README)
+- `styles/` one folder per look (`tech-glow`, `isometric`, `paper-cut`, `whiteboard`, `blueprint`, `neo-brutal`, `glass`, `kinetic`, `neon`, `bauhaus`, `pixel`, `deco`, `mesh`, `particles`, `vhs`, `halftone`, `splitflap`); `_sound/` is the sound kit (original kit, see its README)
 - `plans/<name>/` one folder per video: `manifest.json` (script order), scene code, storyboard
 - `archive/earth-water/` the first video, kept as built
 - `docs/` guides (start with `HOW-TO.md`)
@@ -23,7 +23,7 @@ preview and the MP4 render match. Sound is synthesized (no audio files). Private
 
 ## Styles
 Scenes draw through the style object `S` (see `engine/styles.js`), so one plan renders in any registered style:
-`tech-glow` (dark neon), `glass` (frosted panels), `isometric` (pastel slabs, travel), `paper-cut` (layered paper on teal, education), `whiteboard` (hand-drawn), `blueprint` (technical), `neo-brutal` (loud social), `kinetic` (huge type, one red accent), `neon` (glowing tubes on brick), `bauhaus` (flat shapes on a grid), `pixel` (8-bit arcade), `deco` (black and gold), `mesh` (soft pastel gradients). All are original designs.
+`tech-glow` (dark neon), `glass` (frosted panels), `isometric` (pastel slabs, travel), `paper-cut` (layered paper on teal, education), `whiteboard` (hand-drawn), `blueprint` (technical), `neo-brutal` (loud social), `kinetic` (huge type, one red accent), `neon` (glowing tubes on brick), `bauhaus` (flat shapes on a grid), `pixel` (8-bit arcade), `deco` (black and gold), `mesh` (soft pastel gradients), `particles` (words built from glowing dots), `vhs` (80s sunset grid), `halftone` (printed dots), `splitflap` (departures board). All are original designs.
 The player has a style dropdown; `?style=isometric` in the URL preselects one.
 Render a style: `python3 engine/render.py 9x16 out dist/ilogix_voice_agents.html ilogix_iso isometric`.
 New style = one file that calls `registerStyle(name, {...})` with the same shape (documented in `engine/styles.js`).
