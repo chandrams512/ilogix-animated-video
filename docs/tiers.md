@@ -5,7 +5,7 @@ Two kinds of video, made differently, kept apart in the product and in the price
 ## Tier 1: Explainer videos (built)
 Animated scenes drawn by code from a JSON plan (this repo's engine).
 - Deterministic: the same plan gives the same video. No per-video model cost beyond a cheap LLM draft of the plan.
-- Seventeen original styles, fifteen scene types, captions, brand kit, sound effects only (no music).
+- Eighteen original styles, fifteen scene types, captions, brand kit, sound effects only (no music).
 - Bulk: one template plus a CSV gives a video per row.
 - Planned price for influencer reels: Rs 200-300 per 30 s video (a test number, not final).
 

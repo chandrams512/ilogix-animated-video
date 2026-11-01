@@ -1,5 +1,5 @@
 {
-  "packByStyle": {"tech-glow": "scifi", "glass": "glass", "isometric": "soft", "paper-cut": "organic", "whiteboard": "organic", "blueprint": "mechanical", "neo-brutal": "rubber", "kinetic": "minimal", "neon": "scifi", "bauhaus": "studio", "pixel": "arcade", "deco": "cinematic", "mesh": "dreamy", "particles": "zen", "vhs": "arcade", "halftone": "mechanical", "splitflap": "mechanical"},
+  "packByStyle": {"tech-glow": "scifi", "glass": "glass", "isometric": "soft", "paper-cut": "organic", "whiteboard": "organic", "blueprint": "mechanical", "neo-brutal": "rubber", "kinetic": "minimal", "neon": "scifi", "bauhaus": "studio", "pixel": "arcade", "deco": "cinematic", "mesh": "dreamy", "particles": "zen", "vhs": "arcade", "halftone": "mechanical", "splitflap": "mechanical", "liquid": "glass"},
   "musicByStyle": {"pixel": "chip", "vhs": "wave", "neon": "wave", "kinetic": "pulse", "neo-brutal": "pulse", "halftone": "pulse", "splitflap": "pulse", "bauhaus": "pulse"},
   "roleCue": {"tick": "progress-step", "tock": "toggle-on", "click": "press", "pop": "select", "success": "success", "thud": "drop", "stamp": "snap", "sparkle": "reward", "typing": "typing", "swipe": "swipe"},
   "sceneCues": {"stat": ["level-up"], "cta": ["send"], "compare": ["toggle-on"], "flow": ["progress-step"], "timeline": ["progress-step"], "testimonial": ["receive"], "offer": ["coupon"], "pricing": ["add-to-cart"], "checklist": ["check"], "beforeafter": ["undo"], "endcard": ["achievement"], "phone": ["open"], "clip": ["open"], "image": ["open"]},
@@ -21,6 +21,7 @@
     "mesh": {"pop": "bubble", "sparkle": "chime"},
     "particles": {"pop": "drip", "sparkle": "chime"},
     "deco": {"pop": "bell", "sparkle": "chime"},
-    "isometric": {"pop": "bubble"}
+    "isometric": {"pop": "bubble"},
+    "liquid": {"pop": "bubble", "sparkle": "chime"}
   }
 }
