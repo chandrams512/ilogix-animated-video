@@ -14,4 +14,5 @@ python3 engine/build.py plans/re-bulk-out/skyline-2bhk/plan.json >/dev/null; cp 
 python3 engine/build.py plans/sample-hindi/plan.json >/dev/null; cp dist/sample_hindi.html web/v/sample-hindi.html
 python3 engine/build.py plans/sample-motion/plan.json >/dev/null; cp dist/sample_motion.html web/v/sample-motion.html
 python3 engine/build.py plans/sample-liquid/plan.json >/dev/null; cp dist/sample_liquid.html web/v/sample-liquid.html
+python3 engine/build.py plans/sample-swiss/plan.json >/dev/null; cp dist/sample_swiss.html web/v/sample-swiss.html
 echo synced

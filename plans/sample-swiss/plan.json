@@ -1,0 +1,78 @@
+{
+  "title": "Swiss Grid sample: the water cycle",
+  "style": "swiss",
+  "aspect": "16x9",
+  "brand": {
+    "name": "Learn in 20 seconds"
+  },
+  "scenes": [
+    {
+      "type": "hook",
+      "dur": 3,
+      "lines": [
+        "Where does",
+        "rain come from?"
+      ],
+      "say": "Where does rain come from?"
+    },
+    {
+      "type": "timeline",
+      "dur": 7,
+      "title": "The water cycle",
+      "points": [
+        {
+          "label": "Evaporation",
+          "sub": "Sun warms water"
+        },
+        {
+          "label": "Condensation",
+          "sub": "Vapour forms clouds"
+        },
+        {
+          "label": "Precipitation",
+          "sub": "Rain or snow falls"
+        },
+        {
+          "label": "Collection",
+          "sub": "Water gathers again"
+        }
+      ],
+      "say": "The sun warms water, vapour forms clouds, rain falls, and the water gathers again."
+    },
+    {
+      "type": "steps",
+      "dur": 5,
+      "title": "Remember it as",
+      "items": [
+        {
+          "title": "Heat up",
+          "sub": "evaporation",
+          "icon": "bolt"
+        },
+        {
+          "title": "Cool down",
+          "sub": "condensation",
+          "icon": "plan"
+        },
+        {
+          "title": "Fall",
+          "sub": "precipitation",
+          "icon": "check"
+        }
+      ],
+      "say": "Heat up, cool down, fall."
+    },
+    {
+      "type": "cta",
+      "dur": 3,
+      "lines": [
+        "The same water,",
+        "again and again."
+      ],
+      "icon": false,
+      "say": "The same water, again and again."
+    }
+  ],
+  "motion": "auto",
+  "transition": "push"
+}
