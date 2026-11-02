@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Make a voiceover for a plan: one audio file per scene 'say' line, and the timings build.py needs.
 
-Usage:  python3 engine/tts.py plans/<name>/plan.json [--provider estimate|azure|elevenlabs|edge|file] [--voice NAME] [--lang en|hi] [--rate 1.0] [--force]
+Usage:  python3 engine/tts.py plans/<name>/plan.json [--provider estimate|azure|elevenlabs|edge|kokoro|piper|file] [--voice NAME] [--lang en|hi] [--rate 1.0] [--force]
 Output: plans/<name>/voice/scene-01.mp3 ... and voice/voice.json (durations). Then run build.py: it stretches each scene to fit its line,
         times the captions to the voice, and writes dist/<name>_voice.wav (and .mp3 for the player). render.py adds a *_voiceover.mp4.
 
@@ -10,6 +10,9 @@ Providers (set the keys as environment variables; none are stored in the repo):
   azure       Azure AI Speech REST.  AZURE_TTS_KEY, AZURE_TTS_REGION (e.g. centralindia). Default voices: en-IN-NeerjaNeural, hi-IN-SwaraNeural.
   elevenlabs  ElevenLabs REST.       ELEVENLABS_API_KEY, ELEVENLABS_VOICE (voice id). Model eleven_multilingual_v2 (override ELEVENLABS_MODEL); handles Hindi.
   edge        the edge-tts package (pip install edge-tts). TESTING ONLY: Microsoft publishes no commercial licence for it.
+  kokoro      free, offline, no key (pip install kokoro soundfile; needs espeak-ng). Open Apache-2.0 model, runs on your computer. --voice af_heart (default),
+              Hindi: hf_alpha / hf_beta (set --lang hi). Check the licence of the voice pack you use before selling.
+  piper       free, offline (pip install piper-tts). Needs a voice file: --voice path/to/voice.onnx or PIPER_MODEL. Licences differ per voice: check the voice's card.
   file        your own recordings: put scene-01.mp3 (or .wav/.m4a/.ogg) in the voice folder. Nothing is sent anywhere.
 Lines already made are reused (cache in voice/cache.json) unless --force, so a re-run costs nothing. The plan's 'lang' key picks the default language.
 Check the commercial terms of the provider and the voice before you sell videos that use it."""
@@ -55,8 +58,28 @@ def edge(text, out, lang, rate, voice):
     voice = voice or AZURE_VOICES.get(lang, AZURE_VOICES['en'])
     asyncio.run(edge_tts.Communicate(text, voice, rate='%+d%%' % round((rate - 1) * 100)).save(out))
 
+def _to_mp3(wav, out):
+    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', wav, '-c:a', 'libmp3lame', '-b:a', '64k', out], check=True)
+
+def kokoro(text, out, lang, rate, voice):
+    try: import kokoro as K, soundfile as sf, numpy as np
+    except ImportError: sys.exit('pip install kokoro soundfile  (and install espeak-ng). Free and offline; first run downloads the model.')
+    voice = voice or ('hf_alpha' if lang == 'hi' else 'af_heart'); code = {'hi': 'h'}.get(lang, voice[0] if voice[0] in 'abefhijpz' else 'a')
+    pipe = K.KPipeline(lang_code=code); parts = [np.asarray(a) for _, _, a in pipe(text, voice=voice, speed=rate)]
+    if not parts: sys.exit('kokoro made no audio for: %s' % text[:60])
+    wav = out + '.tmp.wav'; sf.write(wav, np.concatenate(parts), 24000); _to_mp3(wav, out); os.remove(wav)
+
+def piper(text, out, lang, rate, voice):
+    model = voice or os.environ.get('PIPER_MODEL')
+    if not model or not os.path.exists(model): sys.exit('Piper needs a voice file: pass --voice path/to/voice.onnx or set PIPER_MODEL. (pip install piper-tts; voices: the Piper voice list.)')
+    wav = out + '.tmp.wav'; cmd = [os.environ.get('PIPER_BIN', 'piper'), '--model', model, '--output_file', wav, '--length_scale', '%.3f' % (1.0 / max(0.5, rate))]
+    try: subprocess.run(cmd, input=text.encode('utf-8'), check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except FileNotFoundError: sys.exit('The piper command was not found: pip install piper-tts (or set PIPER_BIN).')
+    except subprocess.CalledProcessError: sys.exit('piper failed: check the voice file and that it has its .onnx.json next to it.')
+    _to_mp3(wav, out); os.remove(wav)
+
 def main():
-    ap = argparse.ArgumentParser(); ap.add_argument('plan'); ap.add_argument('--provider', default='estimate', choices=['estimate', 'azure', 'elevenlabs', 'edge', 'file'])
+    ap = argparse.ArgumentParser(); ap.add_argument('plan'); ap.add_argument('--provider', default='estimate', choices=['estimate', 'azure', 'elevenlabs', 'edge', 'kokoro', 'piper', 'file'])
     ap.add_argument('--voice'); ap.add_argument('--lang'); ap.add_argument('--rate', type=float, default=1.0); ap.add_argument('--force', action='store_true')
     a = ap.parse_args(); plan = json.load(open(a.plan, encoding='utf-8')); lang = a.lang or plan.get('lang', 'en')
     vdir = os.path.join(os.path.dirname(os.path.abspath(a.plan)), 'voice'); os.makedirs(vdir, exist_ok=True)
@@ -76,6 +99,8 @@ def main():
                 if a.provider == 'estimate': estimate(text, path, lang, a.rate)
                 elif a.provider == 'azure': azure(text, path, lang, a.rate, a.voice)
                 elif a.provider == 'elevenlabs': elevenlabs(text, path, lang, a.rate, a.voice)
+                elif a.provider == 'kokoro': kokoro(text, path, lang, a.rate, a.voice)
+                elif a.provider == 'piper': piper(text, path, lang, a.rate, a.voice)
                 else: edge(text, path, lang, a.rate, a.voice)
                 cache[name] = key; made += 1
         items.append({'scene': i, 'file': name, 'dur': duration(path)})

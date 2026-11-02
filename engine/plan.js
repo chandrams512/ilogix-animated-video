@@ -98,7 +98,7 @@ function drawCaptions(x, g, t) {
   x.globalAlpha *= seg(t, c.t, c.t + 0.15) * (1 - seg(t, c.t + (c.dur || 2) - 0.12, c.t + (c.dur || 2)));
   x.fillStyle = 'rgba(4,8,24,0.72)'; rr(x, g.C - bw / 2, y0, bw, bh, 22); x.fill();
   x.textBaseline = 'middle'; x.textAlign = 'left';
-  lines.forEach((ln, li) => { let xx = g.C - widths[li] / 2; ln.forEach(([w, i, ww]) => { x.fillStyle = i === cur ? S.pal.cyan : (i < cur ? '#ffffff' : 'rgba(255,255,255,0.62)'); x.fillText(w, xx, y0 + 13 + li * lh + lh / 2); xx += ww; }); });
+  lines.forEach((ln, li) => { let xx = g.C - widths[li] / 2; ln.forEach(([w, i, ww]) => { x.fillStyle = i === cur ? (S.pal.capHi || S.pal.cyan) : (i < cur ? '#ffffff' : 'rgba(255,255,255,0.62)'); x.fillText(w, xx, y0 + 13 + li * lh + lh / 2); xx += ww; }); });
   x.restore();
 }
 
@@ -113,7 +113,7 @@ function drawFooter(x, g, t) {
 
 
 // ===== Scene motion: transitions, camera drift (plan keys: motion "auto"|"off", transition, camera "drift"|"none"; a scene can set its own transition / camera) =====
-const AUTO_TR = { 'tech-glow': 'zoom', glass: 'zoom', isometric: 'slide', 'paper-cut': 'slide', whiteboard: 'wipe', blueprint: 'wipe', 'neo-brutal': 'push', kinetic: 'push', neon: 'zoom', bauhaus: 'slide', pixel: 'wipe', deco: 'zoom', mesh: 'slide', particles: 'zoom', vhs: 'push', halftone: 'push', splitflap: 'slide', liquid: 'zoom' };
+const AUTO_TR = { 'tech-glow': 'zoom', glass: 'zoom', isometric: 'slide', 'paper-cut': 'slide', whiteboard: 'wipe', blueprint: 'wipe', 'neo-brutal': 'push', kinetic: 'push', neon: 'zoom', bauhaus: 'slide', pixel: 'wipe', deco: 'zoom', mesh: 'slide', particles: 'zoom', vhs: 'push', halftone: 'push', splitflap: 'slide', liquid: 'zoom', swiss: 'push' };
 function trOf(sc) { if (sc.transition) return sc.transition; if (PLAN.transition && PLAN.transition !== 'auto') return PLAN.transition; return (PLAN.motion === 'auto' || PLAN.transition === 'auto') ? (AUTO_TR[ACTIVE_STYLE] || 'slide') : 'fade'; }
 function camOf(sc) { const c = sc.camera || PLAN.camera || (PLAN.motion === 'auto' ? 'drift' : 'none'); return c === 'drift'; }
 function motionIn(x, g, tr, pin, pout) {

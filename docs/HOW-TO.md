@@ -67,4 +67,4 @@ Set `"industry": "real-estate"` and `"brand": { "rera": "<registration number>" 
 | A voice line makes a scene longer than 12 s | Shorten the `say` line |
 
 ## Where things are
-`engine/` the tools · `styles/` the eighteen looks · `plans/` one folder per video · `web/` the studio site (Vercel serves this) · `dist/` built players (not committed) · `docs/` these guides.
+`engine/` the tools · `styles/` the nineteen looks · `plans/` one folder per video · `web/` the studio site (Vercel serves this) · `dist/` built players (not committed) · `docs/` these guides.
