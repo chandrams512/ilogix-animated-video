@@ -2,7 +2,7 @@
 """Render a built player HTML to MP4.
 Usage: python3 engine/render.py <16x9|9x16> <outdir> [html_path] [name_prefix] [style]
 Defaults: dist/ilogix_voice_agents.html, prefix 'ilogix'.
-Env: FPS=60 (default 30)   MBLUR=4 (motion blur, sub-frames per frame; default off)   CAPTIONS=0 (no burned-in captions)   MIXES=sfx-only (render only these audio mixes, comma separated; default all three)
+Env: FPS=60 (default 30)   MBLUR=4 (motion blur, sub-frames per frame; default off)   CAPTIONS=0 (no burned-in captions)   MIXES=sfx-only (render only these audio mixes, comma separated; default all three; also voice-only = the voice alone, no music or effects, needs a voiceover; and silent = picture only, no audio)
 With a voiceover (see engine/tts.py) it also writes <prefix>_<aspect>_voiceover.mp4: the quiet effects mix plus the voice.
 Also writes <prefix>_<aspect>_cover.jpg (a settled still for thumbnails) and <prefix>_<aspect>_preview.gif (first 6 s, small, for emails).
 Renders frames once (silent), renders both audio mixes offline, then muxes:
@@ -66,6 +66,14 @@ async def main():
         out = os.path.join(OUT, f'{PREFIX}_{ASPECT}_voiceover.mp4')
         subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', silent, '-f', 'f32le', '-ar', '48000', '-ac', '2', '-i', os.path.join(OUT, '_audio_voiceover-mix.f32'), '-i', vwav,
                         '-filter_complex', '[1:a][2:a]amix=inputs=2:weights=0.55 1.3:duration=first:normalize=0,alimiter=limit=0.95[o]', '-map', '0:v', '-map', '[o]',
+                        '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', out], check=True)
+        print('wrote', out, os.path.getsize(out) // 1024, 'KB', flush=True)
+    if 'silent' in MIXES:  # picture only, no audio track at all, for laying your own sound
+        out = os.path.join(OUT, f'{PREFIX}_{ASPECT}_silent.mp4'); subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', silent, '-c', 'copy', '-an', out], check=True)
+        print('wrote', out, os.path.getsize(out) // 1024, 'KB', flush=True)
+    if 'voice-only' in MIXES and os.path.exists(vwav):  # the voice on its own: no music, no effects
+        out = os.path.join(OUT, f'{PREFIX}_{ASPECT}_voice-only.mp4')
+        subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', silent, '-i', vwav, '-map', '0:v', '-map', '1:a', '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000',
                         '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', out], check=True)
         print('wrote', out, os.path.getsize(out) // 1024, 'KB', flush=True)
     for name in [m for m in ('sound', 'voiceover-mix', 'sfx-only') if m in MIXES]:

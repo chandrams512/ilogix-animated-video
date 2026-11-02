@@ -5,6 +5,7 @@ The voice comes from each scene's `say` line. One audio file per line, then the 
 1. `python3 engine/tts.py plans/<name>/plan.json --provider <p>` writes `plans/<name>/voice/scene-NN.mp3` and `voice.json` (the length of each line).
 2. `python3 engine/build.py plans/<name>/plan.json` stretches any scene shorter than its line (line length + 0.7 s), times the captions to the voice, and writes `dist/<name>_voice.wav`. The player gets a "Voice on" button and plays the voice in step with the picture.
 3. `python3 engine/render.py 9x16 out dist/<name>.html <prefix> <style>` also writes `<prefix>_9x16_voiceover.mp4`: quiet sound effects plus the voice. The other versions (sound, voiceover-mix, sfx-only) stay as they were.
+   Other mixes (set with `MIXES=`): `voice-only` is the voice alone with no music and no effects; `sfx-only` is effects only (no voice, no music); `silent` is the picture with no audio at all. Example: `MIXES=voice-only,silent python3 engine/render.py 9x16 out dist/<name>.html <prefix>`.
 
 ## Providers
 | provider | needs | note |
