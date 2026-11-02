@@ -1,0 +1,20 @@
+{
+  "title": "GitHub repo of the week: lemo-opuscar",
+  "style": "tech-glow",
+  "aspect": "9x16",
+  "safe": true,
+  "motion": "auto",
+  "brand": { "name": "iLogix Digital" },
+  "scenes": [
+    { "type": "hook", "dur": 4, "lines": ["This GitHub repo", "makes films", "from pure code"], "say": "This GitHub repo makes whole films from pure code." },
+    { "type": "stat", "dur": 5, "value": 10000, "suffix": "+", "label": "GitHub stars", "sub": "lemo-opuscar", "say": "Over ten thousand stars, and it is called lemo-opuscar." },
+    { "type": "steps", "dur": 8, "title": "What you get", "items": [
+      { "title": "66 film styles", "sub": "Ink wash to Swiss motion", "tag": "1", "icon": "doc" },
+      { "title": "No video AI model", "sub": "Claude writes the code", "tag": "2", "icon": "bolt" },
+      { "title": "Open source", "sub": "Code under the MIT licence", "tag": "3", "icon": "check" } ],
+      "say": "Sixty-six film styles, made with Claude Code and no video model. The code is open source." },
+    { "type": "flow", "dur": 6, "title": "How it works", "nodes": [ { "label": "Your idea", "icon": "person" }, { "label": "Claude Code", "icon": "bolt" }, { "label": "A film", "icon": "doc" } ],
+      "say": "You type an idea, Claude Code draws it, and a film comes out." },
+    { "type": "cta", "dur": 7, "lines": ["Follow iLogix Digital", "DM GIT for the link"], "button": "Follow", "say": "Follow iLogix Digital, and DM the word GIT to get the link." }
+  ]
+}

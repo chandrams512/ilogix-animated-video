@@ -1,0 +1,21 @@
+{
+  "title": "GitHub रेपो ऑफ़ द वीक: lemo-opuscar",
+  "style": "tech-glow",
+  "aspect": "9x16",
+  "lang": "hi",
+  "safe": true,
+  "motion": "auto",
+  "brand": { "name": "iLogix Digital" },
+  "scenes": [
+    { "type": "hook", "dur": 4, "lines": ["यह GitHub रेपो", "सिर्फ़ कोड से", "बनाता है फ़िल्म"], "say": "यह GitHub रेपो सिर्फ़ कोड से पूरी फ़िल्म बना देता है।" },
+    { "type": "stat", "dur": 5, "value": 10000, "suffix": "+", "label": "GitHub स्टार", "sub": "lemo-opuscar", "say": "दस हज़ार से ज़्यादा स्टार, और नाम है lemo-opuscar।" },
+    { "type": "steps", "dur": 8, "title": "क्या मिलता है", "items": [
+      { "title": "66 फ़िल्म स्टाइल", "sub": "स्याही से स्विस मोशन तक", "tag": "1", "icon": "doc" },
+      { "title": "कोई वीडियो AI नहीं", "sub": "Claude लिखता है कोड", "tag": "2", "icon": "bolt" },
+      { "title": "ओपन सोर्स", "sub": "कोड MIT लाइसेंस में", "tag": "3", "icon": "check" } ],
+      "say": "छियासठ फ़िल्म स्टाइल, बिना किसी वीडियो AI मॉडल के, सिर्फ़ Claude Code से। और कोड ओपन सोर्स है।" },
+    { "type": "flow", "dur": 6, "title": "कैसे काम करता है", "nodes": [ { "label": "आपका आइडिया", "icon": "person" }, { "label": "Claude Code", "icon": "bolt" }, { "label": "फ़िल्म", "icon": "doc" } ],
+      "say": "आप आइडिया लिखिए, Claude Code उसे बनाता है, फ़िल्म तैयार।" },
+    { "type": "cta", "dur": 7, "lines": ["iLogix Digital को", "फ़ॉलो करें"], "button": "DM करें: GIT", "say": "iLogix Digital को फ़ॉलो करें, और लिंक पाने के लिए DM में GIT लिखें।" }
+  ]
+}
