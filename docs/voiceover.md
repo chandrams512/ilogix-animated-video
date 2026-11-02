@@ -13,7 +13,7 @@ The voice comes from each scene's `say` line. One audio file per line, then the 
 | `azure` | `AZURE_TTS_KEY`, `AZURE_TTS_REGION` | default voices `en-IN-NeerjaNeural`, `hi-IN-SwaraNeural`; change with `--voice`. Check the current terms and price. |
 | `elevenlabs` | `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE` | multilingual model, handles Hindi. Check the plan's commercial rights. |
 | `edge` | `pip install edge-tts` | testing only: no published commercial licence. |
-| `kokoro` | `pip install kokoro soundfile`, espeak-ng | free, offline, no key. English voices `af_heart` etc.; Hindi `hf_alpha` with `--lang hi`. Not yet tried on a real machine: test one line first. |
+| `kokoro` | `pip install kokoro soundfile`, espeak-ng | free, offline, no key. English voices `af_heart` etc.; Hindi `hf_alpha` with `--lang hi`. Tried on a Mac with the sample-motion plan and judged good for explainer videos. Needs Python 3.10 to 3.12; the first run downloads the model. |
 | `piper` | `pip install piper-tts` + a voice `.onnx` | free, offline. Pass `--voice path/to/voice.onnx` (or set `PIPER_MODEL`). Licences differ per voice: check the voice card before selling. |
 | `file` | recordings named `scene-01.mp3` (or .wav, .m4a, .ogg) in the voice folder | your own voice, no service involved. |
 Lines are cached by text, voice and provider, so running again costs nothing unless a line changed (`--force` redoes all).
