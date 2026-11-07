@@ -4,10 +4,45 @@
   "aspect": "9x16",
   "safe": true,
   "motion": "auto",
-  "brand": { "name": "Your Brand" },
+  "brand": {
+    "name": "Your Brand"
+  },
   "scenes": [
-    { "type": "hook", "dur": 3, "lines": ["New drop.", "Meet the Sample Tee."], "say": "New drop. Meet the Sample Tee." },
-    { "type": "product", "dur": 6, "image": "product.png", "title": "Built to last", "callouts": ["240 GSM cotton", "Pre-shrunk", "Custom print ready"], "price": "₹499", "was": "₹699", "badge": "Launch offer", "say": "Heavy cotton, pre-shrunk, and ready for your custom print. Launch price, four ninety-nine." },
-    { "type": "cta", "dur": 4, "lines": ["Order today", "Link in bio"], "button": "Shop now", "say": "Order today. Link in bio." }
-  ]
+    {
+      "type": "hook",
+      "dur": 3,
+      "lines": [
+        "New drop.",
+        "Meet the Sample Tee."
+      ],
+      "say": "New drop. Meet the Sample Tee."
+    },
+    {
+      "type": "product",
+      "dur": 6,
+      "image": "product.png",
+      "title": "Built to last",
+      "callouts": [
+        "240 GSM cotton",
+        "Pre-shrunk",
+        "Custom print ready"
+      ],
+      "price": "₹499",
+      "was": "₹699",
+      "badge": "Launch offer",
+      "say": "Heavy cotton, pre-shrunk, and ready for your custom print. Launch price, four ninety-nine."
+    },
+    {
+      "type": "cta",
+      "dur": 4,
+      "lines": [
+        "Order today",
+        "Link in bio"
+      ],
+      "button": "Shop now",
+      "say": "Order today. Link in bio."
+    }
+  ],
+  "sfx": "minimal",
+  "music": false
 }
