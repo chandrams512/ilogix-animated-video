@@ -5,7 +5,7 @@ import json, sys
 STYLES = {'tech-glow', 'isometric', 'whiteboard', 'blueprint', 'neo-brutal', 'glass', 'paper-cut', 'kinetic', 'neon', 'bauhaus', 'pixel', 'deco', 'mesh', 'particles', 'vhs', 'halftone', 'splitflap', 'liquid', 'swiss', 'keynote', 'transit'}
 ICONS = {'phone', 'mail', 'chat', 'cal', 'person', 'doc', 'check', 'bolt', 'plan', 'shield', 'pin', 'plane', 'cross'}
 REQ = {'hook': ['lines'], 'steps': ['items'], 'stat': ['value', 'label'], 'chart': ['bars'], 'compare': ['left', 'right'], 'timeline': ['points'], 'flow': ['nodes'], 'cta': ['lines'],
-       'testimonial': ['quote', 'name'], 'offer': ['headline'], 'pricing': ['plans'], 'checklist': ['items'], 'beforeafter': ['before', 'after'], 'endcard': ['lines'], 'phone': ['image'], 'clip': [], 'image': ['image']}
+       'testimonial': ['quote', 'name'], 'offer': ['headline'], 'pricing': ['plans'], 'checklist': ['items'], 'beforeafter': ['before', 'after'], 'endcard': ['lines'], 'phone': ['image'], 'clip': [], 'image': ['image'], 'product': ['image']}
 LIM = {'hook': (1, 3, 'lines'), 'steps': (2, 4, 'items'), 'chart': (2, 6, 'bars'), 'timeline': (2, 5, 'points'), 'flow': (2, 5, 'nodes'), 'cta': (1, 3, 'lines'),
        'pricing': (2, 3, 'plans'), 'checklist': (2, 5, 'items'), 'endcard': (1, 3, 'lines')}
 BANNED = ['assured return', 'guaranteed return', 'guaranteed appreciation', 'assured rental', 'guaranteed rental', 'assured appreciation', 'risk free', 'risk-free']
@@ -61,6 +61,11 @@ else:
             if not (s.get('prompt') or s.get('file')): errs.append('%s: needs a prompt (to generate with engine/clips.py) or a file' % where)
             if s.get('badge') is False and not s.get('real'): errs.append('%s: AI clips must show a badge; set "real": true only for real footage you own' % where)
         if t in ('clip', 'image') and len(s.get('title', '')) > 60: errs.append('%s: title is over 60 characters' % where)
+        if t == 'product':
+            if len(s.get('callouts', [])) > 3: errs.append('%s: up to 3 callouts' % where)
+            for c in s.get('callouts', []):
+                if len(str(c.get('text', c) if isinstance(c, dict) else c)) > 26: errs.append('%s: callout over 26 characters' % where)
+            if len(str(s.get('price', ''))) > 10: errs.append('%s: price over 10 characters' % where)
         if t == 'endcard' and not any(s.get(k) for k in ('phone', 'email', 'web', 'qr')): errs.append('%s: add at least one of phone, email, web, qr' % where)
         for key in ('items', 'nodes'):
             for it in s.get(key, []):

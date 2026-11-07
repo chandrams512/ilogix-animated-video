@@ -91,6 +91,25 @@
     // ---- media scenes: 'clip' (video, sampled into frames by build.py) and 'image' (a still with a slow zoom). Both can carry a badge.
     clip(x, g, sc, lt) { mediaScene(x, g, sc, lt, sc._fr ? sc._fr[Math.min(sc._fr.length - 1, Math.floor(lt * sc.fps))] : null, sc.badge === undefined ? 'AI-generated' : sc.badge, 0.03); },
     image(x, g, sc, lt) { mediaScene(x, g, sc, lt, sc._img, sc.badge || '', 0.08 * Math.min(1, lt / sc._d)); },
+    // ---- product: the real product photo (ideally a transparent PNG cut-out) floating over a glow, with callouts, a price and a badge. The photo is only moved and scaled, never redrawn, so packaging, logo and label stay exact.
+    product(x, g, sc, lt) {
+      const pal = S.pal, P = g.P, im = sc._img, cols = COLS(), calls = (sc.callouts || []).slice(0, 3);
+      const bw = P ? 560 : 400, bh = P ? 450 : 400, cx = P ? g.C : 340, cy = P ? 425 : 330, u = seg(lt, 0.1, 0.8), bob = Math.sin(lt * 1.7) * (P ? 9 : 8), sway = Math.sin(lt * 1.1) * 0.025, zoom = 1 + 0.05 * Math.min(1, lt / sc._d);
+      const colX = P ? g.C : 940;  // callouts and price share one column: centred under the product (portrait) or to its right (landscape)
+      if (sc.title) fade(x, seg(lt, 0.1, 0.5), () => S.text(x, sc.title, P ? g.C : cx + 50, P ? 150 : 90, P ? 46 : 40, pal.ink, { w: 800 }));
+      fade(x, u, () => { const r = bw * 0.8, gr = x.createRadialGradient(cx, cy, 10, cx, cy, r); gr.addColorStop(0, H.rgba(pal.cyan, 0.32)); gr.addColorStop(1, H.rgba(pal.cyan, 0)); x.fillStyle = gr; x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.fill(); x.fillStyle = 'rgba(0,0,0,0.3)'; x.beginPath(); x.ellipse(cx, cy + bh / 2 + 24, bw * 0.34 * (1 - bob / 90), 14, 0, 0, TAU); x.fill(); });
+      popIn(x, cx, cy, u, () => {
+        if (!(im && im.complete && im.naturalWidth)) return;
+        const k = Math.min(bw / im.naturalWidth, bh / im.naturalHeight) * zoom, dw = im.naturalWidth * k, dh = im.naturalHeight * k;
+        x.save(); x.translate(cx, cy + bob); x.rotate(sway); x.shadowColor = 'rgba(0,0,0,0.38)'; x.shadowBlur = 36; x.shadowOffsetY = 18; x.drawImage(im, -dw / 2, -dh / 2, dw, dh); x.restore();
+      });
+      const c0 = P ? 722 : 190, cstep = P ? 56 : 74;
+      calls.forEach((c, i) => { const t0 = 0.9 + i * 0.45, y = c0 + i * cstep; popIn(x, colX, y, seg(lt, t0, t0 + 0.45), () => S.chip(x, colX, y, c.text || c, P ? 26 : 28, { col: cols[i % cols.length], solid: true })); });
+      if (sc.price) {
+        const py = P ? 935 : 480; popIn(x, colX, py, seg(lt, 1.2 + calls.length * 0.15, 1.7 + calls.length * 0.15), () => { if (sc.was) S.text(x, 'Was ' + sc.was, colX, py - (P ? 50 : 62), 26, pal.mute, { w: 700 }); S.text(x, sc.price, colX, py, P ? 74 : 84, pal.cyan, { w: 800, glow: pal.cyan }); });
+      }
+      if (sc.badge) fade(x, seg(lt, 0.4, 0.8), () => S.chip(x, g.bw - 40 - (String(sc.badge).length * 6.2 + 24), P ? 56 : 54, sc.badge, 22, { col: pal.amber, solid: true }));
+    },
     phone(x, g, sc, lt) {
       const pal = S.pal, P = g.P; 
       const pw = P ? 380 : 232, ph = P ? 760 : 470, px0 = P ? g.C - pw / 2 : 280, py0 = P ? 190 : 80;
@@ -108,7 +127,7 @@
   // library sounds (plan "sfx"): decode the embedded pack once; AudioBuffers can be used by any audio context
   if (window.SFX_PACK) { window.SFX_BUF = {}; const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext; Object.keys(window.SFX_PACK).forEach((c) => { try { const bin = atob(window.SFX_PACK[c].split(',')[1]), u8 = new Uint8Array(bin.length); for (let q = 0; q < bin.length; q++) u8[q] = bin.charCodeAt(q); window.PRELOAD.push(new AC(1, 1, 44100).decodeAudioData(u8.buffer).then((b) => { window.SFX_BUF[c] = b; }).catch(() => {})); } catch (e) { /* missing cue: synthesized fallback plays */ } }); }
   const load = (src) => { const im = new Image(); im.src = src; window.PRELOAD.push(im.decode ? im.decode().catch(() => {}) : Promise.resolve()); return im; };
-  PLAN.scenes.forEach((sc) => { if ((sc.type === 'phone' || sc.type === 'image') && sc.image) sc._img = load(sc.image); if (sc.type === 'clip' && sc.frames) sc._fr = sc.frames.map(load); });
+  PLAN.scenes.forEach((sc) => { if ((sc.type === 'phone' || sc.type === 'image' || sc.type === 'product') && sc.image) sc._img = load(sc.image); if (sc.type === 'clip' && sc.frames) sc._fr = sc.frames.map(load); });
   const SND = {
     testimonial: (k, sc, T0) => { k.play('cue:receive', T0 + 0.2, { gain: 0.8 }); k.play('sparkle', T0 + 0.6, { gain: 0.6, n: 5 }); },
     offer: (k, sc, T0) => { k.play('impact', T0 + 0.15, { gain: 0.5 }); k.play('riser', T0 + 0.5, { dur: 0.8, gain: 0.5 }); k.play('cue:coupon', T0 + 1.3, { gain: 0.9 }); if (sc.button) k.play('ding', T0 + 1.9, { f: 'E6', gain: 0.6 }); },
@@ -118,6 +137,7 @@
     endcard: (k, sc, T0) => { k.play('impact', T0 + 0.12, { gain: 0.5 }); k.play('sparkle', T0 + 0.5, { gain: 0.7, n: 6 }); k.play('cue:achievement', T0 + 1.3, { gain: 0.8 }); },
     clip: (k, sc, T0) => { k.play('pop', T0 + 0.15, { gain: 0.8 }); k.play('sparkle', T0 + 0.5, { gain: 0.5, n: 4 }); },
     image: (k, sc, T0) => { k.play('pop', T0 + 0.15, { gain: 0.8 }); },
+    product: (k, sc, T0) => { k.play('impact', T0 + 0.1, { gain: 0.45 }); k.play('sparkle', T0 + 0.5, { gain: 0.6, n: 5 }); (sc.callouts || []).forEach((_, j) => k.play('pop', T0 + 0.95 + j * 0.5, { gain: 0.7, pan: j % 2 ? 0.25 : -0.25 })); if (sc.price) k.play('ding', T0 + 1.3, { f: 'E6', gain: 0.6 }); },
     phone: (k, sc, T0) => { k.play('cue:open', T0 + 0.2, { gain: 0.9 }); k.play('blip', T0 + 0.8, { f: 'E6', dur: 0.1, gain: 0.5 }); },
   };
   window.SCENE_SOUND = SND;

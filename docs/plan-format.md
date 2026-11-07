@@ -40,6 +40,7 @@ Check it first with `python3 engine/validate_plan.py plans/<name>/plan.json` (th
 | `endcard` | `lines[]`, `phone`, `email`, `web`, `qr` (a URL, made into a QR code at build), `tagline` | needs at least one contact or qr |
 | `phone` | `image` (file next to the plan), `title`, `caption` | screenshot shown in a phone frame |
 | `clip` | `prompt` (made by `engine/clips.py`) or `file` (a video you have), `title`, `badge` (default "AI-generated"), `full`, `fps` | up to 12 s; an AI clip must keep its badge |
+| `product` | `image` (file next to the plan, ideally a transparent PNG), `title`, `callouts[]` (up to 3, 26 characters each), `price`, `was`, `badge` | the photo is only moved and scaled, never redrawn, so packaging, logo and label stay exact; `engine/cutout.py` removes a photo's background |
 | `image` | `image` (file next to the plan), `title`, `badge`, `full` | a still with a slow zoom; real-estate plans need a badge such as "Artist's impression" |
 
 Icons: phone, mail, chat, cal, person, doc, check, bolt, plan, shield, pin, plane, cross.

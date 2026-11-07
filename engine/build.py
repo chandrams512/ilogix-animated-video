@@ -23,7 +23,7 @@ if 'scenes' in src:  # a JSON plan: derive the manifest
         lp = os.path.join(os.path.dirname(path), logo)
         plan['brand']['logo'] = 'data:%s;base64,%s' % (mimetypes.guess_type(lp)[0] or 'image/png', base64.b64encode(open(lp, 'rb').read()).decode())
     for sc in plan['scenes']:
-        if sc.get('image') and sc.get('type') in ('phone', 'image') and not str(sc['image']).startswith('data:'):  # phone screenshot or still image
+        if sc.get('image') and sc.get('type') in ('phone', 'image', 'product') and not str(sc['image']).startswith('data:'):  # phone screenshot or still image
             ip = os.path.join(os.path.dirname(path), sc['image'])
             sc['image'] = 'data:%s;base64,%s' % (mimetypes.guess_type(ip)[0] or 'image/png', base64.b64encode(open(ip, 'rb').read()).decode())
         if sc.get('type') == 'endcard' and sc.get('qr') and not sc.get('qrMatrix'):  # QR code as a matrix of 0/1 rows
