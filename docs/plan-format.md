@@ -41,6 +41,7 @@ Check it first with `python3 engine/validate_plan.py plans/<name>/plan.json` (th
 | `phone` | `image` (file next to the plan), `title`, `caption` | screenshot shown in a phone frame |
 | `clip` | `prompt` (made by `engine/clips.py`) or `file` (a video you have), `title`, `badge` (default "AI-generated"), `full`, `fps` | up to 12 s; an AI clip must keep its badge |
 | `product` | `image` (file next to the plan, ideally a transparent PNG), `title`, `callouts[]` (up to 3, 26 characters each), `price`, `was`, `badge` | the photo is only moved and scaled, never redrawn, so packaging, logo and label stay exact; `engine/cutout.py` removes a photo's background |
+| `stickman` | `figures[]` (1 to 3: `pose`, `at` and `to` as 0 to 1 across the frame, `say` up to 24 characters, `think`, `col`, `size`), optional `lines[]` (up to 2 big title lines), `props[]` (`k`: clock, brain, sun, grass, heart, coin, phone; `x`, `y` as fractions; `s`, `at`, `anim`, `fast`), `shake`, `zoom`, `flash` | code-drawn stick figures. Poses: idle, walk, run, wave, point, think, cheer, shock, dance, scroll, faint. Funny reels work best with scenes of 2 to 3 seconds |
 | `logo` | optional `lines[]` | the brand logo large on a white plate, then lines under it; needs `brand.logo`. Set `"logoCorner": false` in `brand` to hide the small corner logo |
 | `image` | `image` (file next to the plan), `title`, `badge`, `full` | a still with a slow zoom; real-estate plans need a badge such as "Artist's impression" |
 

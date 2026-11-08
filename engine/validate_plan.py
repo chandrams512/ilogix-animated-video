@@ -5,7 +5,7 @@ import json, sys
 STYLES = {'tech-glow', 'isometric', 'whiteboard', 'blueprint', 'neo-brutal', 'glass', 'paper-cut', 'kinetic', 'neon', 'bauhaus', 'pixel', 'deco', 'mesh', 'particles', 'vhs', 'halftone', 'splitflap', 'liquid', 'swiss', 'keynote', 'transit'}
 ICONS = {'phone', 'mail', 'chat', 'cal', 'person', 'doc', 'check', 'bolt', 'plan', 'shield', 'pin', 'plane', 'cross'}
 REQ = {'hook': ['lines'], 'steps': ['items'], 'stat': ['value', 'label'], 'chart': ['bars'], 'compare': ['left', 'right'], 'timeline': ['points'], 'flow': ['nodes'], 'cta': ['lines'],
-       'testimonial': ['quote', 'name'], 'offer': ['headline'], 'pricing': ['plans'], 'checklist': ['items'], 'beforeafter': ['before', 'after'], 'endcard': ['lines'], 'phone': ['image'], 'clip': [], 'image': ['image'], 'product': ['image'], 'logo': []}
+       'testimonial': ['quote', 'name'], 'offer': ['headline'], 'pricing': ['plans'], 'checklist': ['items'], 'beforeafter': ['before', 'after'], 'endcard': ['lines'], 'phone': ['image'], 'clip': [], 'image': ['image'], 'product': ['image'], 'logo': [], 'stickman': []}
 LIM = {'hook': (1, 3, 'lines'), 'steps': (2, 4, 'items'), 'chart': (2, 6, 'bars'), 'timeline': (2, 5, 'points'), 'flow': (2, 5, 'nodes'), 'cta': (1, 3, 'lines'),
        'pricing': (2, 3, 'plans'), 'checklist': (2, 5, 'items'), 'endcard': (1, 3, 'lines')}
 BANNED = ['assured return', 'guaranteed return', 'guaranteed appreciation', 'assured rental', 'guaranteed rental', 'assured appreciation', 'risk free', 'risk-free']
@@ -62,6 +62,13 @@ else:
             if s.get('badge') is False and not s.get('real'): errs.append('%s: AI clips must show a badge; set "real": true only for real footage you own' % where)
         if t in ('clip', 'image') and len(s.get('title', '')) > 60: errs.append('%s: title is over 60 characters' % where)
         if t == 'logo' and not ((plan.get('brand') or {}).get('logo') or (plan.get('brand') or {}).get('name')): errs.append('%s: needs brand.logo (or brand.name) in the plan' % where)
+        if t == 'stickman':
+            fg = s.get('figures', [])
+            if not fg or len(fg) > 3: errs.append('%s: stickman needs 1 to 3 figures' % where)
+            for f in fg:
+                if f.get('pose', 'idle') not in ('idle', 'walk', 'run', 'wave', 'point', 'think', 'cheer', 'shock', 'dance', 'scroll', 'faint'): errs.append('%s: unknown pose %s' % (where, f.get('pose')))
+                if len(str(f.get('say', ''))) > 24: errs.append('%s: speech over 24 characters' % where)
+            if len(s.get('lines', [])) > 2: errs.append('%s: up to 2 title lines' % where)
         if t == 'product':
             if len(s.get('callouts', [])) > 3: errs.append('%s: up to 3 callouts' % where)
             for c in s.get('callouts', []):

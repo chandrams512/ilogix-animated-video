@@ -19,6 +19,64 @@
     if (badge) fade(x, seg(lt, 0.4, 0.8), () => S.chip(x, W - 40 - (String(badge).length * 6.2 + 24), P ? 56 : 54, badge, 22, { col: pal.amber, solid: true }));
   }
 
+
+  // ---- stickman: code-drawn stick figures with poses, faces, props and speech bubbles (see docs/plan-format.md). Everything is a function of time.
+  const POSES = ['idle', 'walk', 'run', 'wave', 'point', 'think', 'cheer', 'shock', 'dance', 'scroll', 'faint'];
+  function rig(pose, t) {
+    const B = { bob: 0, rot: 0, dx: 0, la: [-0.14, -0.1], ra: [0.14, 0.1], ll: [-0.07, 0], rl: [0.07, 0], face: 'smile', big: false };
+    const sw = (w, a) => Math.sin(w) * a, w = pose === 'run' ? t * 13 : t * 7;
+    if (pose === 'idle') { B.la = [-0.14 + sw(t * 2, 0.05), -0.1]; B.ra = [0.14 - sw(t * 2, 0.05), 0.1]; B.bob = sw(t * 2, 2); }
+    else if (pose === 'walk' || pose === 'run') { const a = pose === 'run' ? 1.0 : 0.65, k = Math.sin(w); B.ll = [k * a, Math.max(0, -k) * 1.0]; B.rl = [-k * a, Math.max(0, k) * 1.0]; B.la = [-k * a * 0.9, -0.5 - Math.abs(k) * (pose === 'run' ? 0.9 : 0.2)]; B.ra = [k * a * 0.9, 0.5 + Math.abs(k) * (pose === 'run' ? 0.9 : 0.2)]; B.bob = -Math.abs(k) * (pose === 'run' ? 9 : 4); B.rot = pose === 'run' ? 0.14 : 0; }
+    else if (pose === 'wave') { B.ra = [2.5, 2.5 + sw(t * 12, 0.6)]; B.la = [-0.16, -0.1]; }
+    else if (pose === 'point') { B.ra = [1.5, 1.5]; B.la = [-0.2, -0.1]; B.face = 'grin'; }
+    else if (pose === 'think') { B.ra = [0.9, -2.5]; B.la = [-0.2, -0.1]; B.face = 'flat'; B.bob = sw(t * 2, 1.5); }
+    else if (pose === 'cheer') { B.la = [-2.1 - sw(t * 10, 0.15), -2.75]; B.ra = [2.1 + sw(t * 10, 0.15), 2.75]; B.ll = [-0.3, -0.1]; B.rl = [0.3, 0.1]; B.bob = -Math.abs(Math.sin(t * 8)) * 26; B.face = 'grin'; }
+    else if (pose === 'shock') { B.la = [-2.2 + sw(t * 40, 0.08), -2.6]; B.ra = [2.2 - sw(t * 40, 0.08), 2.6]; B.ll = [-0.18, 0]; B.rl = [0.18, 0]; B.dx = sw(t * 70, 3); B.face = 'o'; B.big = true; }
+    else if (pose === 'dance') { const k = Math.sin(t * 9); B.la = [-2.4 + k * 0.6, -2.6 + k * 0.5]; B.ra = [2.4 + k * 0.6, 2.6 + k * 0.5]; B.ll = [k * 0.4, Math.max(0, -k) * 0.6]; B.rl = [k * 0.4 + 0.2, Math.max(0, k) * 0.6]; B.rot = k * 0.1; B.bob = -Math.abs(k) * 14; B.face = 'grin'; }
+    else if (pose === 'scroll') { B.la = [-0.9, 1.86 + sw(t * 5, 0.04)]; B.ra = [0.9, -1.86]; B.face = 'flat'; B.big = false; }
+    else if (pose === 'faint') { const u = Math.min(1, Math.max(0, (t - 0.5) / 0.5)); B.rot = (u * u * (3 - 2 * u)) * 1.5; B.drop = (u * u * (3 - 2 * u)) * 82; B.la = [-0.5, -0.4]; B.ra = [0.5, 0.4]; B.face = u > 0.4 ? 'x' : 'o'; }
+    return B;
+  }
+  function limb(x, px, py, a1, l1, a2, l2) { const mx = px + Math.sin(a1) * l1, my = py + Math.cos(a1) * l1, ex = mx + Math.sin(a2) * l2, ey = my + Math.cos(a2) * l2; x.beginPath(); x.moveTo(px, py); x.lineTo(mx, my); x.lineTo(ex, ey); x.stroke(); return [ex, ey]; }
+  function drawStick(x, cx, hipY, s, f, t) {
+    const pal = S.pal, B = rig(f.pose || 'idle', t), col = pal[f.col] || f.col || pal.ink, lw = 5.6 * s;
+    x.save(); x.translate(cx + B.dx, hipY + (B.bob + (B.drop || 0)) * s); x.rotate(B.rot + (f.tilt || 0)); x.scale(s, s); x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = col; x.lineWidth = lw / s;
+    limb(x, 0, 0, B.ll[0], 46, B.ll[1], 46); limb(x, 0, 0, B.rl[0], 46, B.rl[1], 46);
+    x.beginPath(); x.moveTo(0, 0); x.lineTo(0, -66); x.stroke();
+    limb(x, 0, -60, B.la[0], 38, B.la[1], 36); const hand = limb(x, 0, -60, B.ra[0], 38, B.ra[1], 36);
+    if ((f.pose === 'scroll') || f.prop === 'phone') { const sy = f.pose === 'scroll' ? -50 : hand[1], sx = f.pose === 'scroll' ? 0 : hand[0]; x.save(); x.translate(sx, sy); x.fillStyle = '#111'; x.strokeStyle = '#111'; rr(x, -13, -22, 26, 44, 5); x.fill(); const k = Math.floor(t * 6) % 4; x.fillStyle = [pal.cyan, pal.pink, pal.amber, pal.green][k]; rr(x, -10, -18, 20, 36, 3); x.fill(); x.restore(); }
+    x.fillStyle = '#ffffff'; x.strokeStyle = col; x.lineWidth = lw / s; x.beginPath(); x.arc(0, -92, 24, 0, TAU); x.fill(); x.stroke();
+    const d = '#111', face = f.face || B.face, er = B.big || f.big ? 6.5 : 3, ey = -96; x.fillStyle = d; x.strokeStyle = d; x.lineWidth = 3;
+    if (face === 'x') { [-8, 8].forEach(ex => { x.beginPath(); x.moveTo(ex - 4, ey - 4); x.lineTo(ex + 4, ey + 4); x.moveTo(ex + 4, ey - 4); x.lineTo(ex - 4, ey + 4); x.stroke(); }); }
+    else if (B.big || f.big) { [-8, 8].forEach(ex => { x.fillStyle = '#fff'; x.beginPath(); x.arc(ex, ey, er, 0, TAU); x.fill(); x.stroke(); x.fillStyle = d; x.beginPath(); x.arc(ex + Math.sin(t * 25) * 1.5, ey, 2.4, 0, TAU); x.fill(); }); }
+    else if (face === 'flat' && f.pose === 'scroll') { [-8, 8].forEach(ex => { x.beginPath(); x.moveTo(ex - 4, ey + 1); x.lineTo(ex + 4, ey + 1); x.stroke(); }); }
+    else { [-8, 8].forEach(ex => { x.beginPath(); x.arc(ex, ey, er, 0, TAU); x.fill(); }); }
+    x.beginPath(); const my = -83;
+    if (face === 'smile') { x.arc(0, my - 3, 8, 0.15 * Math.PI, 0.85 * Math.PI); x.stroke(); }
+    else if (face === 'grin') { x.arc(0, my - 4, 10, 0, Math.PI); x.closePath(); x.fill(); }
+    else if (face === 'o') { x.arc(0, my, 5 + Math.abs(Math.sin(t * 20)) * 2, 0, TAU); x.fill(); }
+    else if (face === 'sad') { x.arc(0, my + 6, 8, 1.15 * Math.PI, 1.85 * Math.PI); x.stroke(); }
+    else { x.moveTo(-7, my); x.lineTo(7, my); x.stroke(); }
+    x.restore();
+  }
+  function bubble(x, cx, cy, text, px, think) {
+    x.save(); font(x, px); const w = x.measureText(text).width + 44, h = px + 34;
+    x.fillStyle = '#ffffff'; x.strokeStyle = '#111'; x.lineWidth = 5; rr(x, cx - w / 2, cy - h / 2, w, h, 22); x.fill(); x.stroke();
+    if (think) { [[cx - 10, cy + h / 2 + 14, 9], [cx - 24, cy + h / 2 + 34, 6]].forEach(([a, b, r]) => { x.beginPath(); x.arc(a, b, r, 0, TAU); x.fill(); x.stroke(); }); }
+    else { x.beginPath(); x.moveTo(cx - 18, cy + h / 2 - 2); x.lineTo(cx - 6, cy + h / 2 + 26); x.lineTo(cx + 12, cy + h / 2 - 2); x.closePath(); x.fill(); x.stroke(); x.fillRect(cx - 16, cy + h / 2 - 5, 26, 6); }
+    x.fillStyle = '#111'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(text, cx, cy + 2); x.restore();
+  }
+  function prop(x, k, cx, cy, s, t, p, sc) {
+    const pal = S.pal; x.save(); x.translate(cx, cy); x.scale(s, s);
+    if (k === 'clock') { x.fillStyle = '#fff'; x.strokeStyle = '#111'; x.lineWidth = 7; x.beginPath(); x.arc(0, 0, 60, 0, TAU); x.fill(); x.stroke(); for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; x.beginPath(); x.moveTo(Math.sin(a) * 50, -Math.cos(a) * 50); x.lineTo(Math.sin(a) * 56, -Math.cos(a) * 56); x.stroke(); } const sp = p.fast ? 5 : 1; [[t * 0.6 * sp, 30, 6], [t * 7 * sp, 44, 4]].forEach(([a, l, w]) => { x.lineWidth = w; x.beginPath(); x.moveTo(0, 0); x.lineTo(Math.sin(a) * l, -Math.cos(a) * l); x.stroke(); }); }
+    else if (k === 'brain') { const f = p.anim === 'shrink' ? 1 - 0.55 * Math.min(1, t / (sc._d * 0.8)) : 1; x.scale(f, f); x.fillStyle = '#ff9fc2'; x.strokeStyle = '#111'; x.lineWidth = 6; x.beginPath(); [[-28, -6, 32], [14, -16, 34], [34, 10, 28], [-8, 20, 32], [-34, 18, 24]].forEach(([a, b, r]) => x.arc(a, b, r, 0, TAU)); x.fill(); x.beginPath(); x.moveTo(-6, -34); x.quadraticCurveTo(10, -10, -4, 6); x.quadraticCurveTo(-18, 18, -2, 34); x.stroke(); }
+    else if (k === 'sun') { x.rotate(t * 0.8); x.strokeStyle = pal.amber; x.lineWidth = 8; x.lineCap = 'round'; for (let i = 0; i < 10; i++) { const a = i * TAU / 10; x.beginPath(); x.moveTo(Math.cos(a) * 62, Math.sin(a) * 62); x.lineTo(Math.cos(a) * 84, Math.sin(a) * 84); x.stroke(); } x.fillStyle = pal.amber; x.beginPath(); x.arc(0, 0, 48, 0, TAU); x.fill(); }
+    else if (k === 'heart') { const pu = 1 + Math.sin(t * 8) * 0.08; x.scale(pu, pu); x.fillStyle = pal.red; x.beginPath(); x.moveTo(0, 30); x.bezierCurveTo(-60, -10, -30, -52, 0, -22); x.bezierCurveTo(30, -52, 60, -10, 0, 30); x.fill(); }
+    else if (k === 'coin') { x.rotate(Math.sin(t * 4) * 0.2); x.fillStyle = pal.amber; x.strokeStyle = '#111'; x.lineWidth = 6; x.beginPath(); x.arc(0, 0, 46, 0, TAU); x.fill(); x.stroke(); x.fillStyle = '#111'; x.font = '800 54px "Nunito", system-ui, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('₹', 0, 3); }
+    else if (k === 'phone') { x.rotate(Math.sin(t * 30) * 0.05); x.fillStyle = '#111'; rr(x, -26, -46, 52, 92, 10); x.fill(); x.fillStyle = [pal.cyan, pal.pink, pal.amber][Math.floor(t * 6) % 3]; rr(x, -20, -38, 40, 76, 6); x.fill(); }
+    x.restore();
+  }
+
   Object.assign(SC, {
     testimonial(x, g, sc, lt) {
       const pal = S.pal, P = g.P, w = P ? 620 : 900, px = P ? 36 : 38, lh = px * 1.38, X = g.C - w / 2;
@@ -120,6 +178,27 @@
       });
       (sc.lines || []).forEach((ln, i, a) => { const y = cy + ch / 2 + (P ? 110 : 80) + i * (P ? 64 : 56); popIn(x, g.C, y, seg(lt, 0.7 + i * 0.3, 1.2 + i * 0.3), () => S.text(x, ln, g.C, y, P ? 44 : 40, i === a.length - 1 && a.length > 1 ? pal.cyan : pal.ink, { w: 800, glow: i === a.length - 1 && a.length > 1 ? pal.cyan : undefined })); });
     },
+    stickman(x, g, sc, lt) {
+      const pal = S.pal, P = g.P, figs = (sc.figures || []).slice(0, 3), gy = P ? 880 : 560, s = (sc.size || 1) * (P ? (figs.length > 1 ? 1.8 : 2.6) : 1.6), hipY = gy - 92 * s;
+      const sh = sc.shake ? Math.sin(lt * 90) * sc.shake : 0, zm = 1 + (sc.zoom || 0) * Math.min(1, lt / sc._d);
+      x.save(); x.translate(g.C + sh, gy - 300); x.scale(zm, zm); x.translate(-g.C, -(gy - 300));
+      if (sc.ground !== false) { x.save(); x.strokeStyle = H.rgba(pal.ink, 0.35); x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(g.C - (P ? 330 : 520), gy + 4); x.lineTo(g.C + (P ? 330 : 520), gy + 4); x.stroke(); x.restore(); }
+      (sc.props || []).forEach(p => { const u = seg(lt, p.at || 0.2, (p.at || 0.2) + 0.4); popIn(x, p.x * g.bw, p.y * g.bh, u, () => prop(x, p.k, p.x * g.bw, p.y * g.bh, (p.s || 1) * (P ? 1 : 0.8), lt, p, sc)); });
+      if ((sc.props || []).some(p => p.k === 'grass')) { x.save(); x.fillStyle = pal.green; for (let i = -9; i <= 9; i++) { const bx = g.C + i * 38, hh = 26 + ((i * 7) % 5 + 5) * 3 + Math.sin(lt * 3 + i) * 3; x.beginPath(); x.moveTo(bx - 12, gy + 4); x.lineTo(bx - 2, gy + 4 - hh); x.lineTo(bx + 4, gy + 4); x.lineTo(bx + 10, gy + 4 - hh * 0.7); x.lineTo(bx + 18, gy + 4); x.fill(); } x.restore(); }
+      figs.forEach((f, i) => {
+        const at = f.at == null ? (figs.length === 1 ? 0.5 : 0.25 + i * 0.5 / Math.max(1, figs.length - 1)) : f.at, to = f.to == null ? at : f.to, mv = seg(lt, 0, sc._d * 0.9), fx = (at + (to - at) * mv) * g.bw, u = seg(lt, 0.05 + i * 0.1, 0.45 + i * 0.1);
+        popIn(x, fx, gy - 150 * s, u, () => drawStick(x, fx, hipY, s * (f.size || 1), f, lt));
+        if (f.say) {
+          const fs = s * (f.size || 1), headY = gy - 184 * fs, above = headY - 26 * fs - 110, bu = seg(lt, (f.sayAt || 0.5), (f.sayAt || 0.5) + 0.3);
+          const top = above > (P ? 340 : 190), bxc = top ? Math.min(g.bw - 170, Math.max(170, fx)) : fx + (fx > g.bw / 2 ? -1 : 1) * (P ? 230 : 220), byc = top ? above : headY - 30;
+          popIn(x, bxc, byc, bu, () => bubble(x, bxc, byc, f.say, P ? 34 : 32, f.think));
+        }
+      });
+      x.restore();
+      const px = (P ? 62 : 54) * (sc.scale || 1), lines = (sc.lines || []).slice(0, 2);
+      lines.forEach((ln, i) => { const y = (P ? 190 : 80) + i * px * 1.12, hot = i === lines.length - 1 && lines.length > 1; popIn(x, g.C, y, seg(lt, 0.02 + i * 0.12, 0.35 + i * 0.12), () => S.text(x, ln, g.C + (sc.shake ? Math.sin(lt * 80 + i) * sc.shake * 0.6 : 0), y, px, hot ? pal.cyan : pal.ink, { w: 800, glow: hot ? pal.cyan : undefined })); });
+      if (sc.flash) { const fa = 1 - seg(lt, 0, 0.18); if (fa > 0) { x.save(); x.globalAlpha = fa * 0.9; x.fillStyle = '#fff'; x.fillRect(0, 0, g.bw, g.bh); x.restore(); } }
+    },
     phone(x, g, sc, lt) {
       const pal = S.pal, P = g.P; 
       const pw = P ? 380 : 232, ph = P ? 760 : 470, px0 = P ? g.C - pw / 2 : 280, py0 = P ? 190 : 80;
@@ -149,6 +228,7 @@
     image: (k, sc, T0) => { k.play('pop', T0 + 0.15, { gain: 0.8 }); },
     product: (k, sc, T0) => { k.play('impact', T0 + 0.1, { gain: 0.45 }); k.play('sparkle', T0 + 0.5, { gain: 0.6, n: 5 }); (sc.callouts || []).forEach((_, j) => k.play('pop', T0 + 0.95 + j * 0.5, { gain: 0.7, pan: j % 2 ? 0.25 : -0.25 })); if (sc.price) k.play('ding', T0 + 1.3, { f: 'E6', gain: 0.6 }); },
     logo: (k, sc, T0) => { k.play('pop', T0 + 0.1, { gain: 0.8 }); k.play('sparkle', T0 + 0.5, { gain: 0.6, n: 6 }); },
+    stickman: (k, sc, T0) => { k.play('pop', T0 + 0.05, { gain: 0.8 }); const ps = (sc.figures || []).map(f => f.pose); if (ps.includes('shock') || ps.includes('faint')) k.play('impact', T0 + 0.1, { gain: 0.9 }); if (ps.includes('cheer') || ps.includes('dance')) k.play('sparkle', T0 + 0.3, { gain: 0.7, n: 5 }); if (sc.flash) k.play('impact', T0, { gain: 0.5 }); },
     phone: (k, sc, T0) => { k.play('cue:open', T0 + 0.2, { gain: 0.9 }); k.play('blip', T0 + 0.8, { f: 'E6', dur: 0.1, gain: 0.5 }); },
   };
   window.SCENE_SOUND = SND;

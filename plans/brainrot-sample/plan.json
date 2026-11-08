@@ -1,0 +1,141 @@
+{
+  "title": "Brainrot stickman sample",
+  "style": "neo-brutal",
+  "aspect": "9x16",
+  "safe": true,
+  "motion": "auto",
+  "sfx": "soft",
+  "music": false,
+  "brand": {
+    "name": "iLogix",
+    "logoCorner": false
+  },
+  "scenes": [
+    {
+      "type": "stickman",
+      "dur": 2.5,
+      "lines": [
+        "POV: you open",
+        "Instagram for 1 min"
+      ],
+      "figures": [
+        {
+          "pose": "scroll",
+          "at": 0.4
+        }
+      ],
+      "props": [
+        {
+          "k": "clock",
+          "x": 0.8,
+          "y": 0.4,
+          "s": 0.9
+        }
+      ]
+    },
+    {
+      "type": "stickman",
+      "dur": 2.5,
+      "lines": [
+        "3 hours later..."
+      ],
+      "flash": true,
+      "shake": 3,
+      "zoom": 0.06,
+      "figures": [
+        {
+          "pose": "scroll",
+          "at": 0.4
+        }
+      ],
+      "props": [
+        {
+          "k": "clock",
+          "x": 0.8,
+          "y": 0.4,
+          "s": 0.9,
+          "fast": true
+        }
+      ]
+    },
+    {
+      "type": "stickman",
+      "dur": 2.5,
+      "lines": [
+        "your brain",
+        "right now"
+      ],
+      "figures": [
+        {
+          "pose": "shock",
+          "at": 0.38,
+          "say": "uhh...",
+          "think": true
+        }
+      ],
+      "props": [
+        {
+          "k": "brain",
+          "x": 0.8,
+          "y": 0.42,
+          "s": 1.7,
+          "anim": "shrink"
+        }
+      ]
+    },
+    {
+      "type": "stickman",
+      "dur": 2.5,
+      "lines": [
+        "Mom walks in"
+      ],
+      "flash": true,
+      "figures": [
+        {
+          "pose": "point",
+          "at": 0.2,
+          "say": "PHONE RAKH!",
+          "sayAt": 0.4
+        },
+        {
+          "pose": "faint",
+          "at": 0.72
+        }
+      ]
+    },
+    {
+      "type": "stickman",
+      "dur": 3,
+      "lines": [
+        "plot twist:",
+        "touch grass"
+      ],
+      "figures": [
+        {
+          "pose": "cheer",
+          "at": 0.45
+        }
+      ],
+      "props": [
+        {
+          "k": "sun",
+          "x": 0.8,
+          "y": 0.3,
+          "s": 1
+        },
+        {
+          "k": "grass"
+        }
+      ]
+    },
+    {
+      "type": "cta",
+      "dur": 2.5,
+      "lines": [
+        "Follow iLogix Digital",
+        "for more"
+      ],
+      "button": "Follow"
+    }
+  ]
+}
