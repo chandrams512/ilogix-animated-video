@@ -1,6 +1,6 @@
 {
   "title": "Diwali greeting",
-  "style": "deco",
+  "style": "tech-glow",
   "aspect": "9x16",
   "safe": true,
   "motion": "auto",
@@ -33,7 +33,7 @@
         "May your life glow",
         "with joy and success"
       ],
-      "scale": 1.2
+      "scale": 1.05
     },
     {
       "type": "logo",
