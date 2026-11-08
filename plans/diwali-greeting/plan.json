@@ -1,0 +1,47 @@
+{
+  "title": "Diwali greeting",
+  "style": "deco",
+  "aspect": "9x16",
+  "safe": true,
+  "motion": "auto",
+  "sfx": "soft",
+  "music": false,
+  "brand": {
+    "logo": "logo.png",
+    "colors": {
+      "cyan": "#ffc83d",
+      "violet": "#ff7a2f",
+      "pink": "#ff4f7b",
+      "amber": "#ffd36b"
+    },
+    "logoCorner": false
+  },
+  "scenes": [
+    {
+      "type": "hook",
+      "dur": 3,
+      "lines": [
+        "Happy",
+        "Diwali!"
+      ],
+      "scale": 1.7
+    },
+    {
+      "type": "hook",
+      "dur": 2.5,
+      "lines": [
+        "May your life glow",
+        "with joy and success"
+      ],
+      "scale": 1.2
+    },
+    {
+      "type": "logo",
+      "dur": 2.5,
+      "lines": [
+        "Warm wishes from",
+        "iLogix Digital"
+      ]
+    }
+  ]
+}

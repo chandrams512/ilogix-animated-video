@@ -28,7 +28,7 @@ const wrap = (x, s, maxW) => { const w = String(s).split(' '), out = []; let lin
 
 const SC = {
   hook(x, g, sc, lt) {
-    const px = g.P ? 70 : 66, y0 = g.bh * (g.P ? 0.3 : 0.38) - (sc.lines.length - 1) * px * 0.6, pal = S.pal;
+    const px = (g.P ? 70 : 66) * (sc.scale || 1), y0 = g.bh * (g.P ? 0.3 : 0.38) - (sc.lines.length - 1) * px * 0.6, pal = S.pal;
     sc.lines.forEach((ln, i) => { const y = y0 + i * px * 1.2, col = i === 0 ? pal.ink : (i % 2 ? pal.cyan : pal.ink); popIn(x, g.C, y, seg(lt, 0.1 + i * 0.35, 0.6 + i * 0.35), () => S.text(x, ln, g.C, y, px, col, { w: 800, glow: i % 2 ? pal.cyan : undefined })); });
     if (sc.sub) { const y = y0 + sc.lines.length * px * 1.2 + 30; x.save(); x.globalAlpha *= seg(lt, 0.9, 1.4); S.text(x, sc.sub, g.C, y, g.P ? 30 : 28, pal.mute, { w: 700 }); x.restore(); }
   },
@@ -130,7 +130,7 @@ function planDraw(x, W, Hh, t) {
   S.bg(x, t); const g = geo(W, Hh), pal = S.pal;
   x.save(); x.translate(g.ox, g.oy); x.scale(g.k, g.k);
   // brand mark
-  x.save(); x.globalAlpha *= seg(t, 0.1, 0.5); if (LOGO_IMG && LOGO_IMG.complete && LOGO_IMG.naturalWidth) { const h = 44, w = LOGO_IMG.naturalWidth / LOGO_IMG.naturalHeight * h; x.drawImage(LOGO_IMG, 40, 34, w, h); } else if (BRAND.logoText || BRAND.name) { x.fillStyle = pal.cyan; rr(x, 40, 40, 26, 26, 8); x.fill(); S.text(x, BRAND.logoText || BRAND.name, 78, 53, 26, pal.ink, { align: 'left', w: 800 }); } x.restore();
+  x.save(); x.globalAlpha *= seg(t, 0.1, 0.5); if (BRAND.logoCorner === false) { /* corner mark hidden: a logo scene shows it large instead */ } else if (LOGO_IMG && LOGO_IMG.complete && LOGO_IMG.naturalWidth) { const h = 44, w = LOGO_IMG.naturalWidth / LOGO_IMG.naturalHeight * h; x.drawImage(LOGO_IMG, 40, 34, w, h); } else if (BRAND.logoText || BRAND.name) { x.fillStyle = pal.cyan; rr(x, 40, 40, 26, 26, 8); x.fill(); S.text(x, BRAND.logoText || BRAND.name, 78, 53, 26, pal.ink, { align: 'left', w: 800 }); } x.restore();
   PLAN.scenes.forEach((sc, i) => {
     const tr = trOf(sc), lt0 = t - sc._t0, lt = Math.max(0, lt0), OV = tr === 'fade' ? 0 : 0.3; if (lt0 < -OV || lt0 > sc._d + 0.001) return; const last = i === PLAN.scenes.length - 1;
     x.save();

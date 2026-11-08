@@ -110,6 +110,16 @@
       }
       if (sc.badge) fade(x, seg(lt, 0.4, 0.8), () => S.chip(x, g.bw - 40 - (String(sc.badge).length * 6.2 + 24), P ? 56 : 54, sc.badge, 22, { col: pal.amber, solid: true }));
     },
+    // ---- logo: the brand logo large on a white plate (works on any style, even with dark lettering), with optional lines under it. For greetings, sign-offs and festival posts.
+    logo(x, g, sc, lt) {
+      const pal = S.pal, P = g.P, im = LOGO_IMG, cw = P ? 600 : 560, ch = P ? 300 : 280, cx = g.C, cy = P ? 500 : 280, u = seg(lt, 0.1, 0.7);
+      popIn(x, cx, cy, u, () => {
+        x.save(); x.shadowColor = H.rgba(pal.cyan, 0.55); x.shadowBlur = 60; x.fillStyle = '#ffffff'; rr(x, cx - cw / 2, cy - ch / 2, cw, ch, 38); x.fill(); x.restore();
+        if (im && im.complete && im.naturalWidth) { const k = Math.min((cw - 90) / im.naturalWidth, (ch - 60) / im.naturalHeight), dw = im.naturalWidth * k, dh = im.naturalHeight * k; x.drawImage(im, cx - dw / 2, cy - dh / 2, dw, dh); }
+        else S.text(x, BRAND.logoText || BRAND.name || '', cx, cy, 64, '#1c2540', { w: 800 });
+      });
+      (sc.lines || []).forEach((ln, i, a) => { const y = cy + ch / 2 + (P ? 110 : 80) + i * (P ? 64 : 56); popIn(x, g.C, y, seg(lt, 0.7 + i * 0.3, 1.2 + i * 0.3), () => S.text(x, ln, g.C, y, P ? 44 : 40, i === a.length - 1 && a.length > 1 ? pal.cyan : pal.ink, { w: 800, glow: i === a.length - 1 && a.length > 1 ? pal.cyan : undefined })); });
+    },
     phone(x, g, sc, lt) {
       const pal = S.pal, P = g.P; 
       const pw = P ? 380 : 232, ph = P ? 760 : 470, px0 = P ? g.C - pw / 2 : 280, py0 = P ? 190 : 80;
@@ -138,6 +148,7 @@
     clip: (k, sc, T0) => { k.play('pop', T0 + 0.15, { gain: 0.8 }); k.play('sparkle', T0 + 0.5, { gain: 0.5, n: 4 }); },
     image: (k, sc, T0) => { k.play('pop', T0 + 0.15, { gain: 0.8 }); },
     product: (k, sc, T0) => { k.play('impact', T0 + 0.1, { gain: 0.45 }); k.play('sparkle', T0 + 0.5, { gain: 0.6, n: 5 }); (sc.callouts || []).forEach((_, j) => k.play('pop', T0 + 0.95 + j * 0.5, { gain: 0.7, pan: j % 2 ? 0.25 : -0.25 })); if (sc.price) k.play('ding', T0 + 1.3, { f: 'E6', gain: 0.6 }); },
+    logo: (k, sc, T0) => { k.play('pop', T0 + 0.1, { gain: 0.8 }); k.play('sparkle', T0 + 0.5, { gain: 0.6, n: 6 }); },
     phone: (k, sc, T0) => { k.play('cue:open', T0 + 0.2, { gain: 0.9 }); k.play('blip', T0 + 0.8, { f: 'E6', dur: 0.1, gain: 0.5 }); },
   };
   window.SCENE_SOUND = SND;
