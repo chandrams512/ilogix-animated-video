@@ -1,0 +1,38 @@
+{
+ "provider": "file",
+ "voice": "",
+ "lang": "en",
+ "placeholder": false,
+ "items": [
+  {
+   "scene": 1,
+   "file": "scene-01.mp3",
+   "dur": 2.847
+  },
+  {
+   "scene": 2,
+   "file": "scene-02.mp3",
+   "dur": 7.236
+  },
+  {
+   "scene": 3,
+   "file": "scene-03.mp3",
+   "dur": 5.512
+  },
+  {
+   "scene": 4,
+   "file": "scene-04.mp3",
+   "dur": 3.527
+  },
+  {
+   "scene": 5,
+   "file": "scene-05.mp3",
+   "dur": 3.579
+  },
+  {
+   "scene": 6,
+   "file": "scene-06.mp3",
+   "dur": 1.933
+  }
+ ]
+}
