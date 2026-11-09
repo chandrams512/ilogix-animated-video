@@ -1,0 +1,93 @@
+{
+  "title": "C P Arora Group overview (pilot)",
+  "style": "swiss",
+  "aspect": "16x9",
+  "safe": true,
+  "motion": "auto",
+  "sfx": "soft",
+  "music": false,
+  "brand": {
+    "name": "C P Arora Group",
+    "colors": {
+      "cyan": "#1b4b8f",
+      "violet": "#0b1f3a",
+      "pink": "#c8102e",
+      "amber": "#c98a00",
+      "green": "#2e7d5b"
+    }
+  },
+  "scenes": [
+    {
+      "type": "hook",
+      "dur": 4,
+      "lines": [
+        "Five decades of",
+        "highways, roads and",
+        "airport pavements"
+      ]
+    },
+    {
+      "type": "stat",
+      "dur": 4,
+      "value": 6,
+      "label": "group companies",
+      "sub": "One group, many sectors"
+    },
+    {
+      "type": "steps",
+      "dur": 8,
+      "title": "What we build",
+      "items": [
+        {
+          "title": "Roads and highways",
+          "sub": "NH-8 and NH-544",
+          "tag": "1",
+          "icon": "check"
+        },
+        {
+          "title": "Airport pavements",
+          "sub": "Round-the-clock at IGI Airport",
+          "tag": "2",
+          "icon": "bolt"
+        },
+        {
+          "title": "Intelligent roads",
+          "sub": "ITS, ATMS and tolling",
+          "tag": "3",
+          "icon": "doc"
+        }
+      ]
+    },
+    {
+      "type": "checklist",
+      "dur": 6,
+      "title": "Four commitments",
+      "items": [
+        "Quality",
+        "Safety",
+        "Environmental care",
+        "On time, on budget"
+      ]
+    },
+    {
+      "type": "hook",
+      "dur": 4,
+      "lines": [
+        "Trusted by",
+        "NHAI, CPWD, DIAL",
+        "MCD and state PWDs"
+      ]
+    },
+    {
+      "type": "cta",
+      "dur": 5,
+      "lines": [
+        "C P Arora Group",
+        "Quality contracting,",
+        "on time, within budget"
+      ],
+      "button": "Get in touch",
+      "icon": false
+    }
+  ]
+}
