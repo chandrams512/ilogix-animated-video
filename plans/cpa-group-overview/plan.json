@@ -4,7 +4,7 @@
   "aspect": "16x9",
   "safe": true,
   "motion": "auto",
-  "sfx": "soft",
+  "sfx": "minimal",
   "music": false,
   "brand": {
     "name": "C P Arora Group",
