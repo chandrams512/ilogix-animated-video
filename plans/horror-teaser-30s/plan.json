@@ -24,7 +24,7 @@
   {
    "type": "shot",
    "dur": 6.5,
-   "image": "02_bed_clock.jpg",
+   "image": "02_bed_clock.png",
    "label": "bed",
    "move": "out",
    "flicker": 0.3,
