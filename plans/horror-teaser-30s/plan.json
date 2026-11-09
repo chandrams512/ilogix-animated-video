@@ -12,13 +12,13 @@
       "say": "Room nine stays closed after sunset." },
     { "type": "shot", "dur": 6.5, "image": "02_bed_clock.jpg", "label": "bed", "move": "out", "flicker": 0.3, "shake": 4, "shakeFrom": 4.5,
       "say": "I am a bank clerk. Every night at two thirteen, I hear a pen scratching beneath my floor." },
-    { "type": "shot", "dur": 5.5, "image": "03_ledger.jpg", "label": "ledger", "move": "in", "amt": 0.18,
+    { "type": "shot", "dur": 5.5, "image": "03_ledger.png", "label": "ledger", "move": "in", "amt": 0.18,
       "say": "In the morning, the ledger has a fresh entry. In my own handwriting." },
     { "type": "shot", "dur": 4, "image": "04_empty_bed.png", "label": "empty bed", "move": "left", "tint": "sepia",
       "say": "Twenty years ago, the last clerk vanished." },
     { "type": "shot", "dur": 4.5, "image": "05_phone.png", "label": "phone", "move": "in", "tint": "night",
       "say": "So I set up a camera. What it recorded..." },
-    { "type": "shot", "dur": 5, "image": "06_pale_man.jpg", "label": "pale man", "move": "in", "amt": 0.2, "flashAt": [1.6], "shake": 6, "shakeFrom": 1.6, "shakeTo": 2.4, "text": "ROOM 9", "textAt": 2.6,
+    { "type": "shot", "dur": 5, "image": "06_pale_man.png", "label": "pale man", "move": "in", "amt": 0.2, "flashAt": [1.6], "shake": 6, "shakeFrom": 1.6, "shakeTo": 2.4, "text": "ROOM 9", "textAt": 2.6,
       "say": "...I should never have seen." }
   ]
 }
