@@ -5,7 +5,7 @@ import json, sys
 STYLES = {'tech-glow', 'isometric', 'whiteboard', 'blueprint', 'neo-brutal', 'glass', 'paper-cut', 'kinetic', 'neon', 'bauhaus', 'pixel', 'deco', 'mesh', 'particles', 'vhs', 'halftone', 'splitflap', 'liquid', 'swiss', 'keynote', 'transit'}
 ICONS = {'phone', 'mail', 'chat', 'cal', 'person', 'doc', 'check', 'bolt', 'plan', 'shield', 'pin', 'plane', 'cross'}
 REQ = {'hook': ['lines'], 'steps': ['items'], 'stat': ['value', 'label'], 'chart': ['bars'], 'compare': ['left', 'right'], 'timeline': ['points'], 'flow': ['nodes'], 'cta': ['lines'],
-       'testimonial': ['quote', 'name'], 'offer': ['headline'], 'pricing': ['plans'], 'checklist': ['items'], 'beforeafter': ['before', 'after'], 'endcard': ['lines'], 'phone': ['image'], 'clip': [], 'image': ['image'], 'product': ['image'], 'logo': [], 'stickman': []}
+       'testimonial': ['quote', 'name'], 'offer': ['headline'], 'pricing': ['plans'], 'checklist': ['items'], 'beforeafter': ['before', 'after'], 'endcard': ['lines'], 'phone': ['image'], 'clip': [], 'image': ['image'], 'product': ['image'], 'logo': [], 'stickman': [], 'shot': ['image']}
 LIM = {'hook': (1, 3, 'lines'), 'steps': (2, 4, 'items'), 'chart': (2, 6, 'bars'), 'timeline': (2, 5, 'points'), 'flow': (2, 5, 'nodes'), 'cta': (1, 3, 'lines'),
        'pricing': (2, 3, 'plans'), 'checklist': (2, 5, 'items'), 'endcard': (1, 3, 'lines')}
 BANNED = ['assured return', 'guaranteed return', 'guaranteed appreciation', 'assured rental', 'guaranteed rental', 'assured appreciation', 'risk free', 'risk-free']

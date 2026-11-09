@@ -199,6 +199,29 @@
       lines.forEach((ln, i) => { const y = (P ? 190 : 80) + i * px * 1.12, hot = i === lines.length - 1 && lines.length > 1; popIn(x, g.C, y, seg(lt, 0.02 + i * 0.12, 0.35 + i * 0.12), () => S.text(x, ln, g.C + (sc.shake ? Math.sin(lt * 80 + i) * sc.shake * 0.6 : 0), y, px, hot ? pal.cyan : pal.ink, { w: 800, glow: hot ? pal.cyan : undefined })); });
       if (sc.flash) { const fa = 1 - seg(lt, 0, 0.18); if (fa > 0) { x.save(); x.globalAlpha = fa * 0.9; x.fillStyle = '#fff'; x.fillRect(0, 0, g.bw, g.bh); x.restore(); } }
     },
+    // ---- shot: a full-bleed still for story videos (horror, mystery, documentary). Slow push/pull/pan, shake, flashes, fog, flicker, tint and a vignette. Captions come from the scene's `say` line as usual. A missing image shows a labelled dark placeholder.
+    shot(x, g, sc, lt) {
+      const W = g.bw, Hh = g.bh, d = sc._d, u = Math.min(1, lt / d), im = sc._img, amt = sc.amt == null ? 0.12 : sc.amt, mv = sc.move || 'in', pal = S.pal;
+      const ok = im && im.complete && im.naturalWidth;
+      let sx = 0, sy = 0, zoom = 1;
+      if (mv === 'in') zoom = 1 + amt * u; else if (mv === 'out') zoom = 1 + amt * (1 - u); else zoom = 1 + amt;
+      const pan = (u - 0.5) * amt * (mv === 'left' || mv === 'up' ? -1 : 1);
+      if (mv === 'left' || mv === 'right') sx = pan * W; if (mv === 'up' || mv === 'down') sy = pan * Hh;
+      if (sc.shake && lt >= (sc.shakeFrom || 0) && lt <= (sc.shakeTo == null ? d : sc.shakeTo)) { sx += Math.sin(lt * 91) * sc.shake; sy += Math.cos(lt * 77) * sc.shake; }
+      x.save(); x.beginPath(); x.rect(0, 0, W, Hh); x.clip();
+      const tint = sc.tint; if (ok && tint === 'sepia') x.filter = 'sepia(0.95) contrast(1.05)'; else if (ok && tint === 'night') x.filter = 'grayscale(1) contrast(1.25) brightness(0.9)'; else if (ok && tint === 'cold') x.filter = 'saturate(0.7) hue-rotate(10deg)';
+      if (ok) { const k = Math.max(W / im.naturalWidth, Hh / im.naturalHeight) * zoom, dw = im.naturalWidth * k, dh = im.naturalHeight * k; x.drawImage(im, (W - dw) / 2 + sx, (Hh - dh) / 2 + sy, dw, dh); }
+      else { const gr = x.createLinearGradient(0, 0, 0, Hh); gr.addColorStop(0, '#0d1b24'); gr.addColorStop(1, '#05070b'); x.fillStyle = gr; x.fillRect(0, 0, W, Hh); x.fillStyle = 'rgba(255,255,255,0.35)'; x.font = '700 34px "Nunito", system-ui, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('[image: ' + (sc.imageName || sc.label || 'missing') + ']', W / 2, Hh / 2); }
+      x.filter = 'none';
+      if (ok && tint === 'night') { x.save(); x.globalCompositeOperation = 'multiply'; x.fillStyle = 'rgb(120,255,150)'; x.fillRect(0, 0, W, Hh); x.restore(); }
+      if (sc.fog) { for (let i = 0; i < 3; i++) { const fx = ((lt * 18 * (i + 1) + i * 400) % (W + 600)) - 300, fy = Hh * (0.55 + i * 0.15), gr = x.createRadialGradient(fx, fy, 10, fx, fy, 420); gr.addColorStop(0, 'rgba(205,215,225,' + 0.13 * sc.fog + ')'); gr.addColorStop(1, 'rgba(205,215,225,0)'); x.fillStyle = gr; x.fillRect(0, 0, W, Hh); } }
+      const vg = sc.vignette == null ? 0.6 : sc.vignette; if (vg > 0) { const gr = x.createRadialGradient(W / 2, Hh / 2, Math.min(W, Hh) * 0.25, W / 2, Hh / 2, Math.max(W, Hh) * 0.75); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,' + vg + ')'); x.fillStyle = gr; x.fillRect(0, 0, W, Hh); }
+      if (sc.flicker) { const a = sc.flicker * Math.max(0, Math.sin(lt * 37) * Math.sin(lt * 13) + 0.2); x.fillStyle = 'rgba(0,0,0,' + a + ')'; x.fillRect(0, 0, W, Hh); }
+      (sc.flashAt || []).forEach(t => { const a = 1 - (lt - t) / 0.2; if (lt >= t && a > 0) { x.fillStyle = 'rgba(255,255,255,' + 0.85 * a + ')'; x.fillRect(0, 0, W, Hh); } });
+      const fi = sc.fadeIn == null ? 0.4 : sc.fadeIn; if (fi > 0 && lt < fi) { x.fillStyle = 'rgba(0,0,0,' + (1 - lt / fi) + ')'; x.fillRect(0, 0, W, Hh); }
+      x.restore();
+      if (sc.text) { const ta = sc.textAt || 0.6, v = seg(lt, ta, ta + 0.4); if (v > 0) popIn(x, g.C, g.P ? 360 : 200, v, () => S.text(x, sc.text, g.C, g.P ? 360 : 200, (g.P ? 84 : 76) * (sc.textScale || 1), '#f2f2f2', { w: 800, glow: pal.red })); }
+    },
     phone(x, g, sc, lt) {
       const pal = S.pal, P = g.P; 
       const pw = P ? 380 : 232, ph = P ? 760 : 470, px0 = P ? g.C - pw / 2 : 280, py0 = P ? 190 : 80;
@@ -216,7 +239,7 @@
   // library sounds (plan "sfx"): decode the embedded pack once; AudioBuffers can be used by any audio context
   if (window.SFX_PACK) { window.SFX_BUF = {}; const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext; Object.keys(window.SFX_PACK).forEach((c) => { try { const bin = atob(window.SFX_PACK[c].split(',')[1]), u8 = new Uint8Array(bin.length); for (let q = 0; q < bin.length; q++) u8[q] = bin.charCodeAt(q); window.PRELOAD.push(new AC(1, 1, 44100).decodeAudioData(u8.buffer).then((b) => { window.SFX_BUF[c] = b; }).catch(() => {})); } catch (e) { /* missing cue: synthesized fallback plays */ } }); }
   const load = (src) => { const im = new Image(); im.src = src; window.PRELOAD.push(im.decode ? im.decode().catch(() => {}) : Promise.resolve()); return im; };
-  PLAN.scenes.forEach((sc) => { if ((sc.type === 'phone' || sc.type === 'image' || sc.type === 'product') && sc.image) sc._img = load(sc.image); if (sc.type === 'clip' && sc.frames) sc._fr = sc.frames.map(load); });
+  PLAN.scenes.forEach((sc) => { if ((sc.type === 'phone' || sc.type === 'image' || sc.type === 'product' || sc.type === 'shot') && sc.image) { sc.imageName = String(sc.imageName || sc.label || ''); sc._img = load(sc.image); } if (sc.type === 'clip' && sc.frames) sc._fr = sc.frames.map(load); });
   const SND = {
     testimonial: (k, sc, T0) => { k.play('cue:receive', T0 + 0.2, { gain: 0.8 }); k.play('sparkle', T0 + 0.6, { gain: 0.6, n: 5 }); },
     offer: (k, sc, T0) => { k.play('impact', T0 + 0.15, { gain: 0.5 }); k.play('riser', T0 + 0.5, { dur: 0.8, gain: 0.5 }); k.play('cue:coupon', T0 + 1.3, { gain: 0.9 }); if (sc.button) k.play('ding', T0 + 1.9, { f: 'E6', gain: 0.6 }); },
@@ -229,6 +252,7 @@
     product: (k, sc, T0) => { k.play('impact', T0 + 0.1, { gain: 0.45 }); k.play('sparkle', T0 + 0.5, { gain: 0.6, n: 5 }); (sc.callouts || []).forEach((_, j) => k.play('pop', T0 + 0.95 + j * 0.5, { gain: 0.7, pan: j % 2 ? 0.25 : -0.25 })); if (sc.price) k.play('ding', T0 + 1.3, { f: 'E6', gain: 0.6 }); },
     logo: (k, sc, T0) => { k.play('pop', T0 + 0.1, { gain: 0.8 }); k.play('sparkle', T0 + 0.5, { gain: 0.6, n: 6 }); },
     stickman: (k, sc, T0) => { k.play('pop', T0 + 0.05, { gain: 0.8 }); const ps = (sc.figures || []).map(f => f.pose); if (ps.includes('shock') || ps.includes('faint')) k.play('impact', T0 + 0.1, { gain: 0.9 }); if (ps.includes('cheer') || ps.includes('dance')) k.play('sparkle', T0 + 0.3, { gain: 0.7, n: 5 }); if (sc.flash) k.play('impact', T0, { gain: 0.5 }); },
+    shot: (k, sc, T0) => { (sc.flashAt || []).forEach(t => k.play('impact', T0 + t, { gain: 0.9 })); },
     phone: (k, sc, T0) => { k.play('cue:open', T0 + 0.2, { gain: 0.9 }); k.play('blip', T0 + 0.8, { f: 'E6', dur: 0.1, gain: 0.5 }); },
   };
   window.SCENE_SOUND = SND;
